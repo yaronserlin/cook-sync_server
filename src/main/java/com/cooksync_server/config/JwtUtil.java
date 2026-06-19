@@ -3,7 +3,9 @@ package com.cooksync_server.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -15,24 +17,26 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // מפתח סודי להצפנת הטוקן. בסביבת פרודקשן אמיתית זה צריך לשבת בקובץ properties/סביבה ולא בקוד!
-    // יצרנו כאן מפתח ארוך ומאובטח שמתאים לאלגוריתם HS256
-    private final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    // Spring שואב את הערך מקובץ ה-.env (דרך application.properties)
+    @Value("${jwt.secret}")
+    private String secretKeyString;
 
-    // תוקף הטוקן: 24 שעות (באלפיות שנייה)
-    private final long JWT_EXPIRATION = 1000 * 60 * 60 * 24;
+    private final long JWT_EXPIRATION = 1000 * 60 * 60 * 24; // 24 שעות
 
-    // חילוץ האימייל (Username) מהטוקן
+    // מתודת עזר שהופכת את המחרוזת מה-.env למפתח הצפנה קריפטוגרפי
+    private Key getSignInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKeyString);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // חילוץ ה-ID של המשתמש מהטוקן
     public String extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("userId", String.class));
     }
 
-    // בדיקה האם הטוקן פג תוקף
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
@@ -48,13 +52,12 @@ public class JwtUtil {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(getSignInKey()) // שימוש במפתח הקבוע
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    // יצירת טוקן חדש (נקרא לזה מה-AuthService)
     public String generateToken(String email, String userId, boolean isAdmin) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
@@ -66,14 +69,13 @@ public class JwtUtil {
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(subject) // לרוב שמים כאן את האימייל או שם המשתמש
+                .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
-                .signWith(SECRET_KEY)
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256) // שימוש במפתח הקבוע
                 .compact();
     }
 
-    // בדיקה סופית האם הטוקן תקין ושייך למשתמש
     public boolean validateToken(String token, String userEmail) {
         final String extractedEmail = extractEmail(token);
         return (extractedEmail.equals(userEmail) && !isTokenExpired(token));
