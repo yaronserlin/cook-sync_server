@@ -7,7 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.cooksync_server.dtos.request.CreateTagRequest;
+import com.cooksync_server.dtos.request.tags.CreateTagRequest;
+import com.cooksync_server.dtos.response.tags.TagResponse;
 import com.cooksync_server.entities.Tag;
 import com.cooksync_server.exceptions.ResourceAllReadyExistsException;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
@@ -39,8 +40,10 @@ public class TagService {
      *
      * @return A {@link List} of all {@link Tag} entities.
      */
-    public List<Tag> getAllTags() {
-        return tagRepository.findAll();
+    public List<TagResponse> getAllTags() {
+        return tagRepository.findAll().stream()
+                .map(this::mapToResponse) // פונקציית המרה
+                .toList();
     }
 
     /**
@@ -57,9 +60,10 @@ public class TagService {
      * @throws ResourceNotFoundException if no tag is found with the provided
      * identifier.
      */
-    public Tag getTagById(String id) {
-        return tagRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag", id));
+    public TagResponse getTagById(String id) {
+
+        return mapToResponse(tagRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag", id)));
     }
 
     /**
@@ -81,11 +85,10 @@ public class TagService {
      * @throws IllegalArgumentException if the request or name is null.
      */
     @Transactional
-    public Tag createTag(CreateTagRequest request) {
+    public TagResponse createTag(CreateTagRequest request) {
         System.out.println("Creating tag with request: " + request);
 
-
-        String rawName = request.getName().toLowerCase().trim();
+        String rawName = request.name().toLowerCase().trim();
         String formattedName = StringUtils.capitalize(rawName);
 
         Optional<Tag> existingTagOpt = tagRepository.findByNameIgnoreCase(formattedName);
@@ -95,7 +98,7 @@ public class TagService {
         }
 
         Tag newTag = Tag.builder().name(formattedName).build();
-        return tagRepository.save(newTag);
+        return mapToResponse(tagRepository.save(newTag));
     }
 
     /**
@@ -113,7 +116,22 @@ public class TagService {
      */
     @Transactional
     public void deleteTag(String id) {
-        Tag existingTag = getTagById(id);
-        tagRepository.delete(existingTag);
+        TagResponse existingTag = getTagById(id);
+        tagRepository.delete(mapToEntity(existingTag));
+    }
+
+    private Tag mapToEntity(TagResponse existingTag) {
+        return Tag.builder()
+                .id(existingTag.getId())
+                .name(existingTag.getName())
+                .build();
+    }
+
+    private TagResponse mapToResponse(Tag tag) {
+        return new TagResponse(
+                tag.getId(),
+                tag.getName(),
+                tag.getCreatedAt().toString()
+        );
     }
 }
