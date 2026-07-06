@@ -1,4 +1,4 @@
-package com.cooksync_server.dtos.response;
+package com.cooksync_server.dtos.response.user;
 
 import com.cooksync_server.entities.User;
 

@@ -19,8 +19,8 @@ import com.cooksync_server.dtos.request.CreateRecipeRequest;
 import com.cooksync_server.dtos.response.IngredientResponse;
 import com.cooksync_server.dtos.response.InstructionResponse;
 import com.cooksync_server.dtos.response.RecipeResponse;
-import com.cooksync_server.dtos.response.TagResponse;
-import com.cooksync_server.dtos.response.UserResponse;
+import com.cooksync_server.dtos.response.tags.TagResponse;
+import com.cooksync_server.dtos.response.user.UserResponse;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.services.RecipeService;
 

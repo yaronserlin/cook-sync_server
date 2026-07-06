@@ -1,4 +1,4 @@
-package com.cooksync_server.dtos.response;
+package com.cooksync_server.dtos.response.tags;
 
 import java.util.List;
 

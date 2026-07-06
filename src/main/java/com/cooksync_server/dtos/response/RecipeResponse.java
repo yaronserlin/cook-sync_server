@@ -3,6 +3,8 @@ package com.cooksync_server.dtos.response;
 import java.util.List;
 import java.util.Set;
 
+import com.cooksync_server.dtos.response.tags.TagResponse;
+import com.cooksync_server.dtos.response.user.UserResponse;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.Recipe.Difficulty;
 
