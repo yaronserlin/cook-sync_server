@@ -44,6 +44,28 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles exceptions thrown when a user attempts to create a resource that
+     * already exists in the system.
+     *
+     * <p>
+     * <b>Example:</b></p>
+     * <pre>{@code
+     * // Thrown in a service layer:
+     * throw new ResourceAlreadyExistsException("Tag", "Vegan");
+     * // Caught here and mapped to 409 CONFLICT.
+     * }</pre>
+     *
+     * @param ex The exception containing the duplication conflict details.
+     * @return A {@link ResponseEntity} containing an {@link ErrorResponse} with
+     * a 409 Conflict status.
+     */
+    @ExceptionHandler(ResourceAllReadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleResourceAlreadyExistsException(ResourceAllReadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("Conflict", ex.getMessage()));
+    }
+
+    /**
      * Handles exceptions thrown when a user attempts to perform an action
      * without sufficient permissions.
      *
