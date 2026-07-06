@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,7 @@ public class DataSeeder implements CommandLineRunner {
     private final IngredientRepository ingredientRepository;
     private final InstructionRepository instructionRepository;
     private final PasswordEncoder passwordEncoder;
+    private static final Logger logger = LoggerFactory.getLogger(DataSeeder.class);
 
     public DataSeeder(UserRepository userRepository, RecipeRepository recipeRepository,
             TagRepository tagRepository, UnitRepository unitRepository,
@@ -51,11 +54,11 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // בדיקה: אם כבר יש משתמשים במסד הנתונים, אל תריץ את הזריעה מחדש
         if (userRepository.count() > 0) {
-            System.out.println("🌱 Database already seeded. Skipping seeder...");
+            logger.debug("🌱 Database already seeded. Skipping seeder...");
             return;
         }
 
-        System.out.println("🌱 Seeding database with initial data...");
+        logger.debug("🌱 Seeding database with initial data...");
 
         // 1. יצירת יחידות מידה (Units)
         Unit grams = unitRepository.save(Unit.builder().code("g").name("Grams").build());
@@ -172,6 +175,6 @@ public class DataSeeder implements CommandLineRunner {
         dessert.getRecipes().add(savedRecipe);
         tagRepository.saveAll(List.of(vegan, dessert));
 
-        System.out.println("✅ Database seeding completed successfully!");
+        logger.debug("✅ Database seeding completed successfully!");
     }
 }

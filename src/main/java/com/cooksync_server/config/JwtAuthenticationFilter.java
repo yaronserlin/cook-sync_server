@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +31,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     /**
      * Initializes the authentication filter with the required JWT utility
@@ -64,18 +66,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * @throws IOException if an input or output exception occurs during the
      * filtering process.
      */
-        @Override
-        protected void doFilterInternal(
+    @Override
+    protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain
-        ) throws ServletException, IOException {
+    ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            logger.warn("Authorization header missing or does not start with 'Bearer '. Proceeding without authentication.");
             filterChain.doFilter(request, response);
             return;
         }
@@ -84,11 +87,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             userEmail = jwtUtil.extractEmail(jwt);
+            logger.debug("Extracted user email from JWT: {}", userEmail);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 if (jwtUtil.validateToken(jwt, userEmail)) {
-
+                    
                     boolean isAdmin = jwtUtil.extractClaim(jwt, claims -> claims.get("isAdmin", Boolean.class));
                     String role = isAdmin ? "ROLE_ADMIN" : "ROLE_USER";
                     List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
@@ -104,7 +108,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Invalid JWT Token: " + e.getMessage());
+            logger.error("Invalid JWT Token: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
