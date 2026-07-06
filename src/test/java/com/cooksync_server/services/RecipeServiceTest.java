@@ -26,7 +26,7 @@ import com.cooksync_server.entities.Tag;
 import com.cooksync_server.entities.Unit;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
-import com.cooksync_server.exceptions.UnauthorizedActionException;
+import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.repositories.IngredientRepository;
 import com.cooksync_server.repositories.InstructionRepository;
 import com.cooksync_server.repositories.RecipeRepository;

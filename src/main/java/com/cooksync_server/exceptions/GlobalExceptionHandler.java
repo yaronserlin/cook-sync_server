@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.cooksync_server.dtos.response.errors.ErrorResponse;
 import com.cooksync_server.exceptions.auth.InvalidCredentialsException;
+import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
 
 /**
