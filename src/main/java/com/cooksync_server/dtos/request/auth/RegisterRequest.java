@@ -1,4 +1,4 @@
-package com.cooksync_server.dtos.request;
+package com.cooksync_server.dtos.request.auth;
 
 import lombok.Data;
 

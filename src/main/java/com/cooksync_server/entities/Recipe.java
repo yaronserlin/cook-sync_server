@@ -1,7 +1,12 @@
 package com.cooksync_server.entities;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -12,7 +17,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -38,40 +42,41 @@ public class Recipe {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id; // [cite: 64]
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id", nullable = false)
-    private User createdBy; // [cite: 65]
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private User createdBy;
 
     @Column(nullable = false, length = 255)
-    private String title; // [cite: 68]
+    private String title;
 
     @Column(columnDefinition = "TEXT")
-    private String description; // [cite: 69]
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Difficulty difficulty; // 
+    private Difficulty difficulty;
 
     @Column(name = "prep_time_minutes", nullable = false)
-    private int prepTimeMinutes; // [cite: 71]
+    private int prepTimeMinutes;
 
     @Column(name = "cook_time_minutes", nullable = false)
-    private int cookTimeMinutes; // [cite: 72]
+    private int cookTimeMinutes;
 
     @Column(nullable = false)
-    private int servings; // [cite: 73]
+    private int servings;
 
     @Builder.Default
     @Column(name = "review_count", nullable = false)
-    private int reviewCount = 0; // [cite: 73]
+    private int reviewCount = 0;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // [cite: 73]
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt; // [cite: 74]
+    private LocalDateTime updatedAt;
 
     @ManyToMany
     @JoinTable(
@@ -79,10 +84,16 @@ public class Recipe {
             joinColumns = @JoinColumn(name = "recipe_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
-    private List<Tag> tags;
+    @Builder.Default
+    private List<Tag> tags = new ArrayList<>();
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Ingredient> ingredients;
+    @Builder.Default
+    private Set<Ingredient> ingredients = new HashSet<>();
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Instruction> instructions = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -96,6 +107,6 @@ public class Recipe {
     }
 
     public enum Difficulty {
-        EASY, MEDIUM, HARD // 
+        EASY, MEDIUM, HARD
     }
 }

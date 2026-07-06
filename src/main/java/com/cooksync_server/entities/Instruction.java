@@ -20,6 +20,7 @@ public class Instruction {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Recipe recipe; //[cite: 88]
 
     @Column(name = "step_number", nullable = false)

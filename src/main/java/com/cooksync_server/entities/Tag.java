@@ -1,7 +1,10 @@
 package com.cooksync_server.entities;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,13 +41,15 @@ public class Tag {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt; // [cite: 121]
 
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
             name = "recipe_tags", // 
             joinColumns = @JoinColumn(name = "tag_id"), // [cite: 125]
             inverseJoinColumns = @JoinColumn(name = "recipe_id") // [cite: 125]
     )
-    private Set<Recipe> recipes;
+    @Builder.Default
+    private Set<Recipe> recipes = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

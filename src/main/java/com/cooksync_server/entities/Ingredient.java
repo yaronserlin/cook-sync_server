@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,6 +33,7 @@ public class Ingredient {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id", nullable = false)
+    @JsonIgnore
     private Recipe recipe; // [cite: 82]
 
     @Column(nullable = false, length = 255)
@@ -41,6 +43,6 @@ public class Ingredient {
     private BigDecimal quantity; // [cite: 84]
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "unit")
+    @JoinColumn(name = "unit_id", nullable = false)
     private Unit unit;
 }

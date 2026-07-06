@@ -19,9 +19,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.cooksync_server.config.JwtUtil;
-import com.cooksync_server.dtos.request.LoginRequest;
-import com.cooksync_server.dtos.request.RegisterRequest;
-import com.cooksync_server.dtos.response.AuthResponse;
+import com.cooksync_server.dtos.request.auth.LoginRequest;
+import com.cooksync_server.dtos.request.auth.RegisterRequest;
+import com.cooksync_server.dtos.response.auth.AuthResponse;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.repositories.UserRepository;
 
