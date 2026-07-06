@@ -3,6 +3,8 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+.github/
+.mvn/
 
 ### STS ###
 .apt_generated
@@ -34,3 +36,7 @@ build/
 
 # Ignore environment variables file
 .env
+
+.DB_Store
+.DS_Store
+.DS_Store
