@@ -1,14 +1,19 @@
 package com.cooksync_server.services;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import com.cooksync_server.dtos.request.CreateTagRequest;
 import com.cooksync_server.entities.Tag;
 import com.cooksync_server.exceptions.ResourceAllReadyExistsException;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.repositories.TagRepository;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Service class responsible for managing tag entities, including retrieval,
@@ -18,18 +23,10 @@ import com.cooksync_server.repositories.TagRepository;
  * @version Last Updated: 06/07/2026
  */
 @Service
+@RequiredArgsConstructor
 public class TagService {
 
     private final TagRepository tagRepository;
-
-    /**
-     * Initializes the tag service with the required tag repository.
-     *
-     * @param tagRepository Repository for accessing and persisting tag data.
-     */
-    public TagService(TagRepository tagRepository) {
-        this.tagRepository = tagRepository;
-    }
 
     /**
      * Retrieves all tags currently stored in the system.
@@ -72,24 +69,33 @@ public class TagService {
      * <p>
      * <b>Example:</b></p>
      * <pre>{@code
-     * Tag newTag = new Tag();
-     * newTag.setName("Vegan");
-     * Tag savedTag = tagService.createTag(newTag);
+     * CreateTagRequest request = new CreateTagRequest("Vegan");
+     * Tag savedTag = tagService.createTag(request);
      * }</pre>
      *
-     * @param tag The {@link Tag} entity to be created and saved.
+     * @param request The data transfer object containing the new tag's details.
      * @return The persisted {@link Tag} entity containing its generated
      * identifier.
      * @throws ResourceAllReadyExistsException if a tag with the same name
      * (case-insensitive) already exists.
+     * @throws IllegalArgumentException if the request or name is null.
      */
     @Transactional
-    public Tag createTag(Tag tag) {
-        if (tagRepository.existsByNameIgnoreCase(tag.getName())) {
-            Tag existingTag = tagRepository.findByNameIgnoreCase(tag.getName()).orElse(null);
+    public Tag createTag(CreateTagRequest request) {
+        System.out.println("Creating tag with request: " + request);
+
+
+        String rawName = request.getName().toLowerCase().trim();
+        String formattedName = StringUtils.capitalize(rawName);
+
+        Optional<Tag> existingTagOpt = tagRepository.findByNameIgnoreCase(formattedName);
+        if (existingTagOpt.isPresent()) {
+            Tag existingTag = existingTagOpt.get();
             throw new ResourceAllReadyExistsException("Tag: '" + existingTag.getName() + "'", existingTag.getId());
         }
-        return tagRepository.save(tag);
+
+        Tag newTag = Tag.builder().name(formattedName).build();
+        return tagRepository.save(newTag);
     }
 
     /**
