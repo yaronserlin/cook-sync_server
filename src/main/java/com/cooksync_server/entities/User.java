@@ -16,6 +16,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA Entity representing a registered user within the CookSync system. Maps to
+ * the "users" table in the underlying relational database and utilizes Lombok
+ * for boilerplate code reduction.
+ *
+ * @author Yaron Serlin
+ * @version Last Updated: 06/07/2026
+ */
 @Entity
 @Table(name = "users")
 @Getter
@@ -26,35 +34,59 @@ import lombok.Setter;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // תואם ל-char(36) במסד הנתונים
-    private String id; // [cite: 59]
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false, length = 255)
-    private String name; // [cite: 60]
+    private String name;
 
     @Column(nullable = false, unique = true, length = 255)
-    private String email; // [cite: 134]
+    private String email;
 
     @Column(name = "password_hash", nullable = false, length = 255)
     @com.fasterxml.jackson.annotation.JsonIgnore
-    private String passwordHash; // [cite: 60]
+    private String passwordHash;
 
     @Builder.Default
     @Column(name = "is_admin", nullable = false)
-    private boolean isAdmin = false; // [cite: 61]
+    private boolean isAdmin = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // [cite: 61]
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt; // [cite: 62]
+    private LocalDateTime updatedAt;
 
+    /**
+     * JPA lifecycle callback executed before the entity is persisted to the
+     * database for the first time. Initializes the creation and update
+     * timestamps to the current system time.
+     *
+     * <p>
+     * <b>Example:</b></p>
+     * <pre>{@code
+     * // Automatically invoked by Hibernate during:
+     * userRepository.save(newUser);
+     * }</pre>
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * JPA lifecycle callback executed before an existing entity is updated in
+     * the database. Refreshes the update timestamp to the current system time.
+     *
+     * <p>
+     * <b>Example:</b></p>
+     * <pre>{@code
+     * // Automatically invoked by Hibernate during an update:
+     * existingUser.setName("New Name");
+     * userRepository.save(existingUser);
+     * }</pre>
+     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
