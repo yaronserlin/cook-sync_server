@@ -11,6 +11,8 @@ import com.cooksync_server.dtos.request.auth.LoginRequest;
 import com.cooksync_server.dtos.request.auth.RegisterRequest;
 import com.cooksync_server.dtos.response.auth.AuthResponse;
 import com.cooksync_server.entities.User;
+import com.cooksync_server.exceptions.auth.InvalidCredentialsException;
+import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
 import com.cooksync_server.repositories.UserRepository;
 
 /**
@@ -60,10 +62,12 @@ public class AuthService {
      * email, and password.
      * @return An {@link AuthResponse} containing the generated JWT token and
      * the user's basic profile details.
+     * @throws {@link UserAlreadyExistsException} if the email is already
+     * registered.
      */
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already registered");
+            throw new UserAlreadyExistsException("Email is already registered");
         }
 
         User newUser = User.builder()
@@ -98,7 +102,8 @@ public class AuthService {
      * plain-text password.
      * @return An {@link AuthResponse} containing the generated JWT token and
      * the user's basic profile details upon successful login.
-     * @throws RuntimeException if the email or password is invalid.
+     * @throws {@link InvalidCredentialsException} if the email or password is
+     * invalid.
      */
     public AuthResponse login(LoginRequest request) {
         Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
@@ -108,7 +113,7 @@ public class AuthService {
         boolean isPasswordMatch = passwordEncoder.matches(request.getPassword(), hashToTest);
 
         if (optionalUser.isEmpty() || !isPasswordMatch) {
-            throw new RuntimeException("Invalid email or password");
+            throw new InvalidCredentialsException("Invalid email or password");
         }
 
         User user = optionalUser.get();
