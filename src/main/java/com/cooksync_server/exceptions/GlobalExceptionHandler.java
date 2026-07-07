@@ -238,7 +238,7 @@ public class GlobalExceptionHandler {
                         HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         "Internal Server Error",
                         "INTERNAL_SERVER_ERROR",
-                        "An unexpected error occurred. Please try again later.",
+                        ex.getMessage(),
                         "",
                         null
                 ), null));

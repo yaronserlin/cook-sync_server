@@ -3,6 +3,7 @@ package com.cooksync_server.dtos.response;
 import java.util.List;
 import java.util.Set;
 
+import com.cooksync_server.dtos.response.ingredient.IngredientResponse;
 import com.cooksync_server.entities.Instruction;
 
 import lombok.AllArgsConstructor;

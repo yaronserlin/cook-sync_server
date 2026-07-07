@@ -86,7 +86,7 @@ public class TagService {
      */
     @Transactional
     public TagResponse createTag(CreateTagRequest request) {
-        System.out.println("Creating tag with request: " + request);
+        // System.out.println("Creating tag with request: " + request);
 
         String rawName = request.name().toLowerCase().trim();
         String formattedName = StringUtils.capitalize(rawName);
