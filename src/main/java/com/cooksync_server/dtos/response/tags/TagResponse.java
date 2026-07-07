@@ -1,31 +1,41 @@
 package com.cooksync_server.dtos.response.tags;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.cooksync_server.entities.Tag;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+/**
+ * Data Transfer Object representing a tag in API responses.
+ * Uses Java records for an immutable data carrier.
+ */
+public record TagResponse(
+    String id,
+    String name,
+    String createdAt,
+    String updatedAt
+) {
+    /**
+     * Maps a persistent Tag entity into a TagResponse DTO.
+     */
+    public static TagResponse fromEntity(Tag tag) {
+        return new TagResponse(
+            tag.getId(),
+            tag.getName(),
+            tag.getCreatedAt() != null ? tag.getCreatedAt().toString() : null,
+            tag.getUpdatedAt() != null ? tag.getUpdatedAt().toString() : null
+        );
+    }
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TagResponse {
-
-    private String id;
-    private String name;
-    private String createdAt;
-
-    public static List<TagResponse> fromEntities(List<Tag> tags) {
+    /**
+     * Maps a collection of Tag entities to a List of TagResponse DTOs.
+     */
+    public static List<TagResponse> fromEntities(Collection<Tag> tags) {
+        if (tags == null) return List.of();
+        
         return tags.stream()
-                .map(tag -> TagResponse.builder()
-                .id(tag.getId())
-                .name(tag.getName())
-                .createdAt(tag.getCreatedAt().toString())
-                .build())
-                .toList();
+                .map(TagResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 }

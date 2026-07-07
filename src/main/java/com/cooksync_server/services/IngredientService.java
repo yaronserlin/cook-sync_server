@@ -1,18 +1,22 @@
 package com.cooksync_server.services;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.cooksync_server.dtos.request.ingredient.CreateIngredientRequset;
+import com.cooksync_server.dtos.request.ingredient.IngredientRequestDTO;
 import com.cooksync_server.dtos.response.ingredient.IngredientResponse;
-import com.cooksync_server.dtos.response.unit.UnitResponse;
 import com.cooksync_server.entities.Ingredient;
+import com.cooksync_server.entities.Recipe;
+import com.cooksync_server.entities.Unit;
+import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
+import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.repositories.IngredientRepository;
 import com.cooksync_server.repositories.RecipeRepository;
 import com.cooksync_server.repositories.UnitRepository;
-import com.cooksync_server.entities.Recipe;
+import com.cooksync_server.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,70 +27,66 @@ public class IngredientService {
     private final IngredientRepository ingredientRepository;
     private final RecipeRepository recipeRepository;
     private final UnitRepository unitRepository;
+    private final UserRepository userRepository;
 
-    public List<IngredientResponse> getAllIngredients() {
-        return ingredientRepository.findAll().stream()
-                .map(ingredient -> IngredientResponse.builder()
-                .id(ingredient.getId())
-                .name(ingredient.getName())
-                .quantity(ingredient.getQuantity())
-                .recipeId(ingredient.getRecipe().getId())
-                .unit(UnitResponse.fromEntity(ingredient.getUnit()))
-                .build())
-                .toList();
-    }
+    @Transactional
+    public IngredientResponse addIngredientToRecipe(String recipeId, IngredientRequestDTO request, String userEmail) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe", recipeId));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-    public List<IngredientResponse> getIngredientsByRecipeId(String recipeId) {
-        return ingredientRepository.findByRecipeId(recipeId).stream()
-                    .map(ingredient -> IngredientResponse.builder()
-                    .id(ingredient.getId())
-                    .name(ingredient.getName())
-                    .quantity(ingredient.getQuantity())
-                    .recipeId(ingredient.getRecipe().getId())
-                    .unit(UnitResponse.fromEntity(ingredient.getUnit()))
-                    .build())
-                    .toList();
+        // אימות הרשאות: רק יוצר המתכון או מנהל יכולים להוסיף מצרכים
+        if (!recipe.getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
+            throw new UnauthorizedActionException("You are not allowed to modify this recipe's ingredients.");
         }
 
-    public IngredientResponse getIngredientById(String ingredientId) {
-        return ingredientRepository.findById(ingredientId)
-                .map(ingredient -> IngredientResponse.builder()
-                .id(ingredient.getId())
-                .name(ingredient.getName())
-                .quantity(ingredient.getQuantity())
-                .recipeId(ingredient.getRecipe().getId())
-                .unit(UnitResponse.fromEntity(ingredient.getUnit()))
-                .build())
-                .orElseThrow(() -> new ResourceNotFoundException("Ingredient", ingredientId));
-    }
+        Unit unit = unitRepository.findById(request.unitId())
+                .orElseThrow(() -> new ResourceNotFoundException("Unit", request.unitId()));
 
-    public void deleteIngredientById(String ingredientId) {
-        ingredientRepository.deleteById(ingredientId);
-    }
-
-    public IngredientResponse createIngredient(String recipeId, CreateIngredientRequset request) {
-        var recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Recipe" , recipeId));
-        var unit = unitRepository.findByCode(request.getUnitCode())
-                .orElseThrow(() -> new ResourceNotFoundException("Unit" , request.getUnitCode()));
-        var ingredient = Ingredient.builder()
-                .name(request.getName())
-                .quantity(request.getQuantity())
-                .unit(unit)
+        Ingredient ingredient = Ingredient.builder()
                 .recipe(recipe)
+                .name(request.name())
+                .quantity(BigDecimal.valueOf(request.quantity()))
+                .unit(unit)
                 .build();
-        var savedIngredient = ingredientRepository.save(ingredient);
-        return IngredientResponse.builder()
-                .id(savedIngredient.getId())
-                .name(savedIngredient.getName())
-                .quantity(savedIngredient.getQuantity())
-                .recipeId(savedIngredient.getRecipe().getId())  
-                .unit(UnitResponse.fromEntity(savedIngredient.getUnit()))
-                .build();   
-                
+
+        return IngredientResponse.fromEntity(ingredientRepository.save(ingredient));
     }
 
+    @Transactional
+    public IngredientResponse updateIngredient(String ingredientId, IngredientRequestDTO request, String userEmail) {
+        Ingredient ingredient = ingredientRepository.findById(ingredientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingredient", ingredientId));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-    
+        // אימות הרשאות באמצעות הגישה למתכון אליו שייך המצרך
+        if (!ingredient.getRecipe().getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
+            throw new UnauthorizedActionException("You are not allowed to modify this ingredient.");
+        }
 
+        Unit unit = unitRepository.findById(request.unitId())
+                .orElseThrow(() -> new ResourceNotFoundException("Unit", request.unitId()));
+
+        ingredient.setName(request.name());
+        ingredient.setQuantity(BigDecimal.valueOf(request.quantity()));
+        ingredient.setUnit(unit);
+
+        return IngredientResponse.fromEntity(ingredientRepository.save(ingredient));
+    }
+
+    @Transactional
+    public void deleteIngredient(String ingredientId, String userEmail) {
+        Ingredient ingredient = ingredientRepository.findById(ingredientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingredient", ingredientId));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+
+        if (!ingredient.getRecipe().getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
+            throw new UnauthorizedActionException("You are not allowed to delete this ingredient.");
+        }
+
+        ingredientRepository.delete(ingredient);
+    }
 }

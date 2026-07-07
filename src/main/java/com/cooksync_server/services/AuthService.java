@@ -7,22 +7,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.cooksync_server.config.JwtUtil;
-import com.cooksync_server.dtos.request.auth.LoginRequest;
-import com.cooksync_server.dtos.request.auth.RegisterRequest;
+import com.cooksync_server.dtos.request.auth.LoginRequestDTO;
+import com.cooksync_server.dtos.request.auth.RegisterRequestDTO;
 import com.cooksync_server.dtos.response.auth.AuthResponse;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.auth.InvalidCredentialsException;
 import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
 import com.cooksync_server.repositories.UserRepository;
 
-/**
- * Service class responsible for managing user authentication, including
- * registration, login verification, and security measures against timing
- * attacks.
- *
- * * @author Yaron Serlin
- * @version Last Updated: 06/07/2026
- */
 @Service
 public class AuthService {
 
@@ -32,55 +24,29 @@ public class AuthService {
 
     private final String dummyPasswordHash;
 
-    /**
-     * Initializes the authentication service and pre-computes a dummy password
-     * hash.
-     *
-     * @param userRepository Repository for accessing and persisting user data.
-     * @param passwordEncoder Encoder for securely hashing and verifying
-     * passwords.
-     * @param jwtUtil Utility for creating JSON Web Tokens.
-     */
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
-
         this.dummyPasswordHash = passwordEncoder.encode("dummy_password_for_timing_attack_prevention");
     }
 
-    /**
-     * Registers a new user account and returns an authentication token.
-     * * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * RegisterRequest req = new RegisterRequest("Alice", "alice@example.com", "SecurePass1!");
-     * AuthResponse response = authService.register(req);
-     * }</pre>
-     *
-     * @param request The data transfer object containing the user's name,
-     * email, and password.
-     * @return An {@link AuthResponse} containing the generated JWT token and
-     * the user's basic profile details.
-     * @throws {@link UserAlreadyExistsException} if the email is already
-     * registered.
-     */
-    public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+    public AuthResponse register(RegisterRequestDTO request) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new UserAlreadyExistsException("Email is already registered");
         }
 
         User newUser = User.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .name(request.name())
+                .email(request.email())
+                .passwordHash(passwordEncoder.encode(request.password()))
                 .isAdmin(false)
                 .build();
 
         try {
             userRepository.save(newUser);
         } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("Email is already registered");
+            throw new UserAlreadyExistsException("Email is already registered");
         }
 
         String token = jwtUtil.generateToken(newUser.getEmail(), newUser.getId(), newUser.isAdmin());
@@ -88,29 +54,12 @@ public class AuthService {
         return new AuthResponse(token, newUser.getId(), newUser.getName(), newUser.isAdmin());
     }
 
-    /**
-     * Authenticates user credentials and prevents timing attacks via consistent
-     * execution time.
-     * * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * LoginRequest req = new LoginRequest("alice@example.com", "SecurePass1!");
-     * AuthResponse response = authService.login(req);
-     * }</pre>
-     *
-     * @param request The data transfer object containing the user's email and
-     * plain-text password.
-     * @return An {@link AuthResponse} containing the generated JWT token and
-     * the user's basic profile details upon successful login.
-     * @throws {@link InvalidCredentialsException} if the email or password is
-     * invalid.
-     */
-    public AuthResponse login(LoginRequest request) {
-        Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
+    public AuthResponse login(LoginRequestDTO request) {
+        Optional<User> optionalUser = userRepository.findByEmail(request.email());
 
         String hashToTest = optionalUser.map(user -> user.getPasswordHash()).orElse(this.dummyPasswordHash);
 
-        boolean isPasswordMatch = passwordEncoder.matches(request.getPassword(), hashToTest);
+        boolean isPasswordMatch = passwordEncoder.matches(request.password(), hashToTest);
 
         if (optionalUser.isEmpty() || !isPasswordMatch) {
             throw new InvalidCredentialsException("Invalid email or password");

@@ -63,4 +63,16 @@ public class PersonalInstructionNote {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    public void setInstructionId(Object object) {
+        // Implementation for setting instruction ID
+        if (object instanceof String) {
+            this.instruction = new Instruction();
+            this.instruction.setId((String) object);
+        } else if (object instanceof Instruction) {
+            this.instruction = (Instruction) object;
+        } else {
+            throw new IllegalArgumentException("Invalid type for instruction ID");
+        }
+    }
 }

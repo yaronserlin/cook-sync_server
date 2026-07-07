@@ -1,0 +1,55 @@
+package com.cooksync_server.controllers;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import com.cooksync_server.dtos.request.instruction.InstructionRequestDTO;
+import com.cooksync_server.dtos.response.ApiResponse;
+import com.cooksync_server.dtos.response.instruction.InstructionResponse;
+import com.cooksync_server.services.InstructionService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Controller for managing individual recipe instructions.
+ */
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+public class InstructionController {
+
+    private final InstructionService instructionService;
+
+    @PostMapping("/recipes/{recipeId}/instructions")
+    public ResponseEntity<ApiResponse<InstructionResponse>> addInstruction(
+            @PathVariable String recipeId,
+            @Valid @RequestBody InstructionRequestDTO request,
+            Authentication authentication) {
+        String userEmail = authentication.getName();
+        InstructionResponse response = instructionService.addInstructionToRecipe(recipeId, request, userEmail);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(true, response, null, "Instruction added successfully"));
+    }
+
+    @PutMapping("/instructions/{instructionId}")
+    public ResponseEntity<ApiResponse<InstructionResponse>> updateInstruction(
+            @PathVariable String instructionId,
+            @Valid @RequestBody InstructionRequestDTO request,
+            Authentication authentication) {
+        String userEmail = authentication.getName();
+        InstructionResponse response = instructionService.updateInstruction(instructionId, request, userEmail);
+        return ResponseEntity.ok(new ApiResponse<>(true, response, null, "Instruction updated successfully"));
+    }
+
+    @DeleteMapping("/instructions/{instructionId}")
+    public ResponseEntity<ApiResponse<Void>> deleteInstruction(
+            @PathVariable String instructionId,
+            Authentication authentication) {
+        String userEmail = authentication.getName();
+        instructionService.deleteInstruction(instructionId, userEmail);
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Instruction deleted successfully"));
+    }
+}
