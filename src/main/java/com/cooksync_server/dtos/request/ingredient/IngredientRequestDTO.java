@@ -9,6 +9,8 @@ import jakarta.validation.constraints.Positive;
  * Uses Java records for an immutable data carrier.
  */
 public record IngredientRequestDTO(
+    String tmpId,
+
     @NotBlank(message = "Ingredient name is required") 
     String name,
     

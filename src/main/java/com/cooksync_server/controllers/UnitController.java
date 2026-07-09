@@ -24,12 +24,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * REST controller responsible for handling administrative endpoints related to measurement units. 
- * Restricts access to users possessing the 'ADMIN' role.
+ * REST controller responsible for handling administrative endpoints related to
+ * measurement units. Restricts access to users possessing the 'ADMIN' role.
  */
 @RestController
-@RequestMapping("/api/admin/units")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("/api/units")
 @RequiredArgsConstructor
 public class UnitController {
 
@@ -43,6 +42,7 @@ public class UnitController {
         return ResponseEntity.ok(new ApiResponse<>(true, units, null, "All units retrieved successfully"));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UnitResponse>> getUnitById(@PathVariable String id) {
         logger.info("Fetching unit with ID: {}", id);
@@ -50,6 +50,7 @@ public class UnitController {
         return ResponseEntity.ok(new ApiResponse<>(true, unit, null, "Unit retrieved successfully"));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("")
     public ResponseEntity<ApiResponse<UnitResponse>> createUnit(@Valid @RequestBody UnitRequestDTO request) {
         logger.info("Creating new unit: {}", request);
@@ -58,6 +59,7 @@ public class UnitController {
                 .body(new ApiResponse<>(true, createdUnit, null, "Unit created successfully"));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUnit(@PathVariable String id) {
         logger.info("Deleting unit with ID: {}", id);
