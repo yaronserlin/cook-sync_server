@@ -6,6 +6,7 @@ import java.util.Set;
 import com.cooksync_server.dtos.response.ingredient.IngredientResponse;
 import com.cooksync_server.dtos.response.instruction.InstructionResponse;
 import com.cooksync_server.dtos.response.tags.TagResponse;
+import com.cooksync_server.dtos.response.review.ReviewResponse;
 import com.cooksync_server.dtos.response.user.UserResponse;
 import com.cooksync_server.entities.Recipe;
 
@@ -23,6 +24,7 @@ public record RecipeResponse(
     int cookTimeMinutes,
     int servings,
     int reviewCount,
+    List<ReviewResponse> reviews,
     String createdAt,
     String updatedAt,
     List<TagResponse> tags,
@@ -43,6 +45,7 @@ public record RecipeResponse(
             recipe.getCookTimeMinutes(),
             recipe.getServings(),
             recipe.getReviewCount(),
+            recipe.getReviews().stream().map(ReviewResponse::fromEntity).collect(java.util.stream.Collectors.toList()),
             recipe.getCreatedAt() != null ? recipe.getCreatedAt().toString() : null,
             recipe.getUpdatedAt() != null ? recipe.getUpdatedAt().toString() : null,
             TagResponse.fromEntities(recipe.getTags()),

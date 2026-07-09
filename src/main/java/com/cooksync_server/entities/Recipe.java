@@ -72,6 +72,10 @@ public class Recipe {
     @Column(name = "review_count", nullable = false)
     private int reviewCount = 0;
 
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Review> reviews = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

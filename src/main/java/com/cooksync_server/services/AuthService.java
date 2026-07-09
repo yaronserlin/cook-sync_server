@@ -98,4 +98,10 @@ public class AuthService {
         // אנו מחזירים תשובה ללא טוקנים חדשים, רק כדי לאשר שהטוקן הקיים תקין ולהחזיר פרטי משתמש
         return new AuthResponse(null, null, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin());
     }
+
+    public void logout(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+        refreshTokenService.deleteByUserId(user.getId());
+    }
 }

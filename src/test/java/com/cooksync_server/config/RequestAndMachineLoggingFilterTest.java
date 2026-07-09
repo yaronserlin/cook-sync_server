@@ -74,14 +74,14 @@ class RequestAndMachineLoggingFilterTest {
                 .toList();
 
         assertThat(messages).hasSize(2);
-        assertThat(messages.get(0)).contains("Request:");
-        assertThat(messages.get(0)).contains("method=POST");
-        assertThat(messages.get(0)).contains("data={\"title\":\"Soup\"}");
-        assertThat(messages.get(0)).contains("ip=127.0.0.1");
-        assertThat(messages.get(1)).contains("Response:");
-        assertThat(messages.get(1)).contains("status=201");
-        assertThat(messages.get(1)).contains("data={\"id\":1}");
-        assertThat(messages.get(1)).contains("processTime=");
-        assertThat(messages.get(1)).contains("memory=");
+        assertThat(messages.get(0)).contains("\"type\": \"request\"");
+        assertThat(messages.get(0)).contains("\"method\": \"POST\"");
+        assertThat(messages.get(0)).contains("\"data\": \"{\\\"title\\\":\\\"Soup\\\"}\"");
+        assertThat(messages.get(0)).contains("\"ip\": \"127.0.0.1\"");
+        assertThat(messages.get(1)).contains("\"type\": \"response\"");
+        assertThat(messages.get(1)).contains("\"status\": 201");
+        assertThat(messages.get(1)).contains("\"data\": \"{\\\"id\\\":1}\"");
+        assertThat(messages.get(1)).contains("\"processTimeMs\"");
+        assertThat(messages.get(1)).contains("\"memoryUsedMb\"");
     }
 }

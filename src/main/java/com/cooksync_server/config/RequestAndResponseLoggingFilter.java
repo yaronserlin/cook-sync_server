@@ -70,15 +70,17 @@ public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
         String requestData = new String(((ContentCachingRequestWrapper) request).getContentAsByteArray(), StandardCharsets.UTF_8);
         String clientIp = request.getRemoteAddr();
 
-        LOG.info(
-                "Request: method={} data={} ip={} uri={} | Machine: host={} ({}) pid={}",
-                method,
-                requestData,
-                clientIp,
-                uri + queryString,
-                hostName,
-                hostAddress,
-                processId);
+        String json = String.format(
+                "{\"type\": \"request\", \"method\": \"%s\", \"uri\": \"%s\", \"ip\": \"%s\", \"data\": \"%s\", \"machine\": {\"host\": \"%s\", \"hostAddress\": \"%s\", \"pid\": \"%s\"}}",
+                escapeJson(method),
+                escapeJson(uri + queryString),
+                escapeJson(clientIp),
+                escapeJson(requestData),
+                escapeJson(hostName),
+                escapeJson(hostAddress),
+                escapeJson(processId));
+
+        LOG.info("{}", json);
     }
 
     private void logResponse(HttpServletResponse response, long duration) {
@@ -90,16 +92,30 @@ public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
         long totalMemoryMb = runtime.totalMemory() / (1024 * 1024);
         long usedMemoryMb = totalMemoryMb - freeMemoryMb;
 
-        LOG.info(
-                "Response: status={} data={} processTime={}ms memory={}MB | Machine: host={} ({}) pid={} memFree={}MB memTotal={}MB",
+        String json = String.format(
+                "{\"type\": \"response\", \"status\": %d, \"data\": \"%s\", \"processTimeMs\": %d, \"memoryUsedMb\": %d, \"machine\": {\"host\": \"%s\", \"hostAddress\": \"%s\", \"pid\": \"%s\", \"memFreeMb\": %d, \"memTotalMb\": %d}}",
                 status,
-                responseData,
+                escapeJson(responseData),
                 duration,
                 usedMemoryMb,
-                hostName,
-                hostAddress,
-                processId,
+                escapeJson(hostName),
+                escapeJson(hostAddress),
+                escapeJson(processId),
                 freeMemoryMb,
                 totalMemoryMb);
+
+        LOG.info("{}", json);
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 }
