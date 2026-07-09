@@ -1,6 +1,5 @@
 package com.cooksync_server.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -12,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Security configuration for the application.
@@ -27,8 +28,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                // דורש אימות עבור אימות הטוקן (חייב להופיע לפני ה-permitAll של auth)
+                .requestMatchers("/api/auth/validate-token").authenticated()
+                // מאפשר גישה ל-login, register ו-refresh-token
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/recipes/public/**").permitAll()
                 .anyRequest().authenticated()
