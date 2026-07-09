@@ -37,8 +37,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false, length = 255)
-    private String name;
+    @Column(name = "first_name", nullable = false, length = 255)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 255)
+    private String lastName;
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
@@ -75,6 +78,20 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
+    public String getFullName() {
+        StringBuilder fullName = new StringBuilder();
+        if (firstName != null && !firstName.isBlank()) {
+            fullName.append(firstName.trim());
+        }
+        if (lastName != null && !lastName.isBlank()) {
+            if (!fullName.isEmpty()) {
+                fullName.append(" ");
+            }
+            fullName.append(lastName.trim());
+        }
+        return fullName.toString();
+    }
+
     /**
      * JPA lifecycle callback executed before an existing entity is updated in
      * the database. Refreshes the update timestamp to the current system time.
@@ -83,7 +100,8 @@ public class User {
      * <b>Example:</b></p>
      * <pre>{@code
      * // Automatically invoked by Hibernate during an update:
-     * existingUser.setName("New Name");
+     * existingUser.setFirstName("New");
+     * existingUser.setLastName("Name");
      * userRepository.save(existingUser);
      * }</pre>
      */

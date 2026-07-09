@@ -17,8 +17,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Data Seeder that runs only when the 'seed' profile is active.
- * Clears all existing data and seeds the database with initial configurations, users, and sample recipes.
+ * Data Seeder that runs only when the 'seed' profile is active. Clears all
+ * existing data and seeds the database with initial configurations, users, and
+ * sample recipes.
  */
 @Component
 @Profile("seed")
@@ -38,66 +39,66 @@ public class DataSeeder implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         logger.info(">>> Starting Database Reset and Seeding...");
-        
+
         clearDatabase();
         seedUnits();
         seedTags();
         seedUsers();
         seedSampleRecipe();
-        
+
         logger.info(">>> Database Reset and Seeding completed successfully.");
     }
 
     private void clearDatabase() {
         logger.info(">>> Clearing existing database data...");
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
-        
+
         String[] tables = {
-            "users", "recipes", "units", "ingredients", "instructions", 
-            "instruction_ingredients", "reviews", "favorite_recipes", 
+            "users", "recipes", "units", "ingredients", "instructions",
+            "instruction_ingredients", "reviews", "favorite_recipes",
             "personal_instruction_notes", "tags", "recipe_tags", "recipe_images"
         };
-        
+
         for (String table : tables) {
             jdbcTemplate.execute("TRUNCATE TABLE " + table);
         }
-        
+
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
     }
 
     private void seedUnits() {
         logger.info(">>> Seeding units...");
         unitRepository.saveAll(List.of(
-            Unit.builder().name("Cup").code("cup").build(),
-            Unit.builder().name("Tablespoon").code("tbsp").build(),
-            Unit.builder().name("Teaspoon").code("tsp").build(),
-            Unit.builder().name("Gram").code("g").build()
+                Unit.builder().name("Cup").code("cup").build(),
+                Unit.builder().name("Tablespoon").code("tbsp").build(),
+                Unit.builder().name("Teaspoon").code("tsp").build(),
+                Unit.builder().name("Gram").code("g").build()
         ));
     }
 
     private void seedTags() {
         logger.info(">>> Seeding tags...");
         tagRepository.saveAll(List.of(
-            Tag.builder().name("vegan").build(),
-            Tag.builder().name("quick").build(),
-            Tag.builder().name("healthy").build()
+                Tag.builder().name("vegan").build(),
+                Tag.builder().name("quick").build(),
+                Tag.builder().name("healthy").build()
         ));
     }
 
     private void seedUsers() {
         logger.info(">>> Seeding users...");
         userRepository.saveAll(List.of(
-            User.builder().name("Admin User").email("admin@cooksync.com")
-                .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(true).build(),
-            User.builder().name("Chef John").email("chef@cooksync.com")
-                .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false).build()
+                User.builder().firstName("Admin").lastName("User").email("admin@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(true).build(),
+                User.builder().firstName("Chef").lastName("John").email("chef@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false).build()
         ));
     }
 
     private void seedSampleRecipe() {
         logger.info(">>> Seeding sample recipe...");
         User chef = userRepository.findByEmail("chef@cooksync.com").orElseThrow();
-        
+
         Recipe recipe = Recipe.builder()
                 .title("Simple Vegan Salad")
                 .description("A fresh and quick healthy salad.")
@@ -124,7 +125,7 @@ public class DataSeeder implements CommandLineRunner {
 
         recipe.setIngredients(java.util.Set.of(ing));
         recipe.setInstructions(List.of(inst));
-        
+
         recipeRepository.save(recipe);
     }
 }

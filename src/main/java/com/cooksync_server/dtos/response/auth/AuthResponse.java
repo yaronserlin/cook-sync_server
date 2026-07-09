@@ -9,7 +9,8 @@ public record AuthResponse(
         String token,
         String refreshToken,
         String userId,
-        String name,
+        String firstName,
+        String lastName,
         boolean isAdmin
         ) {
 

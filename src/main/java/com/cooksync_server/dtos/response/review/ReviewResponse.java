@@ -11,30 +11,31 @@ import com.cooksync_server.entities.Review;
  * Data Transfer Object for a review response.
  */
 public record ReviewResponse(
-    String id,
-    String userId,
-    String authorName,
-    String recipeId,
-    BigDecimal rating,
-    String title,
-    String comment,
-    String createdAt,
-    String updatedAt
-) {
+        String id,
+        String userId,
+        String authorName,
+        String recipeId,
+        BigDecimal rating,
+        String title,
+        String comment,
+        String createdAt,
+        String updatedAt
+        ) {
+
     /**
      * Maps a persistent Review entity to a ReviewResponse DTO.
      */
     public static ReviewResponse fromEntity(Review review) {
         return new ReviewResponse(
-            review.getId(),
-            review.getUser().getId(),
-            review.getUser().getName(),
-            review.getRecipe().getId(),
-            review.getRating(),
-            review.getTitle(),
-            review.getComment(),
-            review.getCreatedAt() != null ? review.getCreatedAt().toString() : null,
-            review.getUpdatedAt() != null ? review.getUpdatedAt().toString() : null
+                review.getId(),
+                review.getUser().getId(),
+                review.getUser().getFullName(),
+                review.getRecipe().getId(),
+                review.getRating(),
+                review.getTitle(),
+                review.getComment(),
+                review.getCreatedAt() != null ? review.getCreatedAt().toString() : null,
+                review.getUpdatedAt() != null ? review.getUpdatedAt().toString() : null
         );
     }
 
@@ -42,8 +43,10 @@ public record ReviewResponse(
      * Maps a collection of Review entities to a List of ReviewResponse DTOs.
      */
     public static List<ReviewResponse> fromEntities(Collection<Review> reviews) {
-        if (reviews == null) return List.of();
-        
+        if (reviews == null) {
+            return List.of();
+        }
+
         return reviews.stream()
                 .map(ReviewResponse::fromEntity)
                 .collect(Collectors.toList());

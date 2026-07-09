@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 public class UserResponse {
 
     private String id;
-    private String name;
+    private String firstName;
+    private String lastName;
     private String email;
     private String createdAt;
     private String updatedAt;
@@ -23,10 +24,11 @@ public class UserResponse {
     public static UserResponse fromEntity(User createdBy) {
         return UserResponse.builder()
                 .id(createdBy.getId())
-                .name(createdBy.getName())
+                .firstName(createdBy.getFirstName())
+                .lastName(createdBy.getLastName())
                 .email(createdBy.getEmail())
-                .createdAt(createdBy.getCreatedAt().toString())
-                .updatedAt(createdBy.getUpdatedAt().toString())
+                .createdAt(createdBy.getCreatedAt() != null ? createdBy.getCreatedAt().toString() : null)
+                .updatedAt(createdBy.getUpdatedAt() != null ? createdBy.getUpdatedAt().toString() : null)
                 .isAdmin(createdBy.isAdmin())
                 .build();
     }

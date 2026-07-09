@@ -42,7 +42,8 @@ public class AuthService {
         }
 
         User newUser = User.builder()
-                .name(request.name())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .isAdmin(false)
@@ -57,7 +58,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(newUser.getEmail(), newUser.getId(), newUser.isAdmin());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(newUser.getId());
 
-        return new AuthResponse(token, refreshToken.getToken(), newUser.getId(), newUser.getName(), newUser.isAdmin());
+        return new AuthResponse(token, refreshToken.getToken(), newUser.getId(), newUser.getFirstName(), newUser.getLastName(), newUser.isAdmin());
     }
 
     public AuthResponse login(LoginRequestDTO request) {
@@ -74,7 +75,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.isAdmin());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        return new AuthResponse(token, refreshToken.getToken(), user.getId(), user.getName(), user.isAdmin());
+        return new AuthResponse(token, refreshToken.getToken(), user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin());
     }
 
     public AuthResponse refreshToken(TokenRefreshRequestDTO request) {
@@ -85,7 +86,7 @@ public class AuthService {
                 .map(RefreshToken::getUser)
                 .map(user -> {
                     String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.isAdmin());
-                    return new AuthResponse(token, requestRefreshToken, user.getId(), user.getName(), user.isAdmin());
+                    return new AuthResponse(token, requestRefreshToken, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin());
                 })
                 .orElseThrow(() -> new UnauthorizedActionException("Refresh token is not in database or is invalid!"));
     }
@@ -95,6 +96,6 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
         // אנו מחזירים תשובה ללא טוקנים חדשים, רק כדי לאשר שהטוקן הקיים תקין ולהחזיר פרטי משתמש
-        return new AuthResponse(null, null, user.getId(), user.getName(), user.isAdmin());
+        return new AuthResponse(null, null, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin());
     }
 }
