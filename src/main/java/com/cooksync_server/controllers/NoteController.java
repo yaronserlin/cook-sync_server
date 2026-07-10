@@ -4,8 +4,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import com.cooksync_server.dtos.request.note.NoteRequestDTO;
-import com.cooksync_server.dtos.response.ApiResponse;
+import com.dtos.request.note.NoteRequestDTO;
+import com.dtos.response.ApiResponse;
 import com.cooksync_server.services.PersonalNoteService;
 
 import jakarta.validation.Valid;
@@ -20,7 +20,7 @@ public class NoteController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> saveNote(
-            @Valid @RequestBody NoteRequestDTO request, 
+            @Valid @RequestBody NoteRequestDTO request,
             Authentication authentication) {
         noteService.saveNote(request, authentication.getName());
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Note saved successfully"));
@@ -28,7 +28,7 @@ public class NoteController {
 
     @DeleteMapping("/{noteId}")
     public ResponseEntity<ApiResponse<Void>> deleteNote(
-            @PathVariable String noteId, 
+            @PathVariable String noteId,
             Authentication authentication) {
         noteService.deleteNote(noteId, authentication.getName());
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Note deleted successfully"));

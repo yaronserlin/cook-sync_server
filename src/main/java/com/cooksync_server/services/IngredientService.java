@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cooksync_server.dtos.request.ingredient.IngredientRequestDTO;
-import com.cooksync_server.dtos.response.ingredient.IngredientResponse;
+import com.dtos.request.ingredient.IngredientRequestDTO;
+import com.dtos.response.ingredient.IngredientResponse;
 import com.cooksync_server.entities.Ingredient;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.Unit;
@@ -51,7 +51,7 @@ public class IngredientService {
                 .unit(unit)
                 .build();
 
-        return IngredientResponse.fromEntity(ingredientRepository.save(ingredient));
+        return com.cooksync_server.mappers.IngredientMapper.toResponse(ingredientRepository.save(ingredient));
     }
 
     @Transactional
@@ -73,7 +73,7 @@ public class IngredientService {
         ingredient.setQuantity(BigDecimal.valueOf(request.quantity()));
         ingredient.setUnit(unit);
 
-        return IngredientResponse.fromEntity(ingredientRepository.save(ingredient));
+        return com.cooksync_server.mappers.IngredientMapper.toResponse(ingredientRepository.save(ingredient));
     }
 
     @Transactional

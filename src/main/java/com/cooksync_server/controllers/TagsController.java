@@ -14,17 +14,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.dtos.request.tags.TagRequestDTO;
-import com.cooksync_server.dtos.response.ApiResponse;
-import com.cooksync_server.dtos.response.tags.TagResponse;
 import com.cooksync_server.services.TagService;
+import com.dtos.request.tags.TagRequestDTO;
+import com.dtos.response.ApiResponse;
+import com.dtos.response.tags.TagResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * REST controller for managing recipe tags.
- * Reading tags is public, but creating, updating, and deleting requires 'ADMIN' privileges.
+ * REST controller for managing recipe tags. Reading tags is public, but
+ * creating, updating, and deleting requires 'ADMIN' privileges.
  */
 @RestController
 @RequestMapping("/api/tags")
@@ -58,7 +58,7 @@ public class TagsController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TagResponse>> updateTag(
-            @PathVariable String id, 
+            @PathVariable String id,
             @Valid @RequestBody TagRequestDTO request) {
         TagResponse updatedTag = tagService.updateTag(id, request);
         return ResponseEntity.ok(new ApiResponse<>(true, updatedTag, null, "Tag updated successfully"));

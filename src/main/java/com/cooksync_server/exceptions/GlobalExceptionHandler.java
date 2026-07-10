@@ -10,8 +10,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.cooksync_server.dtos.response.ApiResponse;
-import com.cooksync_server.dtos.response.errors.ApiErrorResponse;
+import com.dtos.response.ApiResponse;
+import com.dtos.response.errors.ApiErrorResponse;
 import com.cooksync_server.exceptions.auth.InvalidCredentialsException;
 import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
@@ -180,6 +180,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles validation exceptions thrown when a request payload fails to pass
+     *
      * @Valid constraints (e.g., Jakarta Validation).
      *
      * <p>

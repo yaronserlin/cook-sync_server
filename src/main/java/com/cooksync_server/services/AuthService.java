@@ -7,10 +7,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.cooksync_server.config.JwtUtil;
-import com.cooksync_server.dtos.request.auth.LoginRequestDTO;
-import com.cooksync_server.dtos.request.auth.RegisterRequestDTO;
-import com.cooksync_server.dtos.request.auth.TokenRefreshRequestDTO;
-import com.cooksync_server.dtos.response.auth.AuthResponse;
+import com.dtos.request.auth.LoginRequestDTO;
+import com.dtos.request.auth.RegisterRequestDTO;
+import com.dtos.request.auth.TokenRefreshRequestDTO;
+import com.dtos.response.auth.AuthResponse;
 import com.cooksync_server.entities.RefreshToken;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;

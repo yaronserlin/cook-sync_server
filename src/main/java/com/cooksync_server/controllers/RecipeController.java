@@ -15,19 +15,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.dtos.request.recipe.RecipeCreateRequestDTO;
-import com.cooksync_server.dtos.response.ApiResponse;
-import com.cooksync_server.dtos.response.recipe.RecipeResponse;
-import com.cooksync_server.dtos.response.recipe.RecipePreviewResponse;
+import com.dtos.request.recipe.RecipeCreateRequestDTO;
+import com.dtos.response.ApiResponse;
+import com.dtos.response.recipe.RecipeResponse;
+import com.dtos.response.recipe.RecipePreviewResponse;
 import com.cooksync_server.services.RecipeService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Controller for managing recipes.
- * Public endpoints are accessible without authentication, 
- * while modification endpoints require a valid JWT.
+ * Controller for managing recipes. Public endpoints are accessible without
+ * authentication, while modification endpoints require a valid JWT.
  */
 @RestController
 @RequestMapping("/api/recipes")
@@ -62,7 +61,7 @@ public class RecipeController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<RecipeResponse>> createRecipe(
-            @Valid @RequestBody RecipeCreateRequestDTO request, 
+            @Valid @RequestBody RecipeCreateRequestDTO request,
             Authentication authentication) {
         String userEmail = authentication.getName();
         RecipeResponse createdRecipe = recipeService.createRecipe(request, userEmail);
@@ -73,7 +72,7 @@ public class RecipeController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<RecipeResponse>> updateRecipe(
             @PathVariable String id,
-            @Valid @RequestBody RecipeCreateRequestDTO request, 
+            @Valid @RequestBody RecipeCreateRequestDTO request,
             Authentication authentication) {
         String userEmail = authentication.getName();
         RecipeResponse updatedRecipe = recipeService.updateRecipe(id, request, userEmail);
@@ -82,7 +81,7 @@ public class RecipeController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteRecipe(
-            @PathVariable String id, 
+            @PathVariable String id,
             Authentication authentication) {
         String userEmail = authentication.getName();
         recipeService.deleteRecipe(id, userEmail);

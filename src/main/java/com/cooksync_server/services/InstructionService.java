@@ -3,8 +3,8 @@ package com.cooksync_server.services;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cooksync_server.dtos.request.instruction.InstructionRequestDTO;
-import com.cooksync_server.dtos.response.instruction.InstructionResponse;
+import com.dtos.request.instruction.InstructionRequestDTO;
+import com.dtos.response.instruction.InstructionResponse;
 import com.cooksync_server.entities.Instruction;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.User;
@@ -44,7 +44,7 @@ public class InstructionService {
                 .timeSeconds(request.timeSeconds())
                 .build();
 
-        return InstructionResponse.fromEntity(instructionRepository.save(instruction));
+        return com.cooksync_server.mappers.InstructionMapper.toResponse(instructionRepository.save(instruction));
     }
 
     @Transactional
@@ -63,7 +63,7 @@ public class InstructionService {
         instruction.setHasTimer(request.hasTimer());
         instruction.setTimeSeconds(request.timeSeconds());
 
-        return InstructionResponse.fromEntity(instructionRepository.save(instruction));
+        return com.cooksync_server.mappers.InstructionMapper.toResponse(instructionRepository.save(instruction));
     }
 
     @Transactional

@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cooksync_server.dtos.request.note.NoteRequestDTO;
+import com.dtos.request.note.NoteRequestDTO;
 import com.cooksync_server.entities.PersonalInstructionNote;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.User;
@@ -33,7 +33,7 @@ public class PersonalNoteService {
 
         // Check if note exists for this user/recipe/instruction combination
         Optional<PersonalInstructionNote> existingNote = noteRepository.findByUserIdAndRecipeId(user.getId(), request.recipeId().toString());
-        
+
         PersonalInstructionNote note = existingNote.orElse(PersonalInstructionNote.builder()
                 .user(user)
                 .recipe(recipe)
@@ -49,7 +49,7 @@ public class PersonalNoteService {
     public void deleteNote(String noteId, String userEmail) {
         PersonalInstructionNote note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Note", noteId));
-        
+
         if (!note.getUser().getEmail().equals(userEmail)) {
             throw new RuntimeException("Unauthorized: Cannot delete other users' notes");
         }

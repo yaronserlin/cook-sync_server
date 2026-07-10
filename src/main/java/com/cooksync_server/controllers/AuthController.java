@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.dtos.request.auth.LoginRequestDTO;
-import com.cooksync_server.dtos.request.auth.RegisterRequestDTO;
-import com.cooksync_server.dtos.request.auth.TokenRefreshRequestDTO;
-import com.cooksync_server.dtos.response.ApiResponse;
-import com.cooksync_server.dtos.response.auth.AuthResponse;
 import com.cooksync_server.services.AuthService;
+import com.dtos.request.auth.LoginRequestDTO;
+import com.dtos.request.auth.RegisterRequestDTO;
+import com.dtos.request.auth.TokenRefreshRequestDTO;
+import com.dtos.response.ApiResponse;
+import com.dtos.response.auth.AuthResponse;
 
 import jakarta.validation.Valid;
 
@@ -48,7 +48,7 @@ public class AuthController {
     @GetMapping("/validate-token")
     public ResponseEntity<ApiResponse<AuthResponse>> validateToken(Authentication authentication) {
         System.out.println("Authentication object: " + authentication);
-        
+
         String userEmail = authentication.getName();
         AuthResponse response = authService.validateToken(userEmail);
         return ResponseEntity.ok(new ApiResponse<>(true, response, null, "Token is valid"));

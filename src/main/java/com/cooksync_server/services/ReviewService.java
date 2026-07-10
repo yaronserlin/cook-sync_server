@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cooksync_server.dtos.request.review.ReviewRequestDTO;
+import com.dtos.request.review.ReviewRequestDTO;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.Review;
 import com.cooksync_server.entities.User;

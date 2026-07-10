@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.dtos.request.review.ReviewRequestDTO;
-import com.cooksync_server.dtos.response.ApiResponse;
 import com.cooksync_server.services.ReviewService;
+import com.dtos.request.review.ReviewRequestDTO;
+import com.dtos.response.ApiResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cooksync_server.dtos.response.recipe.RecipePreviewResponse;
+import com.dtos.response.recipe.RecipePreviewResponse;
 import com.cooksync_server.entities.FavoriteRecipe;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.User;
@@ -54,9 +54,9 @@ public class FavoriteService {
     public List<RecipePreviewResponse> getUserFavorites(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
-        
+
         return favoriteRepository.findByUserId(user.getId()).stream()
-                .map(fav -> RecipePreviewResponse.fromEntity(fav.getRecipe()))
+                .map(fav -> com.cooksync_server.mappers.RecipeMapper.toPreview(fav.getRecipe()))
                 .collect(Collectors.toList());
     }
 }

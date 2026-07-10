@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.dtos.request.unit.UnitRequestDTO;
-import com.cooksync_server.dtos.response.ApiResponse;
-import com.cooksync_server.dtos.response.unit.UnitResponse;
+import com.dtos.request.unit.UnitRequestDTO;
+import com.dtos.response.ApiResponse;
+import com.dtos.response.unit.UnitResponse;
 import com.cooksync_server.services.UnitService;
 
 import jakarta.validation.Valid;

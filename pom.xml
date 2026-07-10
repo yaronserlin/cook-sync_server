@@ -76,8 +76,13 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Shared DTOs module -->
+        <dependency>
+            <groupId>com.cooksync</groupId>
+            <artifactId>dtos</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

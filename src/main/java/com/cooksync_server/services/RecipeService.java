@@ -10,11 +10,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cooksync_server.dtos.request.ingredient.IngredientRequestDTO;
-import com.cooksync_server.dtos.request.instruction.InstructionRequestDTO;
-import com.cooksync_server.dtos.request.recipe.RecipeCreateRequestDTO;
-import com.cooksync_server.dtos.response.recipe.RecipeResponse;
-import com.cooksync_server.dtos.response.recipe.RecipePreviewResponse;
+import com.dtos.request.ingredient.IngredientRequestDTO;
+import com.dtos.request.instruction.InstructionRequestDTO;
+import com.dtos.request.recipe.RecipeCreateRequestDTO;
+import com.dtos.response.recipe.RecipeResponse;
+import com.dtos.response.recipe.RecipePreviewResponse;
 import com.cooksync_server.entities.Ingredient;
 import com.cooksync_server.entities.Instruction;
 import com.cooksync_server.entities.Recipe;
@@ -44,27 +44,21 @@ public class RecipeService {
     private final UnitRepository unitRepository;
 
     public List<RecipePreviewResponse> getAllRecipes() {
-        return recipeRepository.findAll().stream()
-                .map(RecipePreviewResponse::fromEntity)
-                .collect(Collectors.toList());
+        return recipeRepository.findAll().stream().map(com.cooksync_server.mappers.RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
     public RecipeResponse getRecipeById(String id) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", id));
-        return RecipeResponse.fromEntity(recipe);
+        return com.cooksync_server.mappers.RecipeMapper.toResponse(recipe);
     }
 
     public List<RecipePreviewResponse> searchRecipes(String keyword) {
-        return recipeRepository.findByTitleContainingIgnoreCase(keyword).stream()
-                .map(RecipePreviewResponse::fromEntity)
-                .collect(Collectors.toList());
+        return recipeRepository.findByTitleContainingIgnoreCase(keyword).stream().map(com.cooksync_server.mappers.RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
     public List<RecipePreviewResponse> findRecipesByTag(String tagName) {
-        return recipeRepository.findByTagName(tagName).stream()
-                .map(RecipePreviewResponse::fromEntity)
-                .collect(Collectors.toList());
+        return recipeRepository.findByTagName(tagName).stream().map(com.cooksync_server.mappers.RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
     @Transactional
@@ -87,11 +81,11 @@ public class RecipeService {
                 .build();
 
         Recipe savedRecipe = recipeRepository.save(recipe);
-        
+
         savedRecipe.setIngredients(saveIngredients(request.ingredients(), savedRecipe));
         savedRecipe.setInstructions(saveInstructions(request.instructions(), savedRecipe));
 
-        return RecipeResponse.fromEntity(savedRecipe);
+        return com.cooksync_server.mappers.RecipeMapper.toResponse(savedRecipe);
     }
 
     @Transactional
@@ -120,7 +114,7 @@ public class RecipeService {
         recipe.getInstructions().clear();
         recipe.getInstructions().addAll(saveInstructions(request.instructions(), recipe));
 
-        return RecipeResponse.fromEntity(recipeRepository.save(recipe));
+        return com.cooksync_server.mappers.RecipeMapper.toResponse(recipeRepository.save(recipe));
     }
 
     @Transactional
