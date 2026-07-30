@@ -123,7 +123,7 @@ public class RecipeService {
 
         recipe.getInstructions().clear();
         recipe.getInstructions().addAll(saveInstructions(request.instructions(), recipe, tmpIdToIngredient));
-        updateImages(recipe, request.primaryImageUrl());
+        saveImages(recipe, request.primaryImageUrl(), request.additionalImageUrls());
 
         return RecipeMapper.toResponse(recipeRepository.save(recipe));
     }
@@ -162,17 +162,6 @@ public class RecipeService {
                             .build());
                 }
             }
-        }
-    }
-
-    private void updateImages(Recipe recipe, String primaryImageUrl) {
-        recipe.getImages().clear();
-        if (primaryImageUrl != null && !primaryImageUrl.isBlank()) {
-            recipe.getImages().add(RecipeImage.builder()
-                    .recipe(recipe)
-                    .imageUrl(primaryImageUrl)
-                    .isPrimary(true)
-                    .build());
         }
     }
 
