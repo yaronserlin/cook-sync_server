@@ -27,7 +27,10 @@ public class Instruction {
     private int stepNumber; // המספר הסידורי של השלב [cite: 89]
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String description; //[//cite: 89]
+    private String description;
+
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @Column(name = "has_timer", nullable = false)
     private boolean hasTimer = false;// [cite: 92]

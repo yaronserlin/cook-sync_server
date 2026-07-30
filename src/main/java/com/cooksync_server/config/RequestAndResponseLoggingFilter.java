@@ -58,7 +58,7 @@ public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
             filterChain.doFilter(wrappedRequest, wrappedResponse);
         } finally {
             long duration = System.currentTimeMillis() - startTime;
-            logResponse(wrappedResponse, duration);
+            logResponse(wrappedResponse, duration, request.getRequestURI() + (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
             wrappedResponse.copyBodyToResponse();
         }
     }
@@ -67,55 +67,50 @@ public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         String uri = request.getRequestURI();
         String queryString = request.getQueryString() != null ? "?" + request.getQueryString() : "";
-        String requestData = new String(((ContentCachingRequestWrapper) request).getContentAsByteArray(), StandardCharsets.UTF_8);
+        String requestData = readBody(((ContentCachingRequestWrapper) request).getContentAsByteArray());
         String clientIp = request.getRemoteAddr();
 
-        String json = String.format(
-                "{\"type\": \"request\", \"method\": \"%s\", \"uri\": \"%s\", \"ip\": \"%s\", \"data\": \"%s\", \"machine\": {\"host\": \"%s\", \"hostAddress\": \"%s\", \"pid\": \"%s\"}}",
-                escapeJson(method),
-                escapeJson(uri + queryString),
-                escapeJson(clientIp),
-                escapeJson(requestData),
-                escapeJson(hostName),
-                escapeJson(hostAddress),
-                escapeJson(processId));
+        LOG.info(
+                "REQUEST | method={} uri={} ip={}",
+                method,
+                uri + queryString,
+                clientIp);
 
-        LOG.info("{}", json);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("REQUEST payload={}", truncatePayload(requestData));
+        }
     }
 
-    private void logResponse(HttpServletResponse response, long duration) {
-        String responseData = new String(((ContentCachingResponseWrapper) response).getContentAsByteArray(), StandardCharsets.UTF_8);
+    private void logResponse(HttpServletResponse response, long duration, String requestUri) {
+        String responseData = readBody(((ContentCachingResponseWrapper) response).getContentAsByteArray());
         int status = response.getStatus();
 
-        Runtime runtime = Runtime.getRuntime();
-        long freeMemoryMb = runtime.freeMemory() / (1024 * 1024);
-        long totalMemoryMb = runtime.totalMemory() / (1024 * 1024);
-        long usedMemoryMb = totalMemoryMb - freeMemoryMb;
-
-        String json = String.format(
-                "{\"type\": \"response\", \"status\": %d, \"data\": \"%s\", \"processTimeMs\": %d, \"memoryUsedMb\": %d, \"machine\": {\"host\": \"%s\", \"hostAddress\": \"%s\", \"pid\": \"%s\", \"memFreeMb\": %d, \"memTotalMb\": %d}}",
+        LOG.info(
+                "RESPONSE | status={} uri={} durationMs={}",
                 status,
-                escapeJson(responseData),
-                duration,
-                usedMemoryMb,
-                escapeJson(hostName),
-                escapeJson(hostAddress),
-                escapeJson(processId),
-                freeMemoryMb,
-                totalMemoryMb);
+                requestUri,
+                duration);
 
-        LOG.info("{}", json);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("RESPONSE payload={}", truncatePayload(responseData));
+        }
     }
 
-    private String escapeJson(String value) {
-        if (value == null) {
+    private String readBody(byte[] content) {
+        if (content == null || content.length == 0) {
             return "";
         }
+        return new String(content, StandardCharsets.UTF_8);
+    }
 
-        return value.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+    private String truncatePayload(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return "<empty>";
+        }
+        String compact = payload.replace("\n", " ").replace("\r", " ").trim();
+        if (compact.length() <= 220) {
+            return compact;
+        }
+        return compact.substring(0, 217) + "...";
     }
 }

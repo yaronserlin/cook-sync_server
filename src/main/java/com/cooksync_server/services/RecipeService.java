@@ -18,6 +18,7 @@ import com.dtos.response.recipe.RecipePreviewResponse;
 import com.cooksync_server.entities.Ingredient;
 import com.cooksync_server.entities.Instruction;
 import com.cooksync_server.entities.Recipe;
+import com.cooksync_server.entities.RecipeImage;
 import com.cooksync_server.entities.Tag;
 import com.cooksync_server.entities.Unit;
 import com.cooksync_server.entities.User;
@@ -25,10 +26,12 @@ import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.repositories.IngredientRepository;
 import com.cooksync_server.repositories.InstructionRepository;
+import com.cooksync_server.repositories.RecipeImageRepository;
 import com.cooksync_server.repositories.RecipeRepository;
 import com.cooksync_server.repositories.TagRepository;
 import com.cooksync_server.repositories.UnitRepository;
 import com.cooksync_server.repositories.UserRepository;
+import com.cooksync_server.mappers.RecipeMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,25 +43,26 @@ public class RecipeService {
     private final UserRepository userRepository;
     private final IngredientRepository ingredientRepository;
     private final InstructionRepository instructionRepository;
+    private final RecipeImageRepository recipeImageRepository;
     private final TagRepository tagRepository;
     private final UnitRepository unitRepository;
 
     public List<RecipePreviewResponse> getAllRecipes() {
-        return recipeRepository.findAll().stream().map(com.cooksync_server.mappers.RecipeMapper::toPreview).collect(Collectors.toList());
+        return recipeRepository.findAll().stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
     public RecipeResponse getRecipeById(String id) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe", id));
-        return com.cooksync_server.mappers.RecipeMapper.toResponse(recipe);
+        return RecipeMapper.toResponse(recipe);
     }
 
     public List<RecipePreviewResponse> searchRecipes(String keyword) {
-        return recipeRepository.findByTitleContainingIgnoreCase(keyword).stream().map(com.cooksync_server.mappers.RecipeMapper::toPreview).collect(Collectors.toList());
+        return recipeRepository.findByTitleContainingIgnoreCase(keyword).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
     public List<RecipePreviewResponse> findRecipesByTag(String tagName) {
-        return recipeRepository.findByTagName(tagName).stream().map(com.cooksync_server.mappers.RecipeMapper::toPreview).collect(Collectors.toList());
+        return recipeRepository.findByTagName(tagName).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
     @Transactional
@@ -84,8 +88,9 @@ public class RecipeService {
 
         savedRecipe.setIngredients(saveIngredients(request.ingredients(), savedRecipe));
         savedRecipe.setInstructions(saveInstructions(request.instructions(), savedRecipe));
+        saveImages(savedRecipe, request.primaryImageUrl(), request.additionalImageUrls());
 
-        return com.cooksync_server.mappers.RecipeMapper.toResponse(savedRecipe);
+        return RecipeMapper.toResponse(savedRecipe);
     }
 
     @Transactional
@@ -107,14 +112,15 @@ public class RecipeService {
         recipe.setServings(request.servings());
         recipe.setTags(fetchTags(request.tagIds()));
 
-        // עדכון אוספים בצורה בטוחה כדי למנוע שגיאת orphan deletion
+
         recipe.getIngredients().clear();
         recipe.getIngredients().addAll(saveIngredients(request.ingredients(), recipe));
 
         recipe.getInstructions().clear();
         recipe.getInstructions().addAll(saveInstructions(request.instructions(), recipe));
+        updateImages(recipe, request.primaryImageUrl());
 
-        return com.cooksync_server.mappers.RecipeMapper.toResponse(recipeRepository.save(recipe));
+        return RecipeMapper.toResponse(recipeRepository.save(recipe));
     }
 
     @Transactional
@@ -129,6 +135,40 @@ public class RecipeService {
         }
 
         recipeRepository.delete(recipe);
+    }
+
+    private void saveImages(Recipe recipe, String primaryImageUrl, List<String> additionalImageUrls) {
+        recipe.getImages().clear();
+        if (primaryImageUrl != null && !primaryImageUrl.isBlank()) {
+            recipe.getImages().add(RecipeImage.builder()
+                    .recipe(recipe)
+                    .imageUrl(primaryImageUrl)
+                    .isPrimary(true)
+                    .build());
+        }
+
+        if (additionalImageUrls != null) {
+            for (String imageUrl : additionalImageUrls) {
+                if (imageUrl != null && !imageUrl.isBlank()) {
+                    recipe.getImages().add(RecipeImage.builder()
+                            .recipe(recipe)
+                            .imageUrl(imageUrl)
+                            .isPrimary(false)
+                            .build());
+                }
+            }
+        }
+    }
+
+    private void updateImages(Recipe recipe, String primaryImageUrl) {
+        recipe.getImages().clear();
+        if (primaryImageUrl != null && !primaryImageUrl.isBlank()) {
+            recipe.getImages().add(RecipeImage.builder()
+                    .recipe(recipe)
+                    .imageUrl(primaryImageUrl)
+                    .isPrimary(true)
+                    .build());
+        }
     }
 
     private List<Tag> fetchTags(List<String> tagIds) {
@@ -165,6 +205,7 @@ public class RecipeService {
                     .recipe(recipe)
                     .stepNumber(instDto.stepNumber())
                     .description(instDto.description())
+                    .imageUrl(instDto.imageUrl())
                     .hasTimer(instDto.hasTimer())
                     .timeSeconds(instDto.timeSeconds())
                     .build();

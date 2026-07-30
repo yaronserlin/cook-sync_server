@@ -4,11 +4,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cooksync_server.services.AuthService;
+import com.dtos.request.auth.AvatarUpdateRequestDTO;
 import com.dtos.request.auth.LoginRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
 import com.dtos.request.auth.TokenRefreshRequestDTO;
@@ -59,5 +61,14 @@ public class AuthController {
         String userEmail = authentication.getName();
         authService.logout(userEmail);
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "User logged out successfully"));
+    }
+
+    @PutMapping("/avatar")
+    public ResponseEntity<ApiResponse<Void>> updateAvatar(
+            @Valid @RequestBody AvatarUpdateRequestDTO request,
+            Authentication authentication) {
+        String userEmail = authentication.getName();
+        authService.updateAvatar(userEmail, request.avatarUrl());
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Avatar updated successfully"));
     }
 }

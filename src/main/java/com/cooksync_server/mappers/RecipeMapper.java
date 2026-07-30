@@ -23,6 +23,21 @@ public final class RecipeMapper {
         String created = r.getCreatedAt() == null ? null : r.getCreatedAt().toString();
         String updated = r.getUpdatedAt() == null ? null : r.getUpdatedAt().toString();
 
+        String primaryImageUrl = r.getImages() == null ? null : r.getImages().stream()
+                .filter(image -> image != null && image.isPrimary())
+                .map(image -> image.getImageUrl())
+                .findFirst()
+                .orElse(null);
+        List<String> imageUrls = r.getImages() == null ? List.of() : r.getImages().stream()
+                .filter(image -> image != null)
+                .map(image -> image.getImageUrl())
+                .toList();
+        if (primaryImageUrl != null && !imageUrls.isEmpty() && !imageUrls.get(0).equals(primaryImageUrl)) {
+            imageUrls = new java.util.ArrayList<>(imageUrls);
+            imageUrls.remove(primaryImageUrl);
+            imageUrls.add(0, primaryImageUrl);
+        }
+
         return new RecipeResponse(
                 r.getId(),
                 createdBy,
@@ -38,7 +53,9 @@ public final class RecipeMapper {
                 updated,
                 tags,
                 ingredients,
-                instructions
+                instructions,
+                primaryImageUrl,
+                imageUrls
         );
     }
 
@@ -49,6 +66,11 @@ public final class RecipeMapper {
         String authorName = r.getCreatedBy() == null ? null : r.getCreatedBy().getFirstName() + " " + r.getCreatedBy().getLastName();
         List<com.dtos.response.tags.TagResponse> tags = r.getTags() == null ? List.of() : r.getTags().stream().map(TagMapper::toResponse).collect(Collectors.toList());
         String created = r.getCreatedAt() == null ? null : r.getCreatedAt().toString();
+        String primaryImageUrl = r.getImages() == null ? null : r.getImages().stream()
+                .filter(image -> image != null && image.isPrimary())
+                .map(image -> image.getImageUrl())
+                .findFirst()
+                .orElse(null);
         return new com.dtos.response.recipe.RecipePreviewResponse(
                 r.getId(),
                 authorName,
@@ -59,7 +81,8 @@ public final class RecipeMapper {
                 r.getCookTimeMinutes(),
                 r.getReviewCount(),
                 created,
-                tags
+                tags,
+                primaryImageUrl
         );
     }
 }

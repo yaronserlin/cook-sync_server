@@ -111,17 +111,29 @@ public class DataSeeder implements CommandLineRunner {
         logger.info(">>> Seeding users...");
         return userRepository.saveAll(List.of(
                 User.builder().firstName("Admin").lastName("User").email("admin@cooksync.com")
-                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(true).build(),
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(true)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
                 User.builder().firstName("Chef").lastName("John").email("chef@cooksync.com")
-                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false).build(),
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
                 User.builder().firstName("Maya").lastName("Levi").email("maya@cooksync.com")
-                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false).build(),
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
                 User.builder().firstName("Noam").lastName("Cohen").email("noam@cooksync.com")
-                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false).build(),
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
                 User.builder().firstName("Sara").lastName("Green").email("sara@cooksync.com")
-                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false).build(),
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
                 User.builder().firstName("Eli").lastName("Sharon").email("eli@cooksync.com")
-                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false).build()
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build()
         ));
     }
 
@@ -366,13 +378,38 @@ public class DataSeeder implements CommandLineRunner {
     private void seedRecipeImages(List<Recipe> recipes) {
         logger.info(">>> Seeding recipe images...");
         List<RecipeImage> images = new ArrayList<>();
+        String[] primaryUrls = {
+                "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
+                "https://images.unsplash.com/photo-1516100882582-96c3a05fe590?auto=format&fit=crop&w=1200&q=80",
+                "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=1200&q=80",
+                "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80",
+                "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80",
+                "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=1200&q=80"
+        };
+        String[][] additionalUrls = {
+                {"https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80"},
+                {"https://images.unsplash.com/photo-1518779578993-ec3579fee39f?auto=format&fit=crop&w=1200&q=80", "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80"},
+                {"https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=1200&q=80"},
+                {"https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=1200&q=80", "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1200&q=80"},
+                {"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1200&q=80"},
+                {"https://images.unsplash.com/photo-1488900128323-21503983a07e?auto=format&fit=crop&w=1200&q=80", "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80"}
+        };
+
         for (int i = 0; i < recipes.size(); i++) {
             Recipe recipe = recipes.get(i);
             images.add(RecipeImage.builder()
                     .recipe(recipe)
-                    .imageUrl("https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80")
-                    .isPrimary(i == 0)
+                    .imageUrl(primaryUrls[i % primaryUrls.length])
+                    .isPrimary(true)
                     .build());
+
+            for (String extraUrl : additionalUrls[i % additionalUrls.length]) {
+                images.add(RecipeImage.builder()
+                        .recipe(recipe)
+                        .imageUrl(extraUrl)
+                        .isPrimary(false)
+                        .build());
+            }
         }
         recipeImageRepository.saveAll(images);
     }

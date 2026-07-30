@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.cooksync_server.config.JwtUtil;
 import com.dtos.request.auth.LoginRequestDTO;
@@ -58,7 +59,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(newUser.getEmail(), newUser.getId(), newUser.isAdmin());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(newUser.getId());
 
-        return new AuthResponse(token, refreshToken.getToken(), newUser.getId(), newUser.getFirstName(), newUser.getLastName(), newUser.isAdmin());
+        return new AuthResponse(token, refreshToken.getToken(), newUser.getId(), newUser.getFirstName(), newUser.getLastName(), newUser.isAdmin(), newUser.getAvatarUrl());
     }
 
     public AuthResponse login(LoginRequestDTO request) {
@@ -75,7 +76,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.isAdmin());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        return new AuthResponse(token, refreshToken.getToken(), user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin());
+        return new AuthResponse(token, refreshToken.getToken(), user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin(), user.getAvatarUrl());
     }
 
     public AuthResponse refreshToken(TokenRefreshRequestDTO request) {
@@ -86,7 +87,7 @@ public class AuthService {
                 .map(RefreshToken::getUser)
                 .map(user -> {
                     String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.isAdmin());
-                    return new AuthResponse(token, requestRefreshToken, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin());
+                    return new AuthResponse(token, requestRefreshToken, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin(), user.getAvatarUrl());
                 })
                 .orElseThrow(() -> new UnauthorizedActionException("Refresh token is not in database or is invalid!"));
     }
@@ -96,12 +97,20 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
         // אנו מחזירים תשובה ללא טוקנים חדשים, רק כדי לאשר שהטוקן הקיים תקין ולהחזיר פרטי משתמש
-        return new AuthResponse(null, null, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin());
+        return new AuthResponse(null, null, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin(), user.getAvatarUrl());
     }
 
     public void logout(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
         refreshTokenService.deleteByUserId(user.getId());
+    }
+
+    @Transactional
+    public void updateAvatar(String userEmail, String avatarUrl) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+        user.setAvatarUrl(avatarUrl);
+        userRepository.save(user);
     }
 }

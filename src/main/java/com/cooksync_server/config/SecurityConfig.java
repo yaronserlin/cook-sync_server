@@ -35,6 +35,7 @@ public class SecurityConfig {
                 // מאפשר גישה ל-login, register ו-refresh-token
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/recipes/public/**").permitAll()
+                .requestMatchers("/api/cloudinary/**").authenticated()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

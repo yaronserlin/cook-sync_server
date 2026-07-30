@@ -17,6 +17,6 @@ public final class InstructionMapper {
         Set<com.dtos.response.ingredient.IngredientResponse> ingr = ins.getIngredients() == null ? null : ins.getIngredients().stream().map(IngredientMapper::toResponse).collect(Collectors.toSet());
         String created = ins.getCreatedAt() == null ? null : ins.getCreatedAt().toString();
         String updated = ins.getUpdatedAt() == null ? null : ins.getUpdatedAt().toString();
-        return new InstructionResponse(ins.getId(), ins.getStepNumber(), ins.getDescription(), ins.isHasTimer(), ins.getTimeSeconds(), created, updated, ingr);
+        return new InstructionResponse(ins.getId(), ins.getStepNumber(), ins.getDescription(), ins.isHasTimer(), ins.getTimeSeconds(), created, updated, ingr, ins.getImageUrl());
     }
 }

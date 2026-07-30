@@ -30,10 +30,10 @@ public class Unit {
     private String id;
 
     @Column(nullable = false, length = 50)
-    private String code; // למשל: cup, g
+    private String code; 
 
     @Column(nullable = false, length = 255)
-    private String name; // השם המלא
+    private String name; 
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

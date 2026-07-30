@@ -41,7 +41,7 @@ public class RecipeImage {
 
     @Builder.Default
     @Column(name = "is_primary", nullable = false)
-    private boolean isPrimary = false; // האם זו התמונה שתוצג בפריוויו [cite: 129]
+    private boolean isPrimary = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

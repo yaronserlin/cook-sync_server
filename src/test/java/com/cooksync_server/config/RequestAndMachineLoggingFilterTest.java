@@ -44,7 +44,7 @@ class RequestAndMachineLoggingFilterTest {
             public void service(ServletRequest req, ServletResponse res) throws ServletException, java.io.IOException {
                 res.setCharacterEncoding("UTF-8");
                 res.getWriter().write("{\"id\":1}");
-                ((MockHttpServletResponse) res).setStatus(201);
+                ((jakarta.servlet.http.HttpServletResponse) res).setStatus(201);
             }
 
             @Override
@@ -74,14 +74,13 @@ class RequestAndMachineLoggingFilterTest {
                 .toList();
 
         assertThat(messages).hasSize(2);
-        assertThat(messages.get(0)).contains("\"type\": \"request\"");
-        assertThat(messages.get(0)).contains("\"method\": \"POST\"");
-        assertThat(messages.get(0)).contains("\"data\": \"{\\\"title\\\":\\\"Soup\\\"}\"");
-        assertThat(messages.get(0)).contains("\"ip\": \"127.0.0.1\"");
-        assertThat(messages.get(1)).contains("\"type\": \"response\"");
-        assertThat(messages.get(1)).contains("\"status\": 201");
-        assertThat(messages.get(1)).contains("\"data\": \"{\\\"id\\\":1}\"");
-        assertThat(messages.get(1)).contains("\"processTimeMs\"");
-        assertThat(messages.get(1)).contains("\"memoryUsedMb\"");
+        assertThat(messages.get(0)).contains("REQUEST");
+        assertThat(messages.get(0)).contains("POST");
+        assertThat(messages.get(0)).contains("/recipes");
+        assertThat(messages.get(0)).contains("127.0.0.1");
+        assertThat(messages.get(1)).contains("RESPONSE");
+        assertThat(messages.get(1)).contains("201");
+        assertThat(messages.get(1)).contains("/recipes");
+        assertThat(messages.get(1)).contains("ms");
     }
 }
