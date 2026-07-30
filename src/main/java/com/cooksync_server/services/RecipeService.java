@@ -2,9 +2,12 @@ package com.cooksync_server.services;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -86,8 +89,9 @@ public class RecipeService {
 
         Recipe savedRecipe = recipeRepository.save(recipe);
 
-        savedRecipe.setIngredients(saveIngredients(request.ingredients(), savedRecipe));
-        savedRecipe.setInstructions(saveInstructions(request.instructions(), savedRecipe));
+        Map<String, Ingredient> tmpIdToIngredient = new HashMap<>();
+        savedRecipe.setIngredients(saveIngredients(request.ingredients(), savedRecipe, tmpIdToIngredient));
+        savedRecipe.setInstructions(saveInstructions(request.instructions(), savedRecipe, tmpIdToIngredient));
         saveImages(savedRecipe, request.primaryImageUrl(), request.additionalImageUrls());
 
         return RecipeMapper.toResponse(savedRecipe);
@@ -113,11 +117,12 @@ public class RecipeService {
         recipe.setTags(fetchTags(request.tagIds()));
 
 
+        Map<String, Ingredient> tmpIdToIngredient = new HashMap<>();
         recipe.getIngredients().clear();
-        recipe.getIngredients().addAll(saveIngredients(request.ingredients(), recipe));
+        recipe.getIngredients().addAll(saveIngredients(request.ingredients(), recipe, tmpIdToIngredient));
 
         recipe.getInstructions().clear();
-        recipe.getInstructions().addAll(saveInstructions(request.instructions(), recipe));
+        recipe.getInstructions().addAll(saveInstructions(request.instructions(), recipe, tmpIdToIngredient));
         updateImages(recipe, request.primaryImageUrl());
 
         return RecipeMapper.toResponse(recipeRepository.save(recipe));
@@ -182,7 +187,8 @@ public class RecipeService {
         return tags;
     }
 
-    private Set<Ingredient> saveIngredients(List<IngredientRequestDTO> dtoList, Recipe recipe) {
+    private Set<Ingredient> saveIngredients(List<IngredientRequestDTO> dtoList, Recipe recipe,
+            Map<String, Ingredient> tmpIdToIngredient) {
         Set<Ingredient> ingredients = new HashSet<>();
         for (IngredientRequestDTO ingDto : dtoList) {
             Unit unit = unitRepository.findById(ingDto.unitId())
@@ -194,13 +200,26 @@ public class RecipeService {
                     .unit(unit)
                     .build();
             ingredients.add(ingredient); // שמירה דרך CascadeType.ALL
+            if (ingDto.tmpId() != null) {
+                tmpIdToIngredient.put(ingDto.tmpId(), ingredient);
+            }
         }
         return ingredients;
     }
 
-    private List<Instruction> saveInstructions(List<InstructionRequestDTO> dtoList, Recipe recipe) {
+    private List<Instruction> saveInstructions(List<InstructionRequestDTO> dtoList, Recipe recipe,
+            Map<String, Ingredient> tmpIdToIngredient) {
         List<Instruction> instructions = new ArrayList<>();
         for (InstructionRequestDTO instDto : dtoList) {
+            Set<Ingredient> stepIngredients = new HashSet<>();
+            if (instDto.ingredientIds() != null) {
+                for (UUID ingredientId : instDto.ingredientIds()) {
+                    Ingredient ingredient = tmpIdToIngredient.get(ingredientId.toString());
+                    if (ingredient != null) {
+                        stepIngredients.add(ingredient);
+                    }
+                }
+            }
             Instruction instruction = Instruction.builder()
                     .recipe(recipe)
                     .stepNumber(instDto.stepNumber())
@@ -208,6 +227,7 @@ public class RecipeService {
                     .imageUrl(instDto.imageUrl())
                     .hasTimer(instDto.hasTimer())
                     .timeSeconds(instDto.timeSeconds())
+                    .ingredients(stepIngredients)
                     .build();
             instructions.add(instruction); // שמירה דרך CascadeType.ALL
         }

@@ -143,6 +143,11 @@ public class DataSeeder implements CommandLineRunner {
         User chef = users.stream().filter(User::isAdmin).findFirst().orElse(users.get(1));
         User regularUser = users.stream().filter(user -> !user.isAdmin()).findFirst().orElse(users.get(1));
 
+        List<Ingredient> saladIngredients = List.of(
+                createIngredient("Lettuce", BigDecimal.valueOf(1), units.get(0), null),
+                createIngredient("Tomato", BigDecimal.valueOf(2), units.get(9), null),
+                createIngredient("Cucumber", BigDecimal.valueOf(1), units.get(9), null)
+        );
         Recipe salad = createRecipe(
                 "Simple Vegan Salad",
                 "A fresh and quick healthy salad that works for lunch or dinner.",
@@ -152,17 +157,19 @@ public class DataSeeder implements CommandLineRunner {
                 2,
                 chef,
                 List.of(tags.get(0), tags.get(1), tags.get(2)),
+                saladIngredients,
                 List.of(
-                        createIngredient("Lettuce", BigDecimal.valueOf(1), units.get(0), null),
-                        createIngredient("Tomato", BigDecimal.valueOf(2), units.get(9), null),
-                        createIngredient("Cucumber", BigDecimal.valueOf(1), units.get(9), null)
-                ),
-                List.of(
-                        createInstruction(1, "Wash and chop the vegetables.", false, null, List.of()),
+                        createInstruction(1, "Wash and chop the vegetables.", false, null,
+                                List.of(saladIngredients.get(0), saladIngredients.get(1), saladIngredients.get(2))),
                         createInstruction(2, "Toss with olive oil and lemon juice.", false, null, List.of())
                 )
         );
 
+        List<Ingredient> pastaIngredients = List.of(
+                createIngredient("Pasta", BigDecimal.valueOf(250), units.get(3), null),
+                createIngredient("Tomato sauce", BigDecimal.valueOf(2), units.get(0), null),
+                createIngredient("Garlic", BigDecimal.valueOf(2), units.get(8), null)
+        );
         Recipe pasta = createRecipe(
                 "Creamy Tomato Pasta",
                 "A comforting pasta dish with a silky tomato sauce and herbs.",
@@ -172,18 +179,21 @@ public class DataSeeder implements CommandLineRunner {
                 4,
                 regularUser,
                 List.of(tags.get(4), tags.get(8), tags.get(1)),
+                pastaIngredients,
                 List.of(
-                        createIngredient("Pasta", BigDecimal.valueOf(250), units.get(3), null),
-                        createIngredient("Tomato sauce", BigDecimal.valueOf(2), units.get(0), null),
-                        createIngredient("Garlic", BigDecimal.valueOf(2), units.get(8), null)
-                ),
-                List.of(
-                        createInstruction(1, "Boil the pasta until al dente.", false, null, List.of()),
-                        createInstruction(2, "Simmer the sauce with garlic and herbs.", false, null, List.of()),
+                        createInstruction(1, "Boil the pasta until al dente.", false, null,
+                                List.of(pastaIngredients.get(0))),
+                        createInstruction(2, "Simmer the sauce with garlic and herbs.", false, null,
+                                List.of(pastaIngredients.get(1), pastaIngredients.get(2))),
                         createInstruction(3, "Combine and serve warm.", false, null, List.of())
                 )
         );
 
+        List<Ingredient> pancakeIngredients = List.of(
+                createIngredient("Banana", BigDecimal.valueOf(2), units.get(9), null),
+                createIngredient("Flour", BigDecimal.valueOf(200), units.get(3), null),
+                createIngredient("Egg", BigDecimal.valueOf(2), units.get(9), null)
+        );
         Recipe pancakes = createRecipe(
                 "Fluffy Banana Pancakes",
                 "Soft pancakes with ripe bananas and a hint of cinnamon.",
@@ -193,18 +203,21 @@ public class DataSeeder implements CommandLineRunner {
                 3,
                 regularUser,
                 List.of(tags.get(5), tags.get(1), tags.get(3)),
+                pancakeIngredients,
                 List.of(
-                        createIngredient("Banana", BigDecimal.valueOf(2), units.get(9), null),
-                        createIngredient("Flour", BigDecimal.valueOf(200), units.get(3), null),
-                        createIngredient("Egg", BigDecimal.valueOf(2), units.get(9), null)
-                ),
-                List.of(
-                        createInstruction(1, "Mash the bananas until smooth.", false, null, List.of()),
-                        createInstruction(2, "Mix in flour and eggs to make a batter.", false, null, List.of()),
+                        createInstruction(1, "Mash the bananas until smooth.", false, null,
+                                List.of(pancakeIngredients.get(0))),
+                        createInstruction(2, "Mix in flour and eggs to make a batter.", false, null,
+                                List.of(pancakeIngredients.get(1), pancakeIngredients.get(2))),
                         createInstruction(3, "Cook each side until golden.", true, 180, List.of())
                 )
         );
 
+        List<Ingredient> bowlIngredients = List.of(
+                createIngredient("Chickpeas", BigDecimal.valueOf(400), units.get(3), null),
+                createIngredient("Rice", BigDecimal.valueOf(1), units.get(0), null),
+                createIngredient("Avocado", BigDecimal.valueOf(1), units.get(9), null)
+        );
         Recipe bowl = createRecipe(
                 "Spicy Chickpea Bowl",
                 "A bold bowl filled with roasted chickpeas, rice, and avocado.",
@@ -214,18 +227,21 @@ public class DataSeeder implements CommandLineRunner {
                 2,
                 users.get(3),
                 List.of(tags.get(0), tags.get(9), tags.get(7)),
+                bowlIngredients,
                 List.of(
-                        createIngredient("Chickpeas", BigDecimal.valueOf(400), units.get(3), null),
-                        createIngredient("Rice", BigDecimal.valueOf(1), units.get(0), null),
-                        createIngredient("Avocado", BigDecimal.valueOf(1), units.get(9), null)
-                ),
-                List.of(
-                        createInstruction(1, "Roast the chickpeas with spices.", true, 600, List.of()),
-                        createInstruction(2, "Cook the rice and slice the avocado.", false, null, List.of()),
+                        createInstruction(1, "Roast the chickpeas with spices.", true, 600,
+                                List.of(bowlIngredients.get(0))),
+                        createInstruction(2, "Cook the rice and slice the avocado.", false, null,
+                                List.of(bowlIngredients.get(1), bowlIngredients.get(2))),
                         createInstruction(3, "Assemble everything in a bowl.", false, null, List.of())
                 )
         );
 
+        List<Ingredient> soupIngredients = List.of(
+                createIngredient("Lentils", BigDecimal.valueOf(300), units.get(3), null),
+                createIngredient("Carrot", BigDecimal.valueOf(2), units.get(9), null),
+                createIngredient("Celery", BigDecimal.valueOf(2), units.get(9), null)
+        );
         Recipe soup = createRecipe(
                 "Golden Lentil Soup",
                 "A cozy, nutritious soup with carrots, celery, and lentils.",
@@ -235,18 +251,21 @@ public class DataSeeder implements CommandLineRunner {
                 4,
                 users.get(4),
                 List.of(tags.get(2), tags.get(4), tags.get(8)),
+                soupIngredients,
                 List.of(
-                        createIngredient("Lentils", BigDecimal.valueOf(300), units.get(3), null),
-                        createIngredient("Carrot", BigDecimal.valueOf(2), units.get(9), null),
-                        createIngredient("Celery", BigDecimal.valueOf(2), units.get(9), null)
-                ),
-                List.of(
-                        createInstruction(1, "Saute the vegetables until softened.", false, null, List.of()),
-                        createInstruction(2, "Add lentils and broth, then simmer.", true, 1800, List.of()),
+                        createInstruction(1, "Saute the vegetables until softened.", false, null,
+                                List.of(soupIngredients.get(1), soupIngredients.get(2))),
+                        createInstruction(2, "Add lentils and broth, then simmer.", true, 1800,
+                                List.of(soupIngredients.get(0))),
                         createInstruction(3, "Blend partly for a thicker texture.", false, null, List.of())
                 )
         );
 
+        List<Ingredient> dessertIngredients = List.of(
+                createIngredient("Yogurt", BigDecimal.valueOf(250), units.get(3), null),
+                createIngredient("Mixed berries", BigDecimal.valueOf(150), units.get(3), null),
+                createIngredient("Granola", BigDecimal.valueOf(100), units.get(3), null)
+        );
         Recipe dessert = createRecipe(
                 "Berry Yogurt Parfait",
                 "A simple dessert with layered yogurt, berries, and granola.",
@@ -256,13 +275,10 @@ public class DataSeeder implements CommandLineRunner {
                 2,
                 users.get(5),
                 List.of(tags.get(5), tags.get(2), tags.get(1)),
+                dessertIngredients,
                 List.of(
-                        createIngredient("Yogurt", BigDecimal.valueOf(250), units.get(3), null),
-                        createIngredient("Mixed berries", BigDecimal.valueOf(150), units.get(3), null),
-                        createIngredient("Granola", BigDecimal.valueOf(100), units.get(3), null)
-                ),
-                List.of(
-                        createInstruction(1, "Layer yogurt, berries, and granola in glasses.", false, null, List.of()),
+                        createInstruction(1, "Layer yogurt, berries, and granola in glasses.", false, null,
+                                List.of(dessertIngredients.get(0), dessertIngredients.get(1), dessertIngredients.get(2))),
                         createInstruction(2, "Chill briefly before serving.", false, null, List.of())
                 )
         );
