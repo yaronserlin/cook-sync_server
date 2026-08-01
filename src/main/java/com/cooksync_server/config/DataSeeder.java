@@ -13,10 +13,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * Data Seeder that runs only when the 'seed' profile is active. Clears all
@@ -661,6 +665,17 @@ public class DataSeeder implements CommandLineRunner {
     private void seedReviews(List<Recipe> recipes, List<User> users) {
         logger.info(">>> Seeding reviews...");
         List<Review> reviews = new ArrayList<>();
+        reviews.addAll(buildStandardReviews(recipes, users));
+        reviews.addAll(buildReportedReviews(recipes, users));
+        reviews.addAll(buildBulkComments(recipes, users));
+
+        reviewRepository.saveAll(reviews);
+        recalculateRecipeStats(recipes, reviews);
+        recipeRepository.saveAll(recipes);
+    }
+
+    private List<Review> buildStandardReviews(List<Recipe> recipes, List<User> users) {
+        List<Review> reviews = new ArrayList<>();
         for (int i = 0; i < recipes.size(); i++) {
             Recipe recipe = recipes.get(i);
             User primaryReviewer = users.get((i % (users.size() - 1)) + 1);
@@ -681,91 +696,107 @@ public class DataSeeder implements CommandLineRunner {
                     .comment("I enjoyed this version and will make it again.")
                     .build());
         }
+        return reviews;
+    }
 
-        // A few reported reviews so the admin moderation queue isn't empty and
-        // multiple users show up as reporters.
-        if (recipes.size() >= 4) {
-            reviews.add(Review.builder()
-                    .recipe(recipes.get(0))
-                    .user(users.get(users.size() - 1))
-                    .rating(BigDecimal.valueOf(1.0))
-                    .title("Not related")
-                    .comment("Buy cheap kitchenware at this link, best prices anywhere, click now.")
-                    .reported(true)
-                    .reportReason(Review.ReportReason.SPAM)
-                    .reportedAt(java.time.LocalDateTime.now())
-                    .build());
-            reviews.add(Review.builder()
-                    .recipe(recipes.get(1))
-                    .user(users.get(users.size() - 2))
-                    .rating(BigDecimal.valueOf(1.0))
-                    .title("Rude")
-                    .comment("Whoever wrote this should not be allowed near an oven, absolute rubbish.")
-                    .reported(true)
-                    .reportReason(Review.ReportReason.ABUSE)
-                    .reportedAt(java.time.LocalDateTime.now())
-                    .build());
-            reviews.add(Review.builder()
-                    .recipe(recipes.get(2))
-                    .user(users.get(users.size() - 3))
-                    .rating(BigDecimal.valueOf(1.5))
-                    .title("Off topic")
-                    .comment("This content does not belong in a recipe review and should be removed.")
-                    .reported(true)
-                    .reportReason(Review.ReportReason.SPAM)
-                    .reportedAt(java.time.LocalDateTime.now())
-                    .build());
-            reviews.add(Review.builder()
-                    .recipe(recipes.get(3))
-                    .user(users.get(users.size() - 4))
-                    .rating(BigDecimal.valueOf(1.0))
-                    .title("Inappropriate")
-                    .comment("This review is inappropriate and unrelated to the recipe instructions.")
-                    .reported(true)
-                    .reportReason(Review.ReportReason.ABUSE)
-                    .reportedAt(java.time.LocalDateTime.now())
-                    .build());
+    /** A few reported reviews so the admin moderation queue isn't empty and multiple users show up as reporters. */
+    private List<Review> buildReportedReviews(List<Recipe> recipes, List<User> users) {
+        List<Review> reviews = new ArrayList<>();
+        if (recipes.size() < 4) {
+            return reviews;
         }
+        reviews.add(Review.builder()
+                .recipe(recipes.get(0))
+                .user(users.get(users.size() - 1))
+                .rating(BigDecimal.valueOf(1.0))
+                .title("Not related")
+                .comment("Buy cheap kitchenware at this link, best prices anywhere, click now.")
+                .reported(true)
+                .reportReason(Review.ReportReason.SPAM)
+                .reportedAt(LocalDateTime.now())
+                .build());
+        reviews.add(Review.builder()
+                .recipe(recipes.get(1))
+                .user(users.get(users.size() - 2))
+                .rating(BigDecimal.valueOf(1.0))
+                .title("Rude")
+                .comment("Whoever wrote this should not be allowed near an oven, absolute rubbish.")
+                .reported(true)
+                .reportReason(Review.ReportReason.ABUSE)
+                .reportedAt(LocalDateTime.now())
+                .build());
+        reviews.add(Review.builder()
+                .recipe(recipes.get(2))
+                .user(users.get(users.size() - 3))
+                .rating(BigDecimal.valueOf(1.5))
+                .title("Off topic")
+                .comment("This content does not belong in a recipe review and should be removed.")
+                .reported(true)
+                .reportReason(Review.ReportReason.SPAM)
+                .reportedAt(LocalDateTime.now())
+                .build());
+        reviews.add(Review.builder()
+                .recipe(recipes.get(3))
+                .user(users.get(users.size() - 4))
+                .rating(BigDecimal.valueOf(1.0))
+                .title("Inappropriate")
+                .comment("This review is inappropriate and unrelated to the recipe instructions.")
+                .reported(true)
+                .reportReason(Review.ReportReason.ABUSE)
+                .reportedAt(LocalDateTime.now())
+                .build());
+        return reviews;
+    }
 
-                // Add 50 additional comment-style reviews per recipe to populate UI
-                for (int i = 0; i < recipes.size(); i++) {
-                        Recipe recipe = recipes.get(i);
-                        for (int c = 0; c < 50; c++) {
-                                User commenter = users.get((i + c) % users.size());
-                                double randRating = Math.round(java.util.concurrent.ThreadLocalRandom.current().nextDouble(1.0, 5.0) * 10.0) / 10.0;
-                                String[] sampleComments = new String[]{
-                                        "Loved the balance of flavors, will make again!",
-                                        "Turned out great but I added a bit more salt than the recipe called for.",
-                                        "Easy to follow and perfect for a weeknight dinner.",
-                                        "Family enjoyed it — next time I'll double the sauce.",
-                                        "Recipe is good, I swapped one ingredient and it still worked well.",
-                                        "A little spicy for my taste, but still delicious.",
-                                        "Quick to prepare and packed with flavor.",
-                                        "Great texture, though I baked it a few minutes longer.",
-                                        "Perfect comfort food — will save this one.",
-                                        "Simple, fresh, and satisfying. Recommended!"
-                                };
-                                String commentText = String.format("%s (Comment %d for %s) — %s",
-                                        sampleComments[c % sampleComments.length], c + 1, recipe.getTitle(), commenter.getFirstName());
-                                reviews.add(Review.builder()
-                                                .recipe(recipe)
-                                                .user(commenter)
-                                                .rating(BigDecimal.valueOf(randRating))
-                                                .title("Comment")
-                                                .comment(commentText)
-                                                .build());
-                        }
-                }
+    /** 50 additional comment-style reviews per recipe, so review lists/paging have enough data to populate UI. */
+    private List<Review> buildBulkComments(List<Recipe> recipes, List<User> users) {
+        String[] sampleComments = {
+                "Loved the balance of flavors, will make again!",
+                "Turned out great but I added a bit more salt than the recipe called for.",
+                "Easy to follow and perfect for a weeknight dinner.",
+                "Family enjoyed it — next time I'll double the sauce.",
+                "Recipe is good, I swapped one ingredient and it still worked well.",
+                "A little spicy for my taste, but still delicious.",
+                "Quick to prepare and packed with flavor.",
+                "Great texture, though I baked it a few minutes longer.",
+                "Perfect comfort food — will save this one.",
+                "Simple, fresh, and satisfying. Recommended!"
+        };
 
-                reviewRepository.saveAll(reviews);
+        List<Review> reviews = new ArrayList<>();
+        for (int i = 0; i < recipes.size(); i++) {
+            Recipe recipe = recipes.get(i);
+            for (int c = 0; c < 50; c++) {
+                User commenter = users.get((i + c) % users.size());
+                double randRating = Math.round(ThreadLocalRandom.current().nextDouble(1.0, 5.0) * 10.0) / 10.0;
+                String commentText = String.format("%s (Comment %d for %s) — %s",
+                        sampleComments[c % sampleComments.length], c + 1, recipe.getTitle(), commenter.getFirstName());
+                reviews.add(Review.builder()
+                        .recipe(recipe)
+                        .user(commenter)
+                        .rating(BigDecimal.valueOf(randRating))
+                        .title("Comment")
+                        .comment(commentText)
+                        .build());
+            }
+        }
+        return reviews;
+    }
+
+    /**
+     * Aggregates the in-memory review list per recipe rather than re-querying the
+     * database once per recipe (that N+1 pattern was the previous implementation).
+     */
+    private void recalculateRecipeStats(List<Recipe> recipes, List<Review> reviews) {
+        Map<String, List<Review>> reviewsByRecipeId = reviews.stream()
+                .collect(Collectors.groupingBy(review -> review.getRecipe().getId()));
 
         for (Recipe recipe : recipes) {
-            List<Review> recipeReviews = reviewRepository.findByRecipeIdOrderByCreatedAtDesc(recipe.getId());
+            List<Review> recipeReviews = reviewsByRecipeId.getOrDefault(recipe.getId(), List.of());
             recipe.setReviewCount(recipeReviews.size());
             recipe.setAverageRating(recipeReviews.isEmpty() ? null
                     : recipeReviews.stream().mapToDouble(r -> r.getRating().doubleValue()).average().orElse(0.0));
         }
-        recipeRepository.saveAll(recipes);
     }
 
     private void seedFavorites(List<Recipe> recipes, List<User> users) {

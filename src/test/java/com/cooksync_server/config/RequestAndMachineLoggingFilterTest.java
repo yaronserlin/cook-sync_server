@@ -81,6 +81,6 @@ class RequestAndMachineLoggingFilterTest {
         assertThat(messages.get(1)).contains("RESPONSE");
         assertThat(messages.get(1)).contains("201");
         assertThat(messages.get(1)).contains("/recipes");
-        assertThat(messages.get(1)).contains("ms");
+        assertThat(messages.get(1)).contains("durationMs");
     }
 }

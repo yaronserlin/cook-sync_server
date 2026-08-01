@@ -13,6 +13,7 @@ import com.cooksync_server.entities.PersonalInstructionNote;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
+import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.repositories.PersonalInstructionNoteRepository;
 import com.cooksync_server.repositories.RecipeRepository;
 import com.cooksync_server.repositories.UserRepository;
@@ -91,7 +92,7 @@ public class PersonalNoteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Note", noteId));
 
         if (!note.getUser().getEmail().equals(userEmail)) {
-            throw new RuntimeException("Unauthorized: Cannot delete other users' notes");
+            throw new UnauthorizedActionException("You are not allowed to delete this note.");
         }
 
         noteRepository.delete(note);

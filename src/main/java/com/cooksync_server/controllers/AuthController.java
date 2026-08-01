@@ -51,8 +51,6 @@ public class AuthController {
 
     @GetMapping("/validate-token")
     public ResponseEntity<ApiResponse<AuthResponse>> validateToken(Authentication authentication) {
-        System.out.println("Authentication object: " + authentication);
-
         String userEmail = authentication.getName();
         AuthResponse response = authService.validateToken(userEmail);
         return ResponseEntity.ok(new ApiResponse<>(true, response, null, "Token is valid"));
