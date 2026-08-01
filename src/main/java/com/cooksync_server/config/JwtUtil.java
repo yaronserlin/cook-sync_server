@@ -26,6 +26,10 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtil {
 
+    // Kept short deliberately: access tokens are paired with a longer-lived
+    // refresh token, so a compromised access token has a narrow blast radius.
+    private static final long ACCESS_TOKEN_VALIDITY_MS = 1000L * 60 * 15;
+
     @Value("${jwt.secret}")
     private String secretKey;
 
@@ -50,7 +54,7 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(email)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15)) // 15 minutes
+                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY_MS))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

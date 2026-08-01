@@ -43,8 +43,9 @@ public class Review {
     @JoinColumn(name = "recipe_id", nullable = false)
     private Recipe recipe;
 
+    // Domain-level constraint (not DB-enforced): value must be between 1.0 and 5.0.
     @Column(nullable = false, precision = 2, scale = 1)
-    private BigDecimal rating; // ציון בין 1.0 ל-5.0 [cite: 104]
+    private BigDecimal rating;
 
     @Column(length = 255)
     private String title;

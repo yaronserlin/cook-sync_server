@@ -17,7 +17,7 @@ public final class AdminMapper {
         String recipeId = r.getRecipe() == null ? null : r.getRecipe().getId();
         String recipeTitle = r.getRecipe() == null ? null : r.getRecipe().getTitle();
         String reason = r.getReportReason() == null ? null : r.getReportReason().name();
-        String reportedAt = r.getReportedAt() == null ? null : r.getReportedAt().toString();
+        String reportedAt = MapperUtils.toIsoStringOrNull(r.getReportedAt());
 
         return new ReportedReviewResponse(
                 r.getId(),

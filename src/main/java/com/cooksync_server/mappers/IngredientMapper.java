@@ -1,8 +1,9 @@
 package com.cooksync_server.mappers;
 
 import com.cooksync_server.entities.Ingredient;
-import com.dtos.response.ingredient.IngredientResponse;
 import com.cooksync_server.entities.Unit;
+import com.dtos.request.ingredient.IngredientRequestDTO;
+import com.dtos.response.ingredient.IngredientResponse;
 import com.dtos.response.unit.UnitResponse;
 
 import java.math.BigDecimal;
@@ -20,8 +21,8 @@ public final class IngredientMapper {
         Unit unit = entity.getUnit();
         UnitResponse unitResponse = null;
         if (unit != null) {
-            String uCreated = unit.getCreatedAt() == null ? null : unit.getCreatedAt().toString();
-            String uUpdated = unit.getUpdatedAt() == null ? null : unit.getUpdatedAt().toString();
+            String uCreated = MapperUtils.toIsoStringOrNull(unit.getCreatedAt());
+            String uUpdated = MapperUtils.toIsoStringOrNull(unit.getUpdatedAt());
             unitResponse = new UnitResponse(unit.getId(), unit.getCode(), unit.getName(), uCreated, uUpdated);
         }
 
@@ -39,7 +40,7 @@ public final class IngredientMapper {
         );
     }
 
-    public static Ingredient fromRequest(com.dtos.request.ingredient.IngredientRequestDTO req) {
+    public static Ingredient fromRequest(IngredientRequestDTO req) {
         if (req == null) {
             return null;
         }

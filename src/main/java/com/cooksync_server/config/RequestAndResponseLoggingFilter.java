@@ -1,10 +1,8 @@
 package com.cooksync_server.config;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,27 +21,12 @@ public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestAndResponseLoggingFilter.class);
 
-    private final String hostName;
-    private final String hostAddress;
-    private final String processId;
-
-    public RequestAndResponseLoggingFilter() {
-        String tempName;
-        String tempAddress;
-        try {
-            InetAddress localHost = InetAddress.getLocalHost();
-            tempName = localHost.getHostName();
-            tempAddress = localHost.getHostAddress();
-        } catch (UnknownHostException e) {
-            tempName = "Unknown-Host";
-            tempAddress = "Unknown-IP";
-        }
-        this.hostName = tempName;
-        this.hostAddress = tempAddress;
-
-        String jvmName = ManagementFactory.getRuntimeMXBean().getName();
-        this.processId = jvmName.contains("@") ? jvmName.split("@")[0] : jvmName;
-    }
+    // Matches "password"/"token"/"secret"/"apiKey"-style JSON keys (any case, optional
+    // separators) so credentials submitted to /api/auth/** never reach the DEBUG log,
+    // which is enabled by default for this package (see application.properties).
+    private static final Pattern SENSITIVE_JSON_FIELD = Pattern.compile(
+            "(?i)(\"[^\"]*(password|token|secret|apiKey)[^\"]*\"\\s*:\\s*)\"[^\"]*\"");
+    private static final String REDACTED_JSON_VALUE = "$1\"***REDACTED***\"";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -108,6 +91,7 @@ public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
             return "<empty>";
         }
         String compact = payload.replace("\n", " ").replace("\r", " ").trim();
+        compact = SENSITIVE_JSON_FIELD.matcher(compact).replaceAll(REDACTED_JSON_VALUE);
         if (compact.length() <= 220) {
             return compact;
         }

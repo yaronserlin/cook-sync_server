@@ -30,7 +30,6 @@ import com.cooksync_server.entities.Tag;
 import com.cooksync_server.entities.Unit;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
-import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.repositories.IngredientRepository;
 import com.cooksync_server.repositories.InstructionRepository;
 import com.cooksync_server.repositories.RecipeImageRepository;
@@ -130,9 +129,8 @@ public class RecipeService {
         User currentUser = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        if (!recipe.getCreatedBy().getId().equals(currentUser.getId()) && !currentUser.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to edit this recipe.");
-        }
+        OwnershipValidator.requireOwnerOrAdmin(recipe.getCreatedBy().getId(), currentUser,
+                "You are not allowed to edit this recipe.");
 
         recipe.setTitle(request.title());
         recipe.setDescription(request.description());
@@ -162,9 +160,8 @@ public class RecipeService {
         User currentUser = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        if (!recipe.getCreatedBy().getId().equals(currentUser.getId()) && !currentUser.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to delete this recipe.");
-        }
+        OwnershipValidator.requireOwnerOrAdmin(recipe.getCreatedBy().getId(), currentUser,
+                "You are not allowed to delete this recipe.");
 
         recipeRepository.delete(recipe);
     }
@@ -222,7 +219,7 @@ public class RecipeService {
                     .quantity(BigDecimal.valueOf(ingDto.quantity()))
                     .unit(unit)
                     .build();
-            ingredients.add(ingredient); // שמירה דרך CascadeType.ALL
+            ingredients.add(ingredient); // Persisted via the recipe's CascadeType.ALL, no explicit save needed here.
             if (ingDto.tmpId() != null) {
                 tmpIdToIngredient.put(ingDto.tmpId(), ingredient);
             }
@@ -252,7 +249,7 @@ public class RecipeService {
                     .timeSeconds(instDto.timeSeconds())
                     .ingredients(stepIngredients)
                     .build();
-            instructions.add(instruction); // שמירה דרך CascadeType.ALL
+            instructions.add(instruction); // Persisted via the recipe's CascadeType.ALL, no explicit save needed here.
         }
         return instructions;
     }

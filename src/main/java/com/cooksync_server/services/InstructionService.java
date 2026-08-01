@@ -10,7 +10,7 @@ import com.cooksync_server.entities.Instruction;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
-import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
+import com.cooksync_server.mappers.InstructionMapper;
 import com.cooksync_server.repositories.IngredientRepository;
 import com.cooksync_server.repositories.InstructionRepository;
 import com.cooksync_server.repositories.RecipeRepository;
@@ -40,10 +40,9 @@ public class InstructionService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // אימות הרשאות: רק יוצר המתכון או מנהל יכולים לשנות שלבים
-        if (!recipe.getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to modify this recipe.");
-        }
+        // Only the recipe's creator or an admin may change its steps.
+        OwnershipValidator.requireOwnerOrAdmin(recipe.getCreatedBy().getId(), user,
+                "You are not allowed to modify this recipe.");
 
         Instruction instruction = Instruction.builder()
                 .recipe(recipe)
@@ -55,7 +54,7 @@ public class InstructionService {
                 .ingredients(resolveIngredients(request.ingredientIds()))
                 .build();
 
-        return com.cooksync_server.mappers.InstructionMapper.toResponse(instructionRepository.save(instruction));
+        return InstructionMapper.toResponse(instructionRepository.save(instruction));
     }
 
     @Transactional
@@ -65,9 +64,8 @@ public class InstructionService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        if (!instruction.getRecipe().getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to modify this instruction.");
-        }
+        OwnershipValidator.requireOwnerOrAdmin(instruction.getRecipe().getCreatedBy().getId(), user,
+                "You are not allowed to modify this instruction.");
 
         instruction.setStepNumber(request.stepNumber());
         instruction.setDescription(request.description());
@@ -76,7 +74,7 @@ public class InstructionService {
         instruction.setImageUrl(request.imageUrl());
         instruction.setIngredients(resolveIngredients(request.ingredientIds()));
 
-        return com.cooksync_server.mappers.InstructionMapper.toResponse(instructionRepository.save(instruction));
+        return InstructionMapper.toResponse(instructionRepository.save(instruction));
     }
 
     @Transactional
@@ -86,9 +84,8 @@ public class InstructionService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        if (!instruction.getRecipe().getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to delete this instruction.");
-        }
+        OwnershipValidator.requireOwnerOrAdmin(instruction.getRecipe().getCreatedBy().getId(), user,
+                "You are not allowed to delete this instruction.");
 
         instructionRepository.delete(instruction);
     }

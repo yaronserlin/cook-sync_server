@@ -19,6 +19,7 @@ import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.mappers.AdminMapper;
 import com.cooksync_server.mappers.TagMapper;
+import com.cooksync_server.mappers.UserMapper;
 import com.cooksync_server.repositories.RecipeRepository;
 import com.cooksync_server.repositories.ReviewRepository;
 import com.cooksync_server.repositories.TagRepository;
@@ -56,7 +57,7 @@ public class AdminService {
     public PagedResponse<UserResponse> getAllUsers(int page, int size) {
         Page<User> result = userRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending()));
         List<UserResponse> content = result.getContent().stream()
-                .map(com.cooksync_server.mappers.UserMapper::toResponse)
+                .map(UserMapper::toResponse)
                 .collect(Collectors.toList());
         return new PagedResponse<>(content, result.getNumber(), result.getSize(),
                 result.getTotalElements(), result.getTotalPages(), result.isLast());

@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -27,6 +29,8 @@ import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     /**
      * Handles exceptions thrown when a requested resource cannot be found in
      * the system.
@@ -45,17 +49,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<ApiErrorResponse>> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse<>(false, null, new ApiErrorResponse(
-                        Instant.now(),
-                        HttpStatus.NOT_FOUND.value(),
-                        "Not Found",
-                        "RESOURCE_NOT_FOUND",
-                        ex.getMessage(),
-                        "",
-                        null
-                ), null
-                ));
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Not Found", "RESOURCE_NOT_FOUND", ex.getMessage());
     }
 
     /**
@@ -76,17 +70,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ResourceAllReadyExistsException.class)
     public ResponseEntity<ApiResponse<ApiErrorResponse>> handleResourceAlreadyExistsException(ResourceAllReadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(false, null, new ApiErrorResponse(
-                        Instant.now(),
-                        HttpStatus.CONFLICT.value(),
-                        "Conflict",
-                        "RESOURCE_ALREADY_EXISTS",
-                        ex.getMessage(),
-                        "",
-                        null
-                ), null
-                ));
+        return buildErrorResponse(HttpStatus.CONFLICT, "Conflict", "RESOURCE_ALREADY_EXISTS", ex.getMessage());
     }
 
     /**
@@ -106,17 +90,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity<ApiResponse<ApiErrorResponse>> handleUnauthorizedAction(UnauthorizedActionException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiResponse<>(false, null, new ApiErrorResponse(
-                        Instant.now(),
-                        HttpStatus.FORBIDDEN.value(),
-                        "Forbidden",
-                        "UNAUTHORIZED_ACTION",
-                        ex.getMessage(),
-                        "",
-                        null
-                ), null
-                ));
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "Forbidden", "UNAUTHORIZED_ACTION", ex.getMessage());
     }
 
     /**
@@ -135,17 +109,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiResponse<ApiErrorResponse>> handleInvalidCredentials(InvalidCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse<>(false, null, new ApiErrorResponse(
-                        Instant.now(),
-                        HttpStatus.UNAUTHORIZED.value(),
-                        "Unauthorized",
-                        "INVALID_CREDENTIALS",
-                        ex.getMessage(),
-                        "",
-                        null
-                ), null
-                ));
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", "INVALID_CREDENTIALS", ex.getMessage());
     }
 
     /**
@@ -165,17 +129,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<ApiErrorResponse>> handleUserAlreadyExists(UserAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(false, null, new ApiErrorResponse(
-                        Instant.now(),
-                        HttpStatus.CONFLICT.value(),
-                        "Conflict",
-                        "USER_ALREADY_EXISTS",
-                        ex.getMessage(),
-                        "",
-                        null
-                ), null
-                ));
+        return buildErrorResponse(HttpStatus.CONFLICT, "Conflict", "USER_ALREADY_EXISTS", ex.getMessage());
     }
 
     /**
@@ -233,15 +187,27 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<ApiErrorResponse>> handleGenericException(Exception ex) {
-        // System.err.println("Unhandled exception: " + ex.getMessage());
-        // ex.printStackTrace(); // Print the full stack trace for debugging purposes
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        // Logged at ERROR with the full stack trace since this branch only fires for
+        // exceptions no other handler recognized - the client only ever sees a generic
+        // message, so the server log is the only place this failure is diagnosable.
+        LOG.error("Unhandled exception reached GlobalExceptionHandler", ex);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "INTERNAL_SERVER_ERROR", ex.getMessage());
+    }
+
+    /**
+     * Shared by every handler above so the {@link ApiResponse}/{@link ApiErrorResponse}
+     * shape stays identical no matter which exception triggered it.
+     */
+    private ResponseEntity<ApiResponse<ApiErrorResponse>> buildErrorResponse(
+            HttpStatus status, String error, String errorCode, String message) {
+        return ResponseEntity.status(status)
                 .body(new ApiResponse<>(false, null, new ApiErrorResponse(
                         Instant.now(),
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        "Internal Server Error",
-                        "INTERNAL_SERVER_ERROR",
-                        ex.getMessage(),
+                        status.value(),
+                        error,
+                        errorCode,
+                        message,
                         "",
                         null
                 ), null));

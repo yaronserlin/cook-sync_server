@@ -41,7 +41,7 @@ public class PersonalInstructionNote {
     private Recipe recipe;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "instruction_id") // שדה אופציונלי לשלב ספציפי [cite: 116]
+    @JoinColumn(name = "instruction_id")
     private Instruction instruction;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -64,17 +64,16 @@ public class PersonalInstructionNote {
         updatedAt = LocalDateTime.now();
     }
 
-    public void setInstructionId(Object object) {
-        // null clears the association, representing a whole-recipe (general) note.
-        if (object == null) {
+    /**
+     * Rebuilds the association from just an id, without a round trip to the DB.
+     * A null id clears the association, representing a whole-recipe (general) note.
+     */
+    public void setInstructionId(String instructionId) {
+        if (instructionId == null) {
             this.instruction = null;
-        } else if (object instanceof String) {
-            this.instruction = new Instruction();
-            this.instruction.setId((String) object);
-        } else if (object instanceof Instruction) {
-            this.instruction = (Instruction) object;
         } else {
-            throw new IllegalArgumentException("Invalid type for instruction ID");
+            this.instruction = new Instruction();
+            this.instruction.setId(instructionId);
         }
     }
 }

@@ -12,8 +12,8 @@ public final class UserMapper {
         if (u == null) {
             return null;
         }
-        String created = u.getCreatedAt() == null ? null : u.getCreatedAt().toString();
-        String updated = u.getUpdatedAt() == null ? null : u.getUpdatedAt().toString();
+        String created = MapperUtils.toIsoStringOrNull(u.getCreatedAt());
+        String updated = MapperUtils.toIsoStringOrNull(u.getUpdatedAt());
         return new UserResponse(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail(), u.isAdmin(), u.getAvatarUrl(), created, updated, u.isEnabled());
     }
 }

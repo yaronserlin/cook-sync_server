@@ -66,6 +66,10 @@ public class DataSeeder implements CommandLineRunner {
         logger.info(">>> Clearing existing database data...");
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
 
+        // Table identifiers can't be bound as PreparedStatement parameters, so this stays
+        // string concatenation - it's safe only because `tables` is this fixed, compile-time
+        // constant list, never user/request input, and this code path never runs outside
+        // the "seed" profile.
         String[] tables = {
                 "users", "recipes", "units", "ingredients", "instructions",
                 "instruction_ingredients", "reviews", "favorite_recipes",

@@ -1,7 +1,6 @@
 package com.cooksync_server.services;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +10,7 @@ import com.dtos.response.tags.TagResponse;
 import com.cooksync_server.entities.Tag;
 import com.cooksync_server.exceptions.ResourceAllReadyExistsException;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
+import com.cooksync_server.mappers.TagMapper;
 import com.cooksync_server.repositories.TagRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -22,13 +22,13 @@ public class TagService {
     private final TagRepository tagRepository;
 
     public List<TagResponse> getAllTags() {
-        return tagRepository.findAll().stream().map(com.cooksync_server.mappers.TagMapper::toResponse).toList();
+        return tagRepository.findAll().stream().map(TagMapper::toResponse).toList();
     }
 
     public TagResponse getTagById(String id) {
         Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag", id));
-        return com.cooksync_server.mappers.TagMapper.toResponse(tag);
+        return TagMapper.toResponse(tag);
     }
 
     /**
@@ -41,25 +41,21 @@ public class TagService {
     public TagResponse getOrCreateTag(TagRequestDTO request) {
         String formattedName = request.name().trim().toLowerCase();
         return tagRepository.findByNameIgnoreCase(formattedName)
-                .map(com.cooksync_server.mappers.TagMapper::toResponse)
-                .orElseGet(() -> com.cooksync_server.mappers.TagMapper.toResponse(
+                .map(TagMapper::toResponse)
+                .orElseGet(() -> TagMapper.toResponse(
                         tagRepository.save(Tag.builder().name(formattedName).build())));
     }
 
     @Transactional
     public TagResponse createTag(TagRequestDTO request) {
         String formattedName = request.name().trim().toLowerCase();
-
-        Optional<Tag> existingTag = tagRepository.findByNameIgnoreCase(formattedName);
-        if (existingTag.isPresent()) {
-            throw new ResourceAllReadyExistsException("Tag: '" + formattedName + "'", existingTag.get().getId());
-        }
+        ensureNameAvailable(formattedName, null);
 
         Tag newTag = Tag.builder()
                 .name(formattedName)
                 .build();
 
-        return com.cooksync_server.mappers.TagMapper.toResponse(tagRepository.save(newTag));
+        return TagMapper.toResponse(tagRepository.save(newTag));
     }
 
     @Transactional
@@ -68,14 +64,10 @@ public class TagService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tag", id));
 
         String formattedName = request.name().trim().toLowerCase();
-
-        Optional<Tag> existingTag = tagRepository.findByNameIgnoreCase(formattedName);
-        if (existingTag.isPresent() && !existingTag.get().getId().equals(id)) {
-            throw new ResourceAllReadyExistsException("Tag: '" + formattedName + "'", existingTag.get().getId());
-        }
+        ensureNameAvailable(formattedName, id);
 
         tag.setName(formattedName);
-        return com.cooksync_server.mappers.TagMapper.toResponse(tagRepository.save(tag));
+        return TagMapper.toResponse(tagRepository.save(tag));
     }
 
     @Transactional
@@ -83,5 +75,18 @@ public class TagService {
         Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag", id));
         tagRepository.delete(tag);
+    }
+
+    /**
+     * Shared by {@link #createTag} and {@link #updateTag}: rejects a name that
+     * collides (case-insensitively) with another tag. {@code excludeId} lets an
+     * update keep its own current name without tripping over itself.
+     */
+    private void ensureNameAvailable(String formattedName, String excludeId) {
+        tagRepository.findByNameIgnoreCase(formattedName)
+                .filter(existing -> excludeId == null || !existing.getId().equals(excludeId))
+                .ifPresent(existing -> {
+                    throw new ResourceAllReadyExistsException("Tag: '" + formattedName + "'", existing.getId());
+                });
     }
 }

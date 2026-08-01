@@ -21,10 +21,10 @@ public class Instruction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id", nullable = false)
     @com.fasterxml.jackson.annotation.JsonIgnore
-    private Recipe recipe; //[cite: 88]
+    private Recipe recipe;
 
     @Column(name = "step_number", nullable = false)
-    private int stepNumber; // המספר הסידורי של השלב [cite: 89]
+    private int stepNumber;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
@@ -33,23 +33,23 @@ public class Instruction {
     private String imageUrl;
 
     @Column(name = "has_timer", nullable = false)
-    private boolean hasTimer = false;// [cite: 92]
+    private boolean hasTimer = false;
 
     @Column(name = "time_seconds")
-    private Integer timeSeconds; // משך הזמן בשניות, במידה ויש טיימר [cite: 92]
+    private Integer timeSeconds;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;// [cite: 93]
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;// [cite: 93]
+    private LocalDateTime updatedAt;
 
-    // קישור למצרכים הרלוונטיים לשלב זה (טבלת גישור instruction_ingredients)
+    // Junction table linking this step to the ingredients it uses.
     @ManyToMany
     @JoinTable(
             name = "instruction_ingredients",
-            joinColumns = @JoinColumn(name = "instruction_id"),// [cite: 97]
-            inverseJoinColumns = @JoinColumn(name = "ingredient_id") // [cite: 98]
+            joinColumns = @JoinColumn(name = "instruction_id"),
+            inverseJoinColumns = @JoinColumn(name = "ingredient_id")
     )
     private Set<Ingredient> ingredients;
 

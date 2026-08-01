@@ -15,7 +15,6 @@ import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.Review;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
-import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.mappers.ReviewMapper;
 import com.cooksync_server.repositories.RecipeRepository;
 import com.cooksync_server.repositories.ReviewRepository;
@@ -77,9 +76,8 @@ public class ReviewService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
         // Only the review author or an admin can delete a review
-        if (!review.getUser().getId().equals(currentUser.getId()) && !currentUser.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to delete this review.");
-        }
+        OwnershipValidator.requireOwnerOrAdmin(review.getUser().getId(), currentUser,
+                "You are not allowed to delete this review.");
 
         Recipe recipe = review.getRecipe();
         recipe.setReviewCount(Math.max(0, recipe.getReviewCount() - 1));

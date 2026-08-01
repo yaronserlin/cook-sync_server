@@ -29,18 +29,18 @@ public class Ingredient {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id; // 
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id", nullable = false)
     @JsonIgnore
-    private Recipe recipe; // [cite: 82]
+    private Recipe recipe;
 
     @Column(nullable = false, length = 255)
-    private String name; // [cite: 84]
+    private String name;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal quantity; // [cite: 84]
+    private BigDecimal quantity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "unit_id", nullable = false)

@@ -12,8 +12,8 @@ public final class TagMapper {
         if (t == null) {
             return null;
         }
-        String created = t.getCreatedAt() == null ? null : t.getCreatedAt().toString();
-        String updated = t.getUpdatedAt() == null ? null : t.getUpdatedAt().toString();
+        String created = MapperUtils.toIsoStringOrNull(t.getCreatedAt());
+        String updated = MapperUtils.toIsoStringOrNull(t.getUpdatedAt());
         return new TagResponse(t.getId(), t.getName(), created, updated);
     }
 }

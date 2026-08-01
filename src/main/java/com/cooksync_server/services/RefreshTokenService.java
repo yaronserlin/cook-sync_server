@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cooksync_server.entities.RefreshToken;
+import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.repositories.RefreshTokenRepository;
 import com.cooksync_server.repositories.UserRepository;
@@ -19,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
-    @Value("${jwt.refreshExpirationMs:604800000}") // ברירת מחדל: 7 ימים
+    @Value("${jwt.refreshExpirationMs:604800000}") // Default: 7 days
     private Long refreshTokenDurationMs;
 
     private final RefreshTokenRepository refreshTokenRepository;
@@ -31,11 +32,12 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken createRefreshToken(String userId) {
-        // מחיקת טוקנים ישנים כדי לשמור על סשן יחיד (אופציונלי, מגביר אבטחה)
+        // Clear any previous token so a user only ever has one active session.
         refreshTokenRepository.deleteByUserId(userId);
 
         RefreshToken refreshToken = RefreshToken.builder()
-                .user(userRepository.findById(userId).orElseThrow())
+                .user(userRepository.findById(userId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User", userId)))
                 .token(UUID.randomUUID().toString())
                 .expiryDate(Instant.now().plusMillis(refreshTokenDurationMs))
                 .build();

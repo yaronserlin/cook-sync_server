@@ -34,23 +34,23 @@ public class Tag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id; // [cite: 120]
+    private String id;
 
     @Column(nullable = false, unique = true, length = 100)
-    private String name; // [cite: 120]
+    private String name;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // [cite: 121]
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt; // [cite: 121]
+    private LocalDateTime updatedAt;
 
     @JsonIgnore
     @ManyToMany
     @JoinTable(
-            name = "recipe_tags", // 
-            joinColumns = @JoinColumn(name = "tag_id"), // [cite: 125]
-            inverseJoinColumns = @JoinColumn(name = "recipe_id") // [cite: 125]
+            name = "recipe_tags",
+            joinColumns = @JoinColumn(name = "tag_id"),
+            inverseJoinColumns = @JoinColumn(name = "recipe_id")
     )
     @Builder.Default
     private Set<Recipe> recipes = new HashSet<>();

@@ -12,7 +12,7 @@ import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.Unit;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
-import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
+import com.cooksync_server.mappers.IngredientMapper;
 import com.cooksync_server.repositories.IngredientRepository;
 import com.cooksync_server.repositories.RecipeRepository;
 import com.cooksync_server.repositories.UnitRepository;
@@ -36,10 +36,9 @@ public class IngredientService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // אימות הרשאות: רק יוצר המתכון או מנהל יכולים להוסיף מצרכים
-        if (!recipe.getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to modify this recipe's ingredients.");
-        }
+        // Only the recipe's creator or an admin may add ingredients to it.
+        OwnershipValidator.requireOwnerOrAdmin(recipe.getCreatedBy().getId(), user,
+                "You are not allowed to modify this recipe's ingredients.");
 
         Unit unit = unitRepository.findById(request.unitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Unit", request.unitId()));
@@ -51,7 +50,7 @@ public class IngredientService {
                 .unit(unit)
                 .build();
 
-        return com.cooksync_server.mappers.IngredientMapper.toResponse(ingredientRepository.save(ingredient));
+        return IngredientMapper.toResponse(ingredientRepository.save(ingredient));
     }
 
     @Transactional
@@ -61,10 +60,9 @@ public class IngredientService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // אימות הרשאות באמצעות הגישה למתכון אליו שייך המצרך
-        if (!ingredient.getRecipe().getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to modify this ingredient.");
-        }
+        // Authorization is derived from the parent recipe's owner.
+        OwnershipValidator.requireOwnerOrAdmin(ingredient.getRecipe().getCreatedBy().getId(), user,
+                "You are not allowed to modify this ingredient.");
 
         Unit unit = unitRepository.findById(request.unitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Unit", request.unitId()));
@@ -73,7 +71,7 @@ public class IngredientService {
         ingredient.setQuantity(BigDecimal.valueOf(request.quantity()));
         ingredient.setUnit(unit);
 
-        return com.cooksync_server.mappers.IngredientMapper.toResponse(ingredientRepository.save(ingredient));
+        return IngredientMapper.toResponse(ingredientRepository.save(ingredient));
     }
 
     @Transactional
@@ -83,9 +81,8 @@ public class IngredientService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        if (!ingredient.getRecipe().getCreatedBy().getId().equals(user.getId()) && !user.isAdmin()) {
-            throw new UnauthorizedActionException("You are not allowed to delete this ingredient.");
-        }
+        OwnershipValidator.requireOwnerOrAdmin(ingredient.getRecipe().getCreatedBy().getId(), user,
+                "You are not allowed to delete this ingredient.");
 
         ingredientRepository.delete(ingredient);
     }

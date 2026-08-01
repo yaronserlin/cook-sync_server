@@ -15,8 +15,8 @@ public final class ReviewMapper {
         String userId = r.getUser() == null ? null : r.getUser().getId();
         String authorName = r.getUser() == null ? null : r.getUser().getFirstName() + " " + r.getUser().getLastName();
         String recipeId = r.getRecipe() == null ? null : r.getRecipe().getId();
-        String created = r.getCreatedAt() == null ? null : r.getCreatedAt().toString();
-        String updated = r.getUpdatedAt() == null ? null : r.getUpdatedAt().toString();
+        String created = MapperUtils.toIsoStringOrNull(r.getCreatedAt());
+        String updated = MapperUtils.toIsoStringOrNull(r.getUpdatedAt());
         return new ReviewResponse(r.getId(), userId, authorName, recipeId, r.getRating(), r.getTitle(), r.getComment(), created, updated);
     }
 }

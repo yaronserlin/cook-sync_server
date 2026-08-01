@@ -1,6 +1,7 @@
 package com.cooksync_server.services;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -8,9 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.dtos.response.recipe.RecipePreviewResponse;
 import com.cooksync_server.entities.FavoriteRecipe;
+import com.cooksync_server.entities.PersonalInstructionNote;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
+import com.cooksync_server.mappers.RecipeMapper;
 import com.cooksync_server.repositories.FavoriteRecipeRepository;
 import com.cooksync_server.repositories.PersonalInstructionNoteRepository;
 import com.cooksync_server.repositories.RecipeRepository;
@@ -57,15 +60,13 @@ public class FavoriteService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
+        // A single lookup per favorite (rather than an exists-check plus a separate
+        // fetch) halves the query count against personal_instruction_notes here.
         return favoriteRepository.findByUserId(user.getId()).stream()
                 .map(fav -> {
-                    boolean hasNote = personalInstructionNoteRepository
-                            .existsByUserIdAndRecipeId(user.getId(), fav.getRecipe().getId());
-                    String noteText = personalInstructionNoteRepository
-                            .findByUserIdAndRecipeIdAndInstructionIdIsNull(user.getId(), fav.getRecipe().getId())
-                            .map(com.cooksync_server.entities.PersonalInstructionNote::getNote)
-                            .orElse(null);
-                    return com.cooksync_server.mappers.RecipeMapper.toPreview(fav.getRecipe(), hasNote, noteText);
+                    Optional<PersonalInstructionNote> note = personalInstructionNoteRepository
+                            .findByUserIdAndRecipeIdAndInstructionIdIsNull(user.getId(), fav.getRecipe().getId());
+                    return RecipeMapper.toPreview(fav.getRecipe(), note.isPresent(), note.map(PersonalInstructionNote::getNote).orElse(null));
                 })
                 .collect(Collectors.toList());
     }

@@ -100,7 +100,8 @@ public class AuthService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // אנו מחזירים תשובה ללא טוקנים חדשים, רק כדי לאשר שהטוקן הקיים תקין ולהחזיר פרטי משתמש
+        // No new tokens are issued here — this endpoint only confirms the caller's
+        // existing token is still valid and returns the current user details.
         return new AuthResponse(null, null, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin(), user.getAvatarUrl());
     }
 
