@@ -103,13 +103,24 @@ public class DataSeeder implements CommandLineRunner {
                 Tag.builder().name("gluten-free").build(),
                 Tag.builder().name("high-protein").build(),
                 Tag.builder().name("comfort-food").build(),
-                Tag.builder().name("spicy").build()
+                Tag.builder().name("spicy").build(),
+                // Intentional near-duplicates so the admin console's tag-merge
+                // screen has more cases to show out of the box, without
+                // risking a case-insensitive unique collision at the DB
+                // collation level.
+                Tag.builder().name("gluten free").build(),
+                Tag.builder().name("high protein").build(),
+                Tag.builder().name("comfort food").build()
         ));
     }
 
     private List<User> seedUsers() {
         logger.info(">>> Seeding users...");
         return userRepository.saveAll(List.of(
+                User.builder().firstName("Yaron").lastName("Serlin").email("yaron@gmail.com")
+                        .passwordHash(passwordEncoder.encode("123456aA!")).isAdmin(true)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
                 User.builder().firstName("Admin").lastName("User").email("admin@cooksync.com")
                         .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(true)
                         .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
@@ -133,6 +144,250 @@ public class DataSeeder implements CommandLineRunner {
                 User.builder().firstName("Eli").lastName("Sharon").email("eli@cooksync.com")
                         .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
                         .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Ari").lastName("Levy").email("ari@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Noa").lastName("Aviv").email("noa@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Lior").lastName("Ben").email("lior@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Dana").lastName("Mor").email("dana@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Guy").lastName("Eldar").email("guy@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Eden").lastName("Nir").email("eden@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Yossi").lastName("Amit").email("yossi@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Neta").lastName("Carmi").email("neta@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Tamar").lastName("Barak").email("tamar@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Omer").lastName("Gal").email("omer@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Moran").lastName("Sofer").email("moran@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Roni").lastName("Tzur").email("roni@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Shira").lastName("Tal").email("shira@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Itay").lastName("Peretz").email("itay@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Or").lastName("Levi").email("or@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Nir").lastName("Dayan").email("nir@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Tal").lastName("Eden").email("tal@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Hadar").lastName("Barzilai").email("hadar@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Liat").lastName("Ashkenazi").email("liat@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Yael").lastName("Rosen").email("yael@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Eyal").lastName("Shapira").email("eyal@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Orly").lastName("Ben-Ami").email("orly@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Eitan").lastName("Galili").email("eitan@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Sigal").lastName("Golan").email("sigal@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Yarden").lastName("Baron").email("yarden@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Gal").lastName("Eisen").email("gal@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Mika").lastName("Tamar").email("mika@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Amit").lastName("Klein").email("amit@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Roni").lastName("Tamar").email("roni.tamar@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Noa").lastName("Erez").email("noa.erez@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Itai").lastName("Regev").email("itai@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Nava").lastName("Shapira").email("nava@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Rafael").lastName("Azar").email("rafael@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Talia").lastName("Mor").email("talia@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Yonatan").lastName("Katz").email("yonatan@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Lina").lastName("Yaari").email("lina@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Dvir").lastName("Nadav").email("dvir@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Michal").lastName("Keren").email("michal@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Ziv").lastName("Tal").email("ziv@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Shai").lastName("Ben-David").email("shai@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Oran").lastName("Shlomo").email("oran@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Rina").lastName("Cohen").email("rina@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Elad").lastName("Hadar").email("elad@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Galit").lastName("Levi").email("galit@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Eran").lastName("Amit").email("eran@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Maya").lastName("Einav").email("maya.einav@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Efrat").lastName("Avraham").email("efrat@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Omri").lastName("Shemesh").email("omri@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Liel").lastName("Eliav").email("liel@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Zara").lastName("Mendel").email("zara@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Oded").lastName("Yosef").email("oded@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Tzvi").lastName("Maimon").email("tzvi@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Noya").lastName("Giladi").email("noya@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Gili").lastName("Nissan").email("gili@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Ely").lastName("Oz").email("ely@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Rina").lastName("Hadad").email("rina.hadad@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Asaf").lastName("Paz").email("asaf@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Adva").lastName("Ravid").email("adva@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Aviv").lastName("Gazit").email("aviv@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Miri").lastName("Azoulay").email("miri@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80")
+                        .build(),
+                User.builder().firstName("Dean").lastName("Dahan").email("dean@cooksync.com")
+                        .passwordHash(passwordEncoder.encode("Password123!")).isAdmin(false)
+                        .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
                         .build()
         ));
     }
@@ -283,7 +538,70 @@ public class DataSeeder implements CommandLineRunner {
                 )
         );
 
-        return recipeRepository.saveAll(List.of(salad, pasta, pancakes, bowl, soup, dessert));
+        List<Recipe> baseRecipes = List.of(salad, pasta, pancakes, bowl, soup, dessert);
+        List<Recipe> allRecipes = new ArrayList<>(baseRecipes);
+        allRecipes.addAll(generateAdditionalRecipes(100, users, units, tags, baseRecipes.size() + 1));
+        return recipeRepository.saveAll(allRecipes);
+    }
+
+    private List<Recipe> generateAdditionalRecipes(int count, List<User> users, List<Unit> units, List<Tag> tags,
+                                                   int startingIndex) {
+        User chef = users.stream().filter(User::isAdmin).findFirst().orElse(users.get(0));
+        List<Recipe> generated = new ArrayList<>(count);
+        String[] dishTypes = {"Stew", "Salad", "Pasta", "Bowl", "Wrap", "Soup", "Casserole", "Stir Fry", "Skewers", "Taco"};
+        String[] descriptors = {"Garden", "Autumn", "Sunrise", "Harvest", "Spicy", "Creamy", "Golden", "Fresh", "Tangy", "Cozy"};
+        String[] ingredientBases = {"Carrot", "Potato", "Pea", "Bean", "Mushroom", "Zucchini", "Spinach", "Bell pepper", "Corn", "Beet"};
+        String[] instructionTexts = {
+                "Prepare the ingredients and chop them as needed.",
+                "Cook the mixture with oil and seasonings until tender.",
+                "Serve warm and enjoy."
+        };
+
+        for (int i = 0; i < count; i++) {
+            int index = startingIndex + i;
+            String title = String.format("%s %s %d", descriptors[i % descriptors.length], dishTypes[i % dishTypes.length], index);
+            String description = String.format("A %s recipe with simple ingredients and satisfying flavors.", descriptors[i % descriptors.length].toLowerCase());
+            Recipe.Difficulty difficulty = Recipe.Difficulty.values()[i % Recipe.Difficulty.values().length];
+            int prepTime = 5 + (i % 5) * 5;
+            int cookTime = ((i + 1) % 4) * 10;
+            int servings = 2 + (i % 4);
+            User creator = (i % 2 == 0) ? chef : users.get((i % users.size()));
+
+            List<Tag> recipeTags = List.of(
+                    tags.get(i % tags.size()),
+                    tags.get((i + 1) % tags.size()),
+                    tags.get((i + 2) % tags.size())
+            );
+
+            List<Ingredient> recipeIngredients = new ArrayList<>();
+            for (int j = 0; j < 3; j++) {
+                String ingredientName = String.format("%s %s", ingredientBases[(i + j) % ingredientBases.length],
+                        j == 0 ? "mix" : j == 1 ? "blend" : "piece");
+                BigDecimal quantity = BigDecimal.valueOf(1 + (j * 100) + (i % 5) * 10);
+                Unit unit = units.get((i + j) % units.size());
+                recipeIngredients.add(createIngredient(ingredientName, quantity, unit, null));
+            }
+
+            List<Instruction> recipeInstructions = new ArrayList<>();
+            for (int j = 0; j < 3; j++) {
+                List<Ingredient> linkedIngredients = new ArrayList<>();
+                if (j == 0) {
+                    linkedIngredients.add(recipeIngredients.get(0));
+                } else if (j == 1) {
+                    linkedIngredients.add(recipeIngredients.get(1));
+                    linkedIngredients.add(recipeIngredients.get(2));
+                }
+                Integer timeSeconds = (j == 1 && cookTime > 0) ? cookTime * 60 : null;
+                boolean hasTimer = timeSeconds != null;
+                recipeInstructions.add(createInstruction(j + 1, instructionTexts[j], hasTimer, timeSeconds, linkedIngredients));
+            }
+
+            Recipe recipe = createRecipe(title, description, difficulty, prepTime, cookTime, servings,
+                    creator, recipeTags, recipeIngredients, recipeInstructions);
+            generated.add(recipe);
+        }
+
+        return generated;
     }
 
     private Recipe createRecipe(String title, String description, Recipe.Difficulty difficulty, int prepTime,
@@ -345,19 +663,107 @@ public class DataSeeder implements CommandLineRunner {
         List<Review> reviews = new ArrayList<>();
         for (int i = 0; i < recipes.size(); i++) {
             Recipe recipe = recipes.get(i);
-            User reviewer = users.get((i % (users.size() - 1)) + 1);
+            User primaryReviewer = users.get((i % (users.size() - 1)) + 1);
             reviews.add(Review.builder()
                     .recipe(recipe)
-                    .user(reviewer)
+                    .user(primaryReviewer)
                     .rating(BigDecimal.valueOf(4.5 + (i % 3) * 0.5))
                     .title("Great recipe")
                     .comment("This was easy to follow and turned out really well.")
                     .build());
+
+            User secondaryReviewer = users.get(((i + 2) % (users.size() - 1)) + 1);
+            reviews.add(Review.builder()
+                    .recipe(recipe)
+                    .user(secondaryReviewer)
+                    .rating(BigDecimal.valueOf(4.0 + (i % 2) * 0.5))
+                    .title("Tasty and simple")
+                    .comment("I enjoyed this version and will make it again.")
+                    .build());
         }
-        reviewRepository.saveAll(reviews);
+
+        // A few reported reviews so the admin moderation queue isn't empty and
+        // multiple users show up as reporters.
+        if (recipes.size() >= 4) {
+            reviews.add(Review.builder()
+                    .recipe(recipes.get(0))
+                    .user(users.get(users.size() - 1))
+                    .rating(BigDecimal.valueOf(1.0))
+                    .title("Not related")
+                    .comment("Buy cheap kitchenware at this link, best prices anywhere, click now.")
+                    .reported(true)
+                    .reportReason(Review.ReportReason.SPAM)
+                    .reportedAt(java.time.LocalDateTime.now())
+                    .build());
+            reviews.add(Review.builder()
+                    .recipe(recipes.get(1))
+                    .user(users.get(users.size() - 2))
+                    .rating(BigDecimal.valueOf(1.0))
+                    .title("Rude")
+                    .comment("Whoever wrote this should not be allowed near an oven, absolute rubbish.")
+                    .reported(true)
+                    .reportReason(Review.ReportReason.ABUSE)
+                    .reportedAt(java.time.LocalDateTime.now())
+                    .build());
+            reviews.add(Review.builder()
+                    .recipe(recipes.get(2))
+                    .user(users.get(users.size() - 3))
+                    .rating(BigDecimal.valueOf(1.5))
+                    .title("Off topic")
+                    .comment("This content does not belong in a recipe review and should be removed.")
+                    .reported(true)
+                    .reportReason(Review.ReportReason.SPAM)
+                    .reportedAt(java.time.LocalDateTime.now())
+                    .build());
+            reviews.add(Review.builder()
+                    .recipe(recipes.get(3))
+                    .user(users.get(users.size() - 4))
+                    .rating(BigDecimal.valueOf(1.0))
+                    .title("Inappropriate")
+                    .comment("This review is inappropriate and unrelated to the recipe instructions.")
+                    .reported(true)
+                    .reportReason(Review.ReportReason.ABUSE)
+                    .reportedAt(java.time.LocalDateTime.now())
+                    .build());
+        }
+
+                // Add 50 additional comment-style reviews per recipe to populate UI
+                for (int i = 0; i < recipes.size(); i++) {
+                        Recipe recipe = recipes.get(i);
+                        for (int c = 0; c < 50; c++) {
+                                User commenter = users.get((i + c) % users.size());
+                                double randRating = Math.round(java.util.concurrent.ThreadLocalRandom.current().nextDouble(1.0, 5.0) * 10.0) / 10.0;
+                                String[] sampleComments = new String[]{
+                                        "Loved the balance of flavors, will make again!",
+                                        "Turned out great but I added a bit more salt than the recipe called for.",
+                                        "Easy to follow and perfect for a weeknight dinner.",
+                                        "Family enjoyed it — next time I'll double the sauce.",
+                                        "Recipe is good, I swapped one ingredient and it still worked well.",
+                                        "A little spicy for my taste, but still delicious.",
+                                        "Quick to prepare and packed with flavor.",
+                                        "Great texture, though I baked it a few minutes longer.",
+                                        "Perfect comfort food — will save this one.",
+                                        "Simple, fresh, and satisfying. Recommended!"
+                                };
+                                String commentText = String.format("%s (Comment %d for %s) — %s",
+                                        sampleComments[c % sampleComments.length], c + 1, recipe.getTitle(), commenter.getFirstName());
+                                reviews.add(Review.builder()
+                                                .recipe(recipe)
+                                                .user(commenter)
+                                                .rating(BigDecimal.valueOf(randRating))
+                                                .title("Comment")
+                                                .comment(commentText)
+                                                .build());
+                        }
+                }
+
+                reviewRepository.saveAll(reviews);
 
         for (Recipe recipe : recipes) {
-            recipe.setReviewCount((int) reviewRepository.findByRecipeIdOrderByCreatedAtDesc(recipe.getId()).size());
+            List<Review> recipeReviews = reviewRepository.findByRecipeIdOrderByCreatedAtDesc(recipe.getId());
+            recipe.setReviewCount(recipeReviews.size());
+            recipe.setAverageRating(recipeReviews.isEmpty() ? null
+                    : recipeReviews.stream().mapToDouble(r -> r.getRating().doubleValue()).average().orElse(0.0));
         }
         recipeRepository.saveAll(recipes);
     }

@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -50,6 +52,17 @@ public class Review {
     @Column(columnDefinition = "TEXT")
     private String comment;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean reported = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "report_reason")
+    private ReportReason reportReason;
+
+    @Column(name = "reported_at")
+    private LocalDateTime reportedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -65,5 +78,9 @@ public class Review {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public enum ReportReason {
+        SPAM, ABUSE, OFF_TOPIC
     }
 }

@@ -12,6 +12,7 @@ import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.repositories.FavoriteRecipeRepository;
+import com.cooksync_server.repositories.PersonalInstructionNoteRepository;
 import com.cooksync_server.repositories.RecipeRepository;
 import com.cooksync_server.repositories.UserRepository;
 
@@ -24,6 +25,7 @@ public class FavoriteService {
     private final FavoriteRecipeRepository favoriteRepository;
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
+    private final PersonalInstructionNoteRepository personalInstructionNoteRepository;
 
     @Transactional
     public void addFavorite(String recipeId, String userEmail) {
@@ -56,7 +58,15 @@ public class FavoriteService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
         return favoriteRepository.findByUserId(user.getId()).stream()
-                .map(fav -> com.cooksync_server.mappers.RecipeMapper.toPreview(fav.getRecipe()))
+                .map(fav -> {
+                    boolean hasNote = personalInstructionNoteRepository
+                            .existsByUserIdAndRecipeId(user.getId(), fav.getRecipe().getId());
+                    String noteText = personalInstructionNoteRepository
+                            .findByUserIdAndRecipeIdAndInstructionIdIsNull(user.getId(), fav.getRecipe().getId())
+                            .map(com.cooksync_server.entities.PersonalInstructionNote::getNote)
+                            .orElse(null);
+                    return com.cooksync_server.mappers.RecipeMapper.toPreview(fav.getRecipe(), hasNote, noteText);
+                })
                 .collect(Collectors.toList());
     }
 }

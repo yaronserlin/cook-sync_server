@@ -3,6 +3,7 @@ package com.cooksync_server.controllers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cooksync_server.services.AuthService;
 import com.dtos.request.auth.AvatarUpdateRequestDTO;
 import com.dtos.request.auth.LoginRequestDTO;
+import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
 import com.dtos.request.auth.TokenRefreshRequestDTO;
 import com.dtos.response.ApiResponse;
@@ -70,5 +72,19 @@ public class AuthController {
         String userEmail = authentication.getName();
         authService.updateAvatar(userEmail, request.avatarUrl());
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Avatar updated successfully"));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<Void>> updateProfile(
+            @Valid @RequestBody ProfileUpdateRequestDTO request,
+            Authentication authentication) {
+        authService.updateProfile(authentication.getName(), request);
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Profile updated successfully"));
+    }
+
+    @PatchMapping("/deactivate")
+    public ResponseEntity<ApiResponse<Void>> deactivateAccount(Authentication authentication) {
+        authService.deactivateAccount(authentication.getName());
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Account deactivated"));
     }
 }

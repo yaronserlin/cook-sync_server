@@ -44,10 +44,12 @@ public final class RecipeMapper {
                 r.getTitle(),
                 r.getDescription(),
                 r.getDifficulty() == null ? null : r.getDifficulty().name(),
+                r.getVisibility() == null ? null : r.getVisibility().name(),
                 r.getPrepTimeMinutes(),
                 r.getCookTimeMinutes(),
                 r.getServings(),
                 r.getReviewCount(),
+                r.getAverageRating(),
                 reviews,
                 created,
                 updated,
@@ -60,6 +62,14 @@ public final class RecipeMapper {
     }
 
     public static com.dtos.response.recipe.RecipePreviewResponse toPreview(Recipe r) {
+        return toPreview(r, false, null);
+    }
+
+    public static com.dtos.response.recipe.RecipePreviewResponse toPreview(Recipe r, boolean hasPersonalNote) {
+        return toPreview(r, hasPersonalNote, null);
+    }
+
+    public static com.dtos.response.recipe.RecipePreviewResponse toPreview(Recipe r, boolean hasPersonalNote, String personalNoteText) {
         if (r == null) {
             return null;
         }
@@ -77,12 +87,16 @@ public final class RecipeMapper {
                 r.getTitle(),
                 r.getDescription(),
                 r.getDifficulty() == null ? null : r.getDifficulty().name(),
+                r.getVisibility() == null ? null : r.getVisibility().name(),
                 r.getPrepTimeMinutes(),
                 r.getCookTimeMinutes(),
                 r.getReviewCount(),
+                r.getAverageRating(),
                 created,
                 tags,
-                primaryImageUrl
+                primaryImageUrl,
+                hasPersonalNote,
+                personalNoteText
         );
     }
 }

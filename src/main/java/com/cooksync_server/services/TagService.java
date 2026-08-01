@@ -31,6 +31,21 @@ public class TagService {
         return com.cooksync_server.mappers.TagMapper.toResponse(tag);
     }
 
+    /**
+     * Used by the "create a tag on the fly" flow in the recipe wizard: unlike
+     * {@link #createTag}, an existing tag with the same (normalized) name is
+     * treated as success rather than a conflict, since the user just wants a
+     * tag they can attach to the recipe — not to be told it already exists.
+     */
+    @Transactional
+    public TagResponse getOrCreateTag(TagRequestDTO request) {
+        String formattedName = request.name().trim().toLowerCase();
+        return tagRepository.findByNameIgnoreCase(formattedName)
+                .map(com.cooksync_server.mappers.TagMapper::toResponse)
+                .orElseGet(() -> com.cooksync_server.mappers.TagMapper.toResponse(
+                        tagRepository.save(Tag.builder().name(formattedName).build())));
+    }
+
     @Transactional
     public TagResponse createTag(TagRequestDTO request) {
         String formattedName = request.name().trim().toLowerCase();

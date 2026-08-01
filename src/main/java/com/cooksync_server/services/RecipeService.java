@@ -10,12 +10,16 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dtos.request.ingredient.IngredientRequestDTO;
 import com.dtos.request.instruction.InstructionRequestDTO;
 import com.dtos.request.recipe.RecipeCreateRequestDTO;
+import com.dtos.response.PagedResponse;
 import com.dtos.response.recipe.RecipeResponse;
 import com.dtos.response.recipe.RecipePreviewResponse;
 import com.cooksync_server.entities.Ingredient;
@@ -51,7 +55,16 @@ public class RecipeService {
     private final UnitRepository unitRepository;
 
     public List<RecipePreviewResponse> getAllRecipes() {
-        return recipeRepository.findAll().stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        return recipeRepository.findByVisibility(Recipe.Visibility.PUBLIC).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+    }
+
+    /** Paged variant used by the Home feed's infinite scroll; the unpaged {@link #getAllRecipes()} above is unchanged for Search/Filters. */
+    public PagedResponse<RecipePreviewResponse> getAllRecipesPaged(int page, int size) {
+        Page<Recipe> result = recipeRepository.findByVisibility(Recipe.Visibility.PUBLIC,
+                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        List<RecipePreviewResponse> content = result.getContent().stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        return new PagedResponse<>(content, result.getNumber(), result.getSize(),
+                result.getTotalElements(), result.getTotalPages(), result.isLast());
     }
 
     public RecipeResponse getRecipeById(String id) {
@@ -60,12 +73,24 @@ public class RecipeService {
         return RecipeMapper.toResponse(recipe);
     }
 
-    public List<RecipePreviewResponse> searchRecipes(String keyword) {
-        return recipeRepository.findByTitleContainingIgnoreCase(keyword).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+    /** Advanced search: title/author/ingredient are each optional and ANDed together when present. */
+    public List<RecipePreviewResponse> searchRecipes(String keyword, String author, String ingredient) {
+        String title = (keyword == null || keyword.isBlank()) ? null : keyword;
+        String authorFilter = (author == null || author.isBlank()) ? null : author;
+        String ingredientFilter = (ingredient == null || ingredient.isBlank()) ? null : ingredient;
+        return recipeRepository.searchRecipesAdvanced(title, authorFilter, ingredientFilter, Recipe.Visibility.PUBLIC)
+                .stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
     public List<RecipePreviewResponse> findRecipesByTag(String tagName) {
-        return recipeRepository.findByTagName(tagName).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        return recipeRepository.findByTagNameAndVisibility(tagName, Recipe.Visibility.PUBLIC)
+                .stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+    }
+
+    public List<RecipePreviewResponse> getMyRecipes(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+        return recipeRepository.findByCreatedById(user.getId()).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
     @Transactional
@@ -80,6 +105,7 @@ public class RecipeService {
                 .title(request.title())
                 .description(request.description())
                 .difficulty(Recipe.Difficulty.valueOf(request.difficulty().toUpperCase()))
+                .visibility(parseVisibility(request.visibility()))
                 .prepTimeMinutes(request.prepTimeMinutes())
                 .cookTimeMinutes(request.cookTimeMinutes())
                 .servings(request.servings())
@@ -111,6 +137,7 @@ public class RecipeService {
         recipe.setTitle(request.title());
         recipe.setDescription(request.description());
         recipe.setDifficulty(Recipe.Difficulty.valueOf(request.difficulty().toUpperCase()));
+        recipe.setVisibility(parseVisibility(request.visibility()));
         recipe.setPrepTimeMinutes(request.prepTimeMinutes());
         recipe.setCookTimeMinutes(request.cookTimeMinutes());
         recipe.setServings(request.servings());
@@ -140,6 +167,13 @@ public class RecipeService {
         }
 
         recipeRepository.delete(recipe);
+    }
+
+    private Recipe.Visibility parseVisibility(String visibility) {
+        if (visibility == null || visibility.isBlank()) {
+            return Recipe.Visibility.PUBLIC;
+        }
+        return Recipe.Visibility.valueOf(visibility.toUpperCase());
     }
 
     private void saveImages(Recipe recipe, String primaryImageUrl, List<String> additionalImageUrls) {

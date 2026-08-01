@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dtos.request.recipe.RecipeCreateRequestDTO;
 import com.dtos.response.ApiResponse;
+import com.dtos.response.PagedResponse;
 import com.dtos.response.recipe.RecipeResponse;
 import com.dtos.response.recipe.RecipePreviewResponse;
 import com.cooksync_server.services.RecipeService;
@@ -41,15 +42,31 @@ public class RecipeController {
         return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Recipes retrieved successfully"));
     }
 
+    /** Paged variant of {@link #getAllRecipes()}, used by the Home feed's infinite scroll. */
+    @GetMapping("/public/paged")
+    public ResponseEntity<ApiResponse<PagedResponse<RecipePreviewResponse>>> getAllRecipesPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(new ApiResponse<>(true, recipeService.getAllRecipesPaged(page, size), null, "Recipes retrieved successfully"));
+    }
+
     @GetMapping("/public/{id}")
     public ResponseEntity<ApiResponse<RecipeResponse>> getRecipeById(@PathVariable String id) {
         RecipeResponse recipe = recipeService.getRecipeById(id);
         return ResponseEntity.ok(new ApiResponse<>(true, recipe, null, "Recipe retrieved successfully"));
     }
 
+    /**
+     * Title search plus optional author/ingredient filters (each independent
+     * and ANDed together when present). Tag filtering stays on the separate
+     * {@link #getRecipesByTag} endpoint / client-side chip filtering.
+     */
     @GetMapping("/public/search")
-    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> searchRecipes(@RequestParam String q) {
-        List<RecipePreviewResponse> recipes = recipeService.searchRecipes(q);
+    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> searchRecipes(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String ingredient) {
+        List<RecipePreviewResponse> recipes = recipeService.searchRecipes(q, author, ingredient);
         return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Search completed"));
     }
 
@@ -57,6 +74,12 @@ public class RecipeController {
     public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> getRecipesByTag(@PathVariable String tagName) {
         List<RecipePreviewResponse> recipes = recipeService.findRecipesByTag(tagName);
         return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Recipes retrieved by tag"));
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> getMyRecipes(Authentication authentication) {
+        List<RecipePreviewResponse> recipes = recipeService.getMyRecipes(authentication.getName());
+        return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Your recipes retrieved successfully"));
     }
 
     @PostMapping

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.cooksync_server.config.JwtUtil;
 import com.dtos.request.auth.LoginRequestDTO;
+import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
 import com.dtos.request.auth.TokenRefreshRequestDTO;
 import com.dtos.response.auth.AuthResponse;
@@ -73,6 +74,9 @@ public class AuthService {
         }
 
         User user = optionalUser.get();
+        if (!user.isEnabled()) {
+            throw new UnauthorizedActionException("This account has been disabled.");
+        }
         String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.isAdmin());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
@@ -112,5 +116,29 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
         user.setAvatarUrl(avatarUrl);
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateProfile(String userEmail, ProfileUpdateRequestDTO request) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        userRepository.save(user);
+    }
+
+    /**
+     * Self-service account deactivation (Settings' "delete account" action).
+     * Reversible via the same {@code enabled} flag an admin uses to disable a
+     * user, rather than an irreversible hard delete of the account and its
+     * recipes/reviews.
+     */
+    @Transactional
+    public void deactivateAccount(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+        user.setEnabled(false);
+        userRepository.save(user);
+        refreshTokenService.deleteByUserId(user.getId());
     }
 }

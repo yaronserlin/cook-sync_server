@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# Autonomous Code Quality Gatekeeper — fires after every `git commit`.
+#
+# Reviews the files changed by the commit (see SKILL_FILE below for the full
+# rule set) and edits them in place to fix violations. Changes are left
+# UNCOMMITTED — run `git diff` / `git status` and commit them yourself once
+# you're happy with them. This hook never runs git commands itself (the
+# reviewing agent has no Bash/git tool access), so it cannot commit or push.
+#
+# Escape hatches:
+#   SKIP_QUALITY_GATE=1 git commit ...     skip the gate for one commit
+#   QUALITY_GATE_FULL_SCAN=1 git commit ... review the whole repo, not just the diff
+#   QUALITY_GATE_BUDGET_USD=5 git commit ... raise/lower the per-run cost cap (default 2)
+set -uo pipefail
+
+if [ -n "${SKIP_QUALITY_GATE:-}" ]; then
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SKILL_FILE="$REPO_ROOT/.claude/skills/code-quality-gate/SKILL.md"
+
+find_claude() {
+  if command -v claude >/dev/null 2>&1; then
+    command -v claude
+    return
+  fi
+  ls -t "$HOME"/.vscode/extensions/anthropic.claude-code-*/resources/native-binary/claude 2>/dev/null | head -1
+}
+
+CLAUDE_BIN="$(find_claude)"
+if [ -z "$CLAUDE_BIN" ]; then
+  echo "[quality-gate] claude CLI not found on PATH or in a known VS Code extension dir — skipping." >&2
+  exit 0
+fi
+
+if [ ! -f "$SKILL_FILE" ]; then
+  echo "[quality-gate] $SKILL_FILE missing — skipping." >&2
+  exit 0
+fi
+
+# Strip the YAML frontmatter (--- ... ---) from SKILL.md; keep the rules body.
+# (awk, not sed -e '1{/^---$/!q}...' — BSD sed on macOS rejects that GNU idiom.)
+RULES="$(awk '
+  NR==1 && $0=="---" { infm=1; next }
+  infm && $0=="---" { infm=0; next }
+  infm { next }
+  { print }
+' "$SKILL_FILE")"
+
+if [ -n "${QUALITY_GATE_FULL_SCAN:-}" ]; then
+  SCOPE_NOTE="Scope: full-repo scan requested (QUALITY_GATE_FULL_SCAN=1) — review the entire project."
+else
+  CHANGED_FILES="$(git diff --name-only HEAD~1 HEAD -- . ':!.githooks' 2>/dev/null)"
+  if [ -z "$CHANGED_FILES" ]; then
+    SCOPE_NOTE="Scope: no diffable parent commit (first commit) — review the entire project."
+  else
+    SCOPE_NOTE="Scope: review only these files changed by the latest commit, plus their direct callers/callees if needed to judge a violation. Do not review unrelated files.
+
+$CHANGED_FILES"
+  fi
+fi
+
+PROMPT="$RULES
+
+$SCOPE_NOTE"
+
+echo "[quality-gate] Reviewing $(basename "$REPO_ROOT") ($( [ -n "${QUALITY_GATE_FULL_SCAN:-}" ] && echo "full repo" || echo "latest commit" ))..."
+
+(
+  cd "$REPO_ROOT"
+  "$CLAUDE_BIN" -p \
+    --permission-mode bypassPermissions \
+    --allowedTools "Read Edit Write Grep Glob" \
+    --max-budget-usd "${QUALITY_GATE_BUDGET_USD:-2}" \
+    --output-format text \
+    "$PROMPT"
+)
+status=$?
+if [ $status -ne 0 ]; then
+  echo "[quality-gate] review pass exited with status $status (non-blocking; your commit already succeeded)." >&2
+fi
+
+if ! git -C "$REPO_ROOT" diff --quiet -- . ':!.githooks'; then
+  echo "[quality-gate] Files were modified. Review with 'git diff' before committing the fixes."
+else
+  echo "[quality-gate] No changes needed."
+fi
+
+exit 0

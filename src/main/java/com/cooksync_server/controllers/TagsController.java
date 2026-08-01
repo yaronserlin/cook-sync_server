@@ -46,6 +46,18 @@ public class TagsController {
         return ResponseEntity.ok(new ApiResponse<>(true, tag, null, "Tag retrieved successfully"));
     }
 
+    /**
+     * Lets any authenticated user create a custom tag on the fly from the
+     * recipe creation wizard, rather than the admin-only {@link #createTag}
+     * flow below (which errors on a duplicate name instead of reusing it).
+     */
+    @PostMapping("/custom")
+    public ResponseEntity<ApiResponse<TagResponse>> createCustomTag(@Valid @RequestBody TagRequestDTO request) {
+        TagResponse tag = tagService.getOrCreateTag(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(true, tag, null, "Tag ready"));
+    }
+
     // Admin restricted endpoints
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping

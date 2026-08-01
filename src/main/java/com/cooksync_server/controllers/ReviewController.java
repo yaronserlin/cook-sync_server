@@ -1,9 +1,12 @@
 package com.cooksync_server.controllers;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,8 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cooksync_server.services.ReviewService;
+import com.dtos.request.review.ReportReviewRequestDTO;
 import com.dtos.request.review.ReviewRequestDTO;
 import com.dtos.response.ApiResponse;
+import com.dtos.response.review.ReviewResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +28,12 @@ import lombok.RequiredArgsConstructor;
 public class ReviewController {
 
     private final ReviewService reviewService;
+
+    @GetMapping("/recipes/{recipeId}/reviews")
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviewsForRecipe(@PathVariable String recipeId) {
+        List<ReviewResponse> reviews = reviewService.getReviewsForRecipe(recipeId);
+        return ResponseEntity.ok(new ApiResponse<>(true, reviews, null, "Reviews retrieved successfully"));
+    }
 
     @PostMapping("/recipes/{recipeId}/reviews")
     public ResponseEntity<ApiResponse<Void>> addReview(
@@ -37,10 +48,19 @@ public class ReviewController {
 
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<ApiResponse<Void>> deleteReview(
-            @PathVariable String reviewId, 
+            @PathVariable String reviewId,
             Authentication authentication) {
         String userEmail = authentication.getName();
         reviewService.deleteReview(reviewId, userEmail);
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Review deleted successfully"));
+    }
+
+    @PostMapping("/reviews/{reviewId}/report")
+    public ResponseEntity<ApiResponse<Void>> reportReview(
+            @PathVariable String reviewId,
+            @Valid @RequestBody ReportReviewRequestDTO request,
+            Authentication authentication) {
+        reviewService.reportReview(reviewId, request, authentication.getName());
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Review reported to moderators"));
     }
 }

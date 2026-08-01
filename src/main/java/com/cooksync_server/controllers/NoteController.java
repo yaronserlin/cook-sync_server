@@ -1,11 +1,14 @@
 package com.cooksync_server.controllers;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.dtos.request.note.NoteRequestDTO;
 import com.dtos.response.ApiResponse;
+import com.dtos.response.note.NoteResponse;
 import com.cooksync_server.services.PersonalNoteService;
 
 import jakarta.validation.Valid;
@@ -32,5 +35,22 @@ public class NoteController {
             Authentication authentication) {
         noteService.deleteNote(noteId, authentication.getName());
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Note deleted successfully"));
+    }
+
+    @GetMapping("/recipe/{recipeId}")
+    public ResponseEntity<ApiResponse<NoteResponse>> getNote(
+            @PathVariable String recipeId,
+            Authentication authentication) {
+        NoteResponse note = noteService.getNote(recipeId, authentication.getName());
+        return ResponseEntity.ok(new ApiResponse<>(true, note, null, "OK"));
+    }
+
+    /** All of the caller's notes on a recipe: the general note plus any per-step notes. */
+    @GetMapping("/recipe/{recipeId}/all")
+    public ResponseEntity<ApiResponse<List<NoteResponse>>> getNotesForRecipe(
+            @PathVariable String recipeId,
+            Authentication authentication) {
+        List<NoteResponse> notes = noteService.getNotesForRecipe(recipeId, authentication.getName());
+        return ResponseEntity.ok(new ApiResponse<>(true, notes, null, "OK"));
     }
 }

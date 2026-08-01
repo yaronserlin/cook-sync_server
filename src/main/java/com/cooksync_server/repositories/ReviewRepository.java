@@ -10,4 +10,8 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
     
     // שליפת כל הביקורות של מתכון מסוים
     List<Review> findByRecipeIdOrderByCreatedAtDesc(String recipeId);
+
+    List<Review> findByReportedTrue();
+
+    long countByReportedTrue();
 }

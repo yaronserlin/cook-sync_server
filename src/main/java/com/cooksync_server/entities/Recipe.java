@@ -59,6 +59,14 @@ public class Recipe {
     @Column(nullable = false)
     private Difficulty difficulty;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Visibility visibility = Visibility.PUBLIC;
+
+    @Column(name = "average_rating")
+    private Double averageRating;
+
     @Column(name = "prep_time_minutes", nullable = false)
     private int prepTimeMinutes;
 
@@ -116,5 +124,9 @@ public class Recipe {
 
     public enum Difficulty {
         EASY, MEDIUM, HARD
+    }
+
+    public enum Visibility {
+        PUBLIC, PRIVATE
     }
 }

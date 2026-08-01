@@ -14,6 +14,6 @@ public final class UserMapper {
         }
         String created = u.getCreatedAt() == null ? null : u.getCreatedAt().toString();
         String updated = u.getUpdatedAt() == null ? null : u.getUpdatedAt().toString();
-        return new UserResponse(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail(), u.isAdmin(), u.getAvatarUrl(), created, updated);
+        return new UserResponse(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail(), u.isAdmin(), u.getAvatarUrl(), created, updated, u.isEnabled());
     }
 }

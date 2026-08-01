@@ -54,6 +54,10 @@ public class User {
     @Column(name = "is_admin", nullable = false)
     private boolean isAdmin = false;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean enabled = true;
+
     @Column(name = "avatar_url", length = 2000)
     private String avatarUrl;
 

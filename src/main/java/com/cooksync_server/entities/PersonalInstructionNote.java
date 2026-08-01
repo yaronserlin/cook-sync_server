@@ -65,8 +65,10 @@ public class PersonalInstructionNote {
     }
 
     public void setInstructionId(Object object) {
-        // Implementation for setting instruction ID
-        if (object instanceof String) {
+        // null clears the association, representing a whole-recipe (general) note.
+        if (object == null) {
+            this.instruction = null;
+        } else if (object instanceof String) {
             this.instruction = new Instruction();
             this.instruction.setId((String) object);
         } else if (object instanceof Instruction) {
