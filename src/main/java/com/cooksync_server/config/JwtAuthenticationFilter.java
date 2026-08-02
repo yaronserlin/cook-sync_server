@@ -19,7 +19,12 @@ import io.jsonwebtoken.JwtException;
 import java.io.IOException;
 
 /**
- * Intercepts every request to validate the JWT token.
+ * Filter intercepting incoming HTTP requests once per execution to validate JWT Authorization headers.
+ * Populates SecurityContext with user identity upon successful token authentication.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @Component
 @RequiredArgsConstructor
@@ -29,6 +34,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
+    /**
+     * Processes request header, validates bearer token, and establishes security context.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request current HTTP request
+     * @param response current HTTP response
+     * @param filterChain target filter chain
+     * @throws ServletException if servlet execution error occurs
+     * @throws IOException if I/O error occurs
+     */
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -62,12 +80,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (JwtException | IllegalArgumentException ex) {
-            // Covers expired/malformed/invalid-signature/blank tokens alike (jjwt throws
-            // IllegalArgumentException rather than JwtException for a null/blank token
-            // string): any failure here just means the request proceeds unauthenticated,
-            // so log at debug only. This must not escape the filter uncaught - filters run
-            // before the DispatcherServlet, so GlobalExceptionHandler never sees it and an
-            // uncaught exception here surfaces as a raw 500 instead of a clean 401/403.
             LOG.debug("Rejecting request with invalid JWT: {}", ex.getMessage());
             SecurityContextHolder.clearContext();
         }

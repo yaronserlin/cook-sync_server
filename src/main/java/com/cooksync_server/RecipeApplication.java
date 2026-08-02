@@ -3,9 +3,26 @@ package com.cooksync_server;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * Main application entry point for the CookSync Spring Boot backend service.
+ * Initializes the Spring ApplicationContext and starts embedded web container.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @SpringBootApplication
 public class RecipeApplication {
 
+    /**
+     * Main execution method launching the Spring Boot framework instance.
+     *
+     * Complexity:
+     * Time: O(N)
+     * Space: O(N)
+     *
+     * @param args command-line input arguments
+     */
     public static void main(String[] args) {
         SpringApplication.run(RecipeApplication.class, args);
     }

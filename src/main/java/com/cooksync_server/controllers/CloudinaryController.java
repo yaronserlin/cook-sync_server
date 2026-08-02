@@ -10,7 +10,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Controller for providing Cloudinary authorization details to the client.
+ * REST Controller providing Cloudinary signed authorization details to authenticated client apps.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @RestController
 @RequestMapping("/api/cloudinary")
@@ -19,6 +23,15 @@ public class CloudinaryController {
 
     private final CloudinaryService cloudinaryService;
 
+    /**
+     * Generates a signed upload signature payload for client-side direct media uploads.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @return response entity containing CloudinarySignatureResponse payload
+     */
     @GetMapping("/signature")
     public ResponseEntity<ApiResponse<CloudinarySignatureResponse>> getSignature() {
         CloudinarySignatureResponse response = cloudinaryService.generateUploadSignature();

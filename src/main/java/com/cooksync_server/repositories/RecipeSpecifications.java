@@ -16,18 +16,44 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 
-/** Reusable JPA {@link Specification} building blocks for recipe search/filtering. */
+/**
+ * Utility class providing reusable JPA Specification criteria builders for recipe filtering and search.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 public final class RecipeSpecifications {
 
     private RecipeSpecifications() {
     }
 
+    /**
+     * Specification filtering public recipes created by active enabled users.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @return JPA Specification predicate
+     */
     public static Specification<Recipe> isPublicAndEnabled() {
         return (root, query, cb) -> cb.and(
                 cb.equal(root.get("visibility"), Recipe.Visibility.PUBLIC),
-                cb.isTrue(root.get("createdBy").get("enabled")));
+                cb.isTrue(root.get("createdBy").get("enabled"))
+        );
     }
 
+    /**
+     * Specification filtering recipes authored by a matching name keyword.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param author author name query keyword
+     * @return Specification predicate or null if search keyword is empty
+     */
     public static Specification<Recipe> hasAuthor(String author) {
         if (author == null || author.isBlank()) {
             return null;
@@ -36,6 +62,16 @@ public final class RecipeSpecifications {
         return (root, query, cb) -> cb.like(cb.lower(authorName(root, cb)), pattern);
     }
 
+    /**
+     * Specification filtering recipes containing an ingredient with matching name.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param ingredient ingredient search string
+     * @return Specification predicate or null if search string is empty
+     */
     public static Specification<Recipe> hasIngredient(String ingredient) {
         if (ingredient == null || ingredient.isBlank()) {
             return null;
@@ -49,11 +85,14 @@ public final class RecipeSpecifications {
     }
 
     /**
-     * Unified search bar: splits the query into whitespace-separated tokens. A recipe matches
-     * only if EVERY token is found in at least one of title / author name / tag name / ingredient
-     * name. This lets a single field handle plain title searches, author lookups, tag names, and
-     * multi-ingredient queries like "cucumber tomato lettuce" (which requires all three ingredients
-     * to be present, since each becomes its own AND-ed token).
+     * Unified multi-token search matching title, author name, tag, or ingredient name.
+     *
+     * Complexity:
+     * Time: O(K) where K is number of query tokens
+     * Space: O(K)
+     *
+     * @param rawQuery search query string
+     * @return composite Specification predicate
      */
     public static Specification<Recipe> matchesUnifiedQuery(String rawQuery) {
         if (rawQuery == null || rawQuery.isBlank()) {
@@ -75,7 +114,16 @@ public final class RecipeSpecifications {
         };
     }
 
-    /** Combines specifications with AND, skipping any that are null (i.e. "no filter for this field"). */
+    /**
+     * Combines multiple Specifications with AND operators, skipping null entries.
+     *
+     * Complexity:
+     * Time: O(S) where S is number of non-null specifications
+     * Space: O(1)
+     *
+     * @param specs varargs array of Specification instances
+     * @return combined Specification predicate
+     */
     @SafeVarargs
     public static Specification<Recipe> combine(Specification<Recipe>... specs) {
         Specification<Recipe> result = (root, query, cb) -> cb.conjunction();
@@ -91,7 +139,6 @@ public final class RecipeSpecifications {
         return cb.concat(cb.concat(root.get("createdBy").get("firstName"), " "), root.get("createdBy").get("lastName"));
     }
 
-    /** Correlated EXISTS subquery against a to-many collection, so multiple tokens don't multiply joins on the root query. */
     private static <T> Predicate existsInCollection(Root<Recipe> root, CriteriaQuery<?> query, CriteriaBuilder cb,
             String collectionAttribute, String fieldName, String pattern) {
         Subquery<Long> subquery = query.subquery(Long.class);

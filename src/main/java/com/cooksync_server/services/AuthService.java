@@ -23,6 +23,13 @@ import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
 import com.cooksync_server.repositories.UserRepository;
 
+/**
+ * Service class handling user authentication, registration, token refresh, password changes, and account settings.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Service
 public class AuthService {
 
@@ -32,6 +39,18 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final String dummyPasswordHash;
 
+    /**
+     * Constructs AuthService with required dependencies and initializes timing attack dummy hash.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userRepository repository for user persistence
+     * @param passwordEncoder encoder for BCrypt password hashing
+     * @param jwtUtil utility for JWT generation and verification
+     * @param refreshTokenService service for managing session refresh tokens
+     */
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -40,6 +59,16 @@ public class AuthService {
         this.dummyPasswordHash = passwordEncoder.encode("dummy_password_for_timing_attack_prevention");
     }
 
+    /**
+     * Registers a new user account with encoded password and issues initial access and refresh tokens.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request registration details payload
+     * @return AuthResponse containing access token, refresh token, and user info
+     */
     public AuthResponse register(RegisterRequestDTO request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new UserAlreadyExistsException("Email is already registered");
@@ -65,6 +94,16 @@ public class AuthService {
         return new AuthResponse(token, refreshToken.getToken(), newUser.getId(), newUser.getFirstName(), newUser.getLastName(), newUser.isAdmin(), newUser.getAvatarUrl());
     }
 
+    /**
+     * Authenticates user credentials with constant-time password comparison to prevent timing attacks.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request login credentials payload
+     * @return AuthResponse containing fresh tokens and user info
+     */
     public AuthResponse login(LoginRequestDTO request) {
         Optional<User> optionalUser = userRepository.findByEmail(request.email());
 
@@ -85,6 +124,16 @@ public class AuthService {
         return new AuthResponse(token, refreshToken.getToken(), user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin(), user.getAvatarUrl());
     }
 
+    /**
+     * Renews access token using a valid refresh token payload.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request refresh token request payload
+     * @return AuthResponse containing new access token and existing refresh token
+     */
     public AuthResponse refreshToken(TokenRefreshRequestDTO request) {
         String requestRefreshToken = request.refreshToken();
 
@@ -98,21 +147,48 @@ public class AuthService {
                 .orElseThrow(() -> new UnauthorizedActionException("Refresh token is not in database or is invalid!"));
     }
 
+    /**
+     * Validates active JWT token context and returns user profile details without issuing new tokens.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail authenticated user email
+     * @return AuthResponse with profile details
+     */
     public AuthResponse validateToken(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // No new tokens are issued here — this endpoint only confirms the caller's
-        // existing token is still valid and returns the current user details.
         return new AuthResponse(null, null, user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin(), user.getAvatarUrl());
     }
 
+    /**
+     * Revokes active user refresh tokens upon logout.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail authenticated user email
+     */
     public void logout(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
         refreshTokenService.deleteByUserId(user.getId());
     }
 
+    /**
+     * Updates user avatar picture URL.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail target user email
+     * @param avatarUrl new profile picture URL
+     */
     @Transactional
     public void updateAvatar(String userEmail, String avatarUrl) {
         User user = userRepository.findByEmail(userEmail)
@@ -121,6 +197,16 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    /**
+     * Updates user first and last name profile details.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail target user email
+     * @param request profile update request DTO
+     */
     @Transactional
     public void updateProfile(String userEmail, ProfileUpdateRequestDTO request) {
         User user = userRepository.findByEmail(userEmail)
@@ -131,11 +217,14 @@ public class AuthService {
     }
 
     /**
-     * Self-service password change. Requires the caller's current password so
-     * that a leaked/stolen access token alone can't be used to lock the real
-     * owner out of their account. Existing refresh tokens are revoked
-     * afterwards so any other signed-in device/session must re-authenticate
-     * with the new password.
+     * Changes user account password following verification of current password, revoking existing sessions.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail target user email
+     * @param request password change request DTO
      */
     @Transactional
     public void changePassword(String userEmail, ChangePasswordRequestDTO request) {
@@ -152,10 +241,15 @@ public class AuthService {
     }
 
     /**
-     * Self-service email change. Requires the caller's current password for
-     * the same reason as {@link #changePassword}. Since the JWT subject is
-     * the user's email, a fresh token/refresh-token pair reflecting the new
-     * address is issued and returned so the client can keep using it.
+     * Updates user account email address following password verification and issues updated tokens.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail current authenticated user email
+     * @param request email update request DTO
+     * @return AuthResponse containing updated tokens reflecting new email address
      */
     @Transactional
     public AuthResponse updateEmail(String userEmail, EmailUpdateRequestDTO request) {
@@ -184,10 +278,13 @@ public class AuthService {
     }
 
     /**
-     * Self-service account deactivation (Settings' "delete account" action).
-     * Reversible via the same {@code enabled} flag an admin uses to disable a
-     * user, rather than an irreversible hard delete of the account and its
-     * recipes/reviews.
+     * Deactivates user account (soft delete) and revokes active refresh tokens.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail target user email
      */
     @Transactional
     public void deactivateAccount(String userEmail) {

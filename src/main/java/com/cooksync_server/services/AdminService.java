@@ -34,6 +34,13 @@ import com.dtos.response.user.UserResponse;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service class implementing business logic for administrative moderation, user management, and tag deduplication.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -44,6 +51,15 @@ public class AdminService {
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * Calculates system-wide aggregate stats for admin dashboard monitoring.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @return AdminStatsResponse containing counts of reported reviews, recipes, reviews, tags, and users
+     */
     public AdminStatsResponse getStats() {
         return new AdminStatsResponse(
                 reviewRepository.countByReportedTrue(),
@@ -54,6 +70,17 @@ public class AdminService {
         );
     }
 
+    /**
+     * Retrieves paginated list of all registered users sorted by creation date descending.
+     *
+     * Complexity:
+     * Time: O(S) where S is page size limit
+     * Space: O(S)
+     *
+     * @param page page number index
+     * @param size page size limit
+     * @return PagedResponse containing UserResponse DTO list
+     */
     public PagedResponse<UserResponse> getAllUsers(int page, int size) {
         Page<User> result = userRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending()));
         List<UserResponse> content = result.getContent().stream()
@@ -63,12 +90,30 @@ public class AdminService {
                 result.getTotalElements(), result.getTotalPages(), result.isLast());
     }
 
+    /**
+     * Retrieves all review entries currently flagged as reported.
+     *
+     * Complexity:
+     * Time: O(R) where R is reported review count
+     * Space: O(R)
+     *
+     * @return list of ReportedReviewResponse DTOs
+     */
     public List<ReportedReviewResponse> getReportedReviews() {
         return reviewRepository.findByReportedTrue().stream()
                 .map(AdminMapper::toReportedReviewResponse)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Dismisses moderation report flag on a specific review ID.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param reviewId target review ID
+     */
     @Transactional
     public void dismissReport(String reviewId) {
         Review review = reviewRepository.findById(reviewId)
@@ -79,6 +124,15 @@ public class AdminService {
         reviewRepository.save(review);
     }
 
+    /**
+     * Disables a user account, preventing login and hiding authored recipes from public listings.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userId target user ID
+     */
     @Transactional
     public void disableUser(String userId) {
         User user = userRepository.findById(userId)
@@ -87,6 +141,15 @@ public class AdminService {
         userRepository.save(user);
     }
 
+    /**
+     * Enables a previously disabled user account.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userId target user ID
+     */
     @Transactional
     public void enableUser(String userId) {
         User user = userRepository.findById(userId)
@@ -95,6 +158,15 @@ public class AdminService {
         userRepository.save(user);
     }
 
+    /**
+     * Scans catalog tags to detect duplicate tag groups based on normalized name formatting.
+     *
+     * Complexity:
+     * Time: O(T) where T is total tag count
+     * Space: O(T)
+     *
+     * @return list of DuplicateTagGroupResponse DTOs
+     */
     public List<DuplicateTagGroupResponse> getDuplicateTagGroups() {
         Map<String, List<Tag>> byNormalizedName = new LinkedHashMap<>();
         for (Tag tag : tagRepository.findAll()) {
@@ -116,16 +188,13 @@ public class AdminService {
     }
 
     /**
-     * Merges the source tag into the target tag and deletes the source.
+     * Merges source duplicate tag into canonical target tag using direct SQL and deletes source tag.
      *
-     * Implemented with direct SQL against the recipe_tags join table rather
-     * than through the JPA entity graph: both {@code Recipe.tags} and
-     * {@code Tag.recipes} independently declare themselves the owning side
-     * of that same join table (neither uses mappedBy), so mutating the
-     * association only through one entity's in-memory collection risked
-     * leaving stale rows behind — which is exactly the previously-reported
-     * symptom of the old and new tag both still showing on Home/Filters
-     * after a merge. Raw SQL sidesteps that ambiguity entirely.
+     * Complexity:
+     * Time: O(R) where R is count of recipes tagged with source tag
+     * Space: O(1)
+     *
+     * @param request tag merge request DTO containing source and target tag IDs
      */
     @Transactional
     public void mergeTags(TagMergeRequestDTO request) {
@@ -139,18 +208,15 @@ public class AdminService {
             throw new ResourceNotFoundException("Tag", request.targetTagId());
         }
 
-        // Drop join rows that would become duplicates (recipe already has both tags).
         jdbcTemplate.update(
                 "DELETE rt FROM recipe_tags rt JOIN recipe_tags rt2 ON rt.recipe_id = rt2.recipe_id " +
                         "WHERE rt.tag_id = ? AND rt2.tag_id = ?",
                 request.sourceTagId(), request.targetTagId());
 
-        // Re-point every remaining source-tagged row at the target tag.
         jdbcTemplate.update(
                 "UPDATE recipe_tags SET tag_id = ? WHERE tag_id = ?",
                 request.targetTagId(), request.sourceTagId());
 
-        // The source tag now has zero references; safe to delete outright.
         jdbcTemplate.update("DELETE FROM tags WHERE id = ?", request.sourceTagId());
     }
 

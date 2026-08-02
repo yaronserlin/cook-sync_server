@@ -17,12 +17,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * JPA Entity representing a registered user within the CookSync system. Maps to
- * the "users" table in the underlying relational database and utilizes Lombok
- * for boilerplate code reduction.
+ * JPA Entity representing a registered user account.
+ * Maps database persistence columns in the "users" table.
  *
  * @author Yaron Serlin
- * @version Last Updated: 06/07/2026
+ * @version 1.0
+ * @since 02/08/2026
  */
 @Entity
 @Table(name = "users")
@@ -68,16 +68,11 @@ public class User {
     private LocalDateTime updatedAt;
 
     /**
-     * JPA lifecycle callback executed before the entity is persisted to the
-     * database for the first time. Initializes the creation and update
-     * timestamps to the current system time.
+     * Initializes timestamps prior to persistence.
      *
-     * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * // Automatically invoked by Hibernate during:
-     * userRepository.save(newUser);
-     * }</pre>
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
      */
     @PrePersist
     protected void onCreate() {
@@ -85,6 +80,15 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Computes the trimmed full name of the user.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @return formatted full name string
+     */
     public String getFullName() {
         StringBuilder fullName = new StringBuilder();
         if (firstName != null && !firstName.isBlank()) {
@@ -100,17 +104,11 @@ public class User {
     }
 
     /**
-     * JPA lifecycle callback executed before an existing entity is updated in
-     * the database. Refreshes the update timestamp to the current system time.
+     * Updates modified timestamp prior to entity update execution.
      *
-     * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * // Automatically invoked by Hibernate during an update:
-     * existingUser.setFirstName("New");
-     * existingUser.setLastName("Name");
-     * userRepository.save(existingUser);
-     * }</pre>
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
      */
     @PreUpdate
     protected void onUpdate() {

@@ -18,6 +18,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA Entity representing a user favorite recipe bookmark relation.
+ * Maps table columns in "favorite_recipes".
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "favorite_recipes")
 @Getter
@@ -42,6 +50,13 @@ public class FavoriteRecipe {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Initializes creation timestamp before entity persistence.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

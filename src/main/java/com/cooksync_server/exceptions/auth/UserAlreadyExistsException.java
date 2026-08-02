@@ -1,26 +1,22 @@
 package com.cooksync_server.exceptions.auth;
 
 /**
- * Custom runtime exception thrown when attempting to register a user with an
- * email or identifier that already exists in the system.
+ * Custom runtime exception thrown when attempting to register a duplicate email address.
  *
  * @author Yaron Serlin
- * @version Last Updated: 06/07/2026
+ * @version 1.0
+ * @since 02/08/2026
  */
 public class UserAlreadyExistsException extends RuntimeException {
 
     /**
-     * Constructs a new UserAlreadyExistsException with the specified detail
-     * message.
+     * Constructs a UserAlreadyExistsException with duplicate email context details.
      *
-     * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * throw new UserAlreadyExistsException("Email is already registered");
-     * }</pre>
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
      *
-     * @param message The detail message explaining the specific reason for the
-     * exception.
+     * @param message exception message context
      */
     public UserAlreadyExistsException(String message) {
         super(message);

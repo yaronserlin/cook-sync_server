@@ -21,6 +21,13 @@ import com.cooksync_server.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service class managing user favorite recipe bookmark additions, removals, and retrievals.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Service
 @RequiredArgsConstructor
 public class FavoriteService {
@@ -30,6 +37,16 @@ public class FavoriteService {
     private final UserRepository userRepository;
     private final PersonalInstructionNoteRepository personalInstructionNoteRepository;
 
+    /**
+     * Adds a recipe to the user's favorite bookmarks if not already bookmarked.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param userEmail authenticated user email address
+     */
     @Transactional
     public void addFavorite(String recipeId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
@@ -46,6 +63,16 @@ public class FavoriteService {
         }
     }
 
+    /**
+     * Removes a recipe from the user's favorite bookmarks.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param userEmail authenticated user email address
+     */
     @Transactional
     public void removeFavorite(String recipeId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
@@ -56,12 +83,20 @@ public class FavoriteService {
         favoriteRepository.deleteByUserIdAndRecipeId(user.getId(), recipe.getId());
     }
 
+    /**
+     * Retrieves all recipe preview entries bookmarked as favorite by the user.
+     *
+     * Complexity:
+     * Time: O(F) where F is count of bookmarked favorite recipes
+     * Space: O(F)
+     *
+     * @param userEmail authenticated user email address
+     * @return list of RecipePreviewResponse DTOs with personal notes if present
+     */
     public List<RecipePreviewResponse> getUserFavorites(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // A single lookup per favorite (rather than an exists-check plus a separate
-        // fetch) halves the query count against personal_instruction_notes here.
         return favoriteRepository.findByUserId(user.getId()).stream()
                 .map(fav -> {
                     Optional<PersonalInstructionNote> note = personalInstructionNoteRepository

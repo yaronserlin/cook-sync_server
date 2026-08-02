@@ -5,6 +5,14 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+/**
+ * JPA Entity representing a step-by-step cooking instruction.
+ * Maps table columns in "instructions" with many-to-many ingredient links.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "instructions")
 @Getter
@@ -32,6 +40,7 @@ public class Instruction {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Builder.Default
     @Column(name = "has_timer", nullable = false)
     private boolean hasTimer = false;
 
@@ -44,7 +53,6 @@ public class Instruction {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Junction table linking this step to the ingredients it uses.
     @ManyToMany
     @JoinTable(
             name = "instruction_ingredients",
@@ -53,12 +61,26 @@ public class Instruction {
     )
     private Set<Ingredient> ingredients;
 
+    /**
+     * Lifecycle callback setting creation and update timestamps.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Lifecycle callback refreshing modification timestamp.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

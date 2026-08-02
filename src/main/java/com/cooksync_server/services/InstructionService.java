@@ -24,6 +24,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Service class managing recipe preparation instruction steps and associated ingredient links.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Service
 @RequiredArgsConstructor
 public class InstructionService {
@@ -33,6 +40,18 @@ public class InstructionService {
     private final UserRepository userRepository;
     private final IngredientRepository ingredientRepository;
 
+    /**
+     * Appends a new cooking instruction step to a recipe.
+     *
+     * Complexity:
+     * Time: O(I) where I is count of referenced step ingredient IDs
+     * Space: O(I)
+     *
+     * @param recipeId target recipe ID
+     * @param request instruction step creation request DTO
+     * @param userEmail user email address
+     * @return InstructionResponse DTO of saved step
+     */
     @Transactional
     public InstructionResponse addInstructionToRecipe(String recipeId, InstructionRequestDTO request, String userEmail) {
         Recipe recipe = recipeRepository.findById(recipeId)
@@ -40,7 +59,6 @@ public class InstructionService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // Only the recipe's creator or an admin may change its steps.
         OwnershipValidator.requireOwnerOrAdmin(recipe.getCreatedBy().getId(), user,
                 "You are not allowed to modify this recipe.");
 
@@ -57,6 +75,18 @@ public class InstructionService {
         return InstructionMapper.toResponse(instructionRepository.save(instruction));
     }
 
+    /**
+     * Updates an existing instruction step details and ingredient associations.
+     *
+     * Complexity:
+     * Time: O(I) where I is count of referenced step ingredient IDs
+     * Space: O(I)
+     *
+     * @param instructionId target instruction step ID
+     * @param request instruction step update request DTO
+     * @param userEmail user email address
+     * @return InstructionResponse DTO of updated step
+     */
     @Transactional
     public InstructionResponse updateInstruction(String instructionId, InstructionRequestDTO request, String userEmail) {
         Instruction instruction = instructionRepository.findById(instructionId)
@@ -77,6 +107,16 @@ public class InstructionService {
         return InstructionMapper.toResponse(instructionRepository.save(instruction));
     }
 
+    /**
+     * Deletes an instruction step from a recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param instructionId target instruction step ID
+     * @param userEmail user email address
+     */
     @Transactional
     public void deleteInstruction(String instructionId, String userEmail) {
         Instruction instruction = instructionRepository.findById(instructionId)

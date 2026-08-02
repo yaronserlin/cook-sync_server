@@ -18,6 +18,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA Entity representing an ingredient component of a recipe.
+ * Maps table columns in "ingredients" with relations to parent Recipe and measurement Unit.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "ingredients")
 @Getter

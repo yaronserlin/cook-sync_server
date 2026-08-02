@@ -22,6 +22,13 @@ import com.dtos.response.review.ReviewResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * REST Controller managing user reviews, rating submissions, and moderation reports on recipes.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -29,12 +36,34 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
+    /**
+     * Retrieves all review entries for a given recipe ID.
+     *
+     * Complexity:
+     * Time: O(R) where R is review count for recipe
+     * Space: O(R)
+     *
+     * @param recipeId target recipe ID
+     * @return response entity containing list of ReviewResponse DTOs
+     */
     @GetMapping("/recipes/{recipeId}/reviews")
     public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviewsForRecipe(@PathVariable String recipeId) {
         List<ReviewResponse> reviews = reviewService.getReviewsForRecipe(recipeId);
         return ResponseEntity.ok(new ApiResponse<>(true, reviews, null, "Reviews retrieved successfully"));
     }
 
+    /**
+     * Submits a new review and rating for a recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param request review creation request DTO
+     * @param authentication active user authentication token
+     * @return response entity acknowledging review addition
+     */
     @PostMapping("/recipes/{recipeId}/reviews")
     public ResponseEntity<ApiResponse<Void>> addReview(
             @PathVariable String recipeId, 
@@ -46,6 +75,17 @@ public class ReviewController {
                 .body(new ApiResponse<>(true, null, null, "Review added successfully"));
     }
 
+    /**
+     * Deletes a review entry.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param reviewId target review ID
+     * @param authentication active user authentication token
+     * @return response entity acknowledging review deletion
+     */
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<ApiResponse<Void>> deleteReview(
             @PathVariable String reviewId,
@@ -55,6 +95,18 @@ public class ReviewController {
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Review deleted successfully"));
     }
 
+    /**
+     * Flags a review for moderation audit with specified report reason.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param reviewId target review ID
+     * @param request moderation report request DTO
+     * @param authentication active user authentication token
+     * @return response entity acknowledging review report
+     */
     @PostMapping("/reviews/{reviewId}/report")
     public ResponseEntity<ApiResponse<Void>> reportReview(
             @PathVariable String reviewId,

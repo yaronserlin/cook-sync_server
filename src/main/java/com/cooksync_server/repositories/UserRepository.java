@@ -3,54 +3,30 @@ package com.cooksync_server.repositories;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import com.cooksync_server.entities.User;
 
 /**
- * Repository interface for managing User entity persistence and retrieval
- * operations. Extends JpaRepository to provide standard CRUD functionality
- * alongside custom query methods for authentication.
+ * Spring Data JPA Repository interface for managing User entity persistence.
  *
  * @author Yaron Serlin
- * @version Last Updated: 06/07/2026
+ * @version 1.0
+ * @since 02/08/2026
  */
 public interface UserRepository extends JpaRepository<User, String> {
 
     /**
-     * Retrieves a user associated with the specified email address.
+     * Retrieves a user entity matching the provided email address.
      *
-     * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * Optional<User> user = userRepository.findByEmail("alice@example.com");
-     * if (user.isPresent()) {
-     * // process login
-     * }
-     * }</pre>
-     *
-     * @param email The exact email address to search for in the database.
-     * @return An {@link Optional} containing the {@link User} if found, or an
-     * empty Optional if no matching user exists.
+     * @param email exact email address to search for
+     * @return optional containing User if matching account exists
      */
     Optional<User> findByEmail(String email);
 
     /**
-     * Checks if a user record with the given email address already exists in
-     * the system.
+     * Verifies if a user with the specified email address exists.
      *
-     * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * boolean isTaken = userRepository.existsByEmail("alice@example.com");
-     * if (isTaken) {
-     * throw new UserAlreadyExistsException("Email is already registered");
-     * }
-     * }</pre>
-     *
-     * @param email The email address to verify for availability during
-     * registration.
-     * @return {@code true} if a user with the specified email exists,
-     * {@code false} otherwise.
+     * @param email target email address
+     * @return true if email is registered, false otherwise
      */
     boolean existsByEmail(String email);
 }

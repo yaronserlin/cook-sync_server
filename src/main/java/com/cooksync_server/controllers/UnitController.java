@@ -24,8 +24,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * REST controller responsible for handling administrative endpoints related to
- * measurement units. Restricts access to users possessing the 'ADMIN' role.
+ * REST Controller managing measurement unit definitions.
+ * Publicly exposes unit retrieval endpoints, while creation and deletion require 'ADMIN' authority.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @RestController
 @RequestMapping("/api/units")
@@ -35,6 +39,15 @@ public class UnitController {
     private final UnitService unitService;
     private static final Logger logger = LoggerFactory.getLogger(UnitController.class);
 
+    /**
+     * Retrieves all measurement units configured in the system.
+     *
+     * Complexity:
+     * Time: O(U) where U is total unit count
+     * Space: O(U)
+     *
+     * @return response entity containing list of UnitResponse DTOs
+     */
     @GetMapping("")
     public ResponseEntity<ApiResponse<List<UnitResponse>>> getAllUnits() {
         logger.info("Fetching all units from the system");
@@ -42,6 +55,16 @@ public class UnitController {
         return ResponseEntity.ok(new ApiResponse<>(true, units, null, "All units retrieved successfully"));
     }
 
+    /**
+     * Retrieves a specific measurement unit by ID.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target unit unique identifier
+     * @return response entity containing UnitResponse DTO
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UnitResponse>> getUnitById(@PathVariable String id) {
@@ -50,6 +73,16 @@ public class UnitController {
         return ResponseEntity.ok(new ApiResponse<>(true, unit, null, "Unit retrieved successfully"));
     }
 
+    /**
+     * Creates a new measurement unit definition.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request unit creation request DTO
+     * @return response entity containing created UnitResponse DTO
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("")
     public ResponseEntity<ApiResponse<UnitResponse>> createUnit(@Valid @RequestBody UnitRequestDTO request) {
@@ -59,6 +92,16 @@ public class UnitController {
                 .body(new ApiResponse<>(true, createdUnit, null, "Unit created successfully"));
     }
 
+    /**
+     * Deletes a measurement unit by ID.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target unit unique identifier
+     * @return response entity acknowledging unit deletion
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUnit(@PathVariable String id) {

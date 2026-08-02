@@ -22,6 +22,13 @@ import com.cooksync_server.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service class managing user reviews, rating recomputations, and moderation report submissions.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -31,9 +38,14 @@ public class ReviewService {
     private final UserRepository userRepository;
 
     /**
-     * Retrieves all reviews for a recipe. Confirmed missing entirely on the
-     * server before this fix — the client's GET call was hitting a 500
-     * ("Request method not supported") since no such endpoint existed.
+     * Retrieves all review entries for a recipe ordered by creation date descending.
+     *
+     * Complexity:
+     * Time: O(R) where R is review count for recipe
+     * Space: O(R)
+     *
+     * @param recipeId target recipe ID
+     * @return list of ReviewResponse DTOs
      */
     public List<ReviewResponse> getReviewsForRecipe(String recipeId) {
         if (!recipeRepository.existsById(recipeId)) {
@@ -44,6 +56,17 @@ public class ReviewService {
                 .toList();
     }
 
+    /**
+     * Adds a review to a recipe and recomputes the recipe's aggregate average rating.
+     *
+     * Complexity:
+     * Time: O(R) where R is total review count for recipe
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param request review creation request DTO
+     * @param userEmail user email address
+     */
     @Transactional
     public void addReview(String recipeId, ReviewRequestDTO request, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
@@ -61,14 +84,22 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
-        // Count/average are denormalized onto Recipe so recipe list views avoid
-        // aggregating the reviews table on every read.
         recipe.setReviewCount(recipe.getReviewCount() + 1);
         recipe.getReviews().add(review);
         recomputeAverageRating(recipe);
         recipeRepository.save(recipe);
     }
 
+    /**
+     * Deletes a review entry following authorization checks and recomputes recipe average rating.
+     *
+     * Complexity:
+     * Time: O(R) where R is total review count for recipe
+     * Space: O(1)
+     *
+     * @param reviewId target review ID
+     * @param userEmail user email address
+     */
     @Transactional
     public void deleteReview(String reviewId, String userEmail) {
         Review review = reviewRepository.findById(reviewId)
@@ -76,7 +107,6 @@ public class ReviewService {
         User currentUser = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // Only the review author or an admin can delete a review
         OwnershipValidator.requireOwnerOrAdmin(review.getUser().getId(), currentUser,
                 "You are not allowed to delete this review.");
 
@@ -89,10 +119,19 @@ public class ReviewService {
         reviewRepository.delete(review);
     }
 
+    /**
+     * Flags a review for moderation audit with specified reason.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param reviewId target review ID
+     * @param request moderation report request DTO
+     * @param userEmail user email address
+     */
     @Transactional
     public void reportReview(String reviewId, ReportReviewRequestDTO request, String userEmail) {
-        // Ensures the reporter is a real, authenticated user without requiring
-        // any particular relationship to the review being reported.
         userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
         Review review = reviewRepository.findById(reviewId)

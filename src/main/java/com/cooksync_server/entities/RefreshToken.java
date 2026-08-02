@@ -16,7 +16,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
+/**
+ * JPA Entity representing a persistent refresh token used for session extension.
+ * Maps table columns in "refresh_tokens".
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "refresh_tokens")
 @Getter

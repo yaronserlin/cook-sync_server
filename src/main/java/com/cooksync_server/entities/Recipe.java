@@ -31,6 +31,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA Entity representing a culinary recipe.
+ * Maps table columns in "recipes" and manages relational associations to author, reviews, tags, ingredients, and instructions.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "recipes")
 @Getter
@@ -111,12 +119,26 @@ public class Recipe {
     @Builder.Default
     private List<RecipeImage> images = new ArrayList<>();
 
+    /**
+     * Initializes timestamps prior to persistence.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Refreshes modification timestamp prior to update execution.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

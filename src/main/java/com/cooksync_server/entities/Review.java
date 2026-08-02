@@ -22,6 +22,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA Entity representing a user review and rating submission on a recipe.
+ * Maps table columns in "reviews" with optional moderation flags.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "reviews")
 @Getter
@@ -43,7 +51,6 @@ public class Review {
     @JoinColumn(name = "recipe_id", nullable = false)
     private Recipe recipe;
 
-    // Domain-level constraint (not DB-enforced): value must be between 1.0 and 5.0.
     @Column(nullable = false, precision = 2, scale = 1)
     private BigDecimal rating;
 
@@ -70,12 +77,26 @@ public class Review {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /**
+     * Initializes creation and modification timestamps before persistence.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Refreshes update timestamp prior to entity update execution.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

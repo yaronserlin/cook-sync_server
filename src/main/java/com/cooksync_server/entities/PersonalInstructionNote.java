@@ -19,6 +19,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA Entity representing a private user note on a recipe or instruction step.
+ * Maps table columns in "personal_instruction_notes".
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "personal_instruction_notes")
 @Getter
@@ -53,20 +61,39 @@ public class PersonalInstructionNote {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /**
+     * Initializes timestamps prior to database persistence.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Updates modification timestamp prior to entity updates.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
 
     /**
-     * Rebuilds the association from just an id, without a round trip to the DB.
-     * A null id clears the association, representing a whole-recipe (general) note.
+     * Helper method binding instruction relationship using an ID without database lookup.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param instructionId target instruction step ID or null for recipe-wide note
      */
     public void setInstructionId(String instructionId) {
         if (instructionId == null) {

@@ -20,6 +20,13 @@ import com.cooksync_server.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service class managing user private notes on recipes and step-by-step instructions.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Service
 @RequiredArgsConstructor
 public class PersonalNoteService {
@@ -29,11 +36,14 @@ public class PersonalNoteService {
     private final UserRepository userRepository;
 
     /**
-     * A recipe can carry both one general note (instructionId == null) and
-     * independent notes per step, so the lookup for an existing row to
-     * update must match on instructionId too — matching only on
-     * (user, recipe) would let a per-step note silently overwrite the
-     * general note (or vice versa).
+     * Saves or updates a personal private note for a recipe or specific instruction step.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request note creation or update request DTO
+     * @param userEmail user email address
      */
     @Transactional
     public void saveNote(NoteRequestDTO request, String userEmail) {
@@ -58,7 +68,17 @@ public class PersonalNoteService {
         noteRepository.save(note);
     }
 
-    /** The recipe-level note only (not pinned to any instruction step). */
+    /**
+     * Retrieves general recipe-level personal note (where instruction IS NULL).
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param userEmail user email address
+     * @return NoteResponse DTO or null if no note attached
+     */
     public NoteResponse getNote(String recipeId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
@@ -68,7 +88,17 @@ public class PersonalNoteService {
                 .orElse(null);
     }
 
-    /** All of the caller's notes on this recipe: the general note (if any) plus one per annotated step. */
+    /**
+     * Retrieves all personal notes created by user for a recipe (general + step-specific notes).
+     *
+     * Complexity:
+     * Time: O(N) where N is user note count for recipe
+     * Space: O(N)
+     *
+     * @param recipeId target recipe ID
+     * @param userEmail user email address
+     * @return list of NoteResponse DTOs
+     */
     public List<NoteResponse> getNotesForRecipe(String recipeId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
@@ -86,6 +116,16 @@ public class PersonalNoteService {
                 n.getNote());
     }
 
+    /**
+     * Deletes a personal note following author verification.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param noteId target note ID
+     * @param userEmail user email address
+     */
     @Transactional
     public void deleteNote(String noteId, String userEmail) {
         PersonalInstructionNote note = noteRepository.findById(noteId)

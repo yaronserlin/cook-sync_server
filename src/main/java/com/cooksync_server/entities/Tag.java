@@ -23,6 +23,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA Entity representing a recipe classification tag.
+ * Maps to the "tags" table with many-to-many recipe associations.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "tags")
 @Getter
@@ -55,12 +63,26 @@ public class Tag {
     @Builder.Default
     private Set<Recipe> recipes = new HashSet<>();
 
+    /**
+     * Lifecycle callback setting creation and modification timestamps.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Lifecycle callback refreshing update timestamp.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

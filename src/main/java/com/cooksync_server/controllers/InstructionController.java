@@ -20,7 +20,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Controller for managing individual recipe instructions.
+ * REST Controller managing recipe preparation instruction steps.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @RestController
 @RequestMapping("/api")
@@ -29,6 +33,18 @@ public class InstructionController {
 
     private final InstructionService instructionService;
 
+    /**
+     * Adds a new preparation instruction step to a recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param request instruction creation request DTO
+     * @param authentication active user authentication token
+     * @return response entity containing created InstructionResponse DTO
+     */
     @PostMapping("/recipes/{recipeId}/instructions")
     public ResponseEntity<ApiResponse<InstructionResponse>> addInstruction(
             @PathVariable String recipeId,
@@ -40,6 +56,18 @@ public class InstructionController {
                 .body(new ApiResponse<>(true, response, null, "Instruction added successfully"));
     }
 
+    /**
+     * Updates an existing preparation instruction step.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param instructionId target instruction step ID
+     * @param request instruction update request DTO
+     * @param authentication active user authentication token
+     * @return response entity containing updated InstructionResponse DTO
+     */
     @PutMapping("/instructions/{instructionId}")
     public ResponseEntity<ApiResponse<InstructionResponse>> updateInstruction(
             @PathVariable String instructionId,
@@ -50,6 +78,17 @@ public class InstructionController {
         return ResponseEntity.ok(new ApiResponse<>(true, response, null, "Instruction updated successfully"));
     }
 
+    /**
+     * Deletes an instruction step from a recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param instructionId target instruction step ID
+     * @param authentication active user authentication token
+     * @return response entity acknowledging instruction deletion
+     */
     @DeleteMapping("/instructions/{instructionId}")
     public ResponseEntity<ApiResponse<Void>> deleteInstruction(
             @PathVariable String instructionId,

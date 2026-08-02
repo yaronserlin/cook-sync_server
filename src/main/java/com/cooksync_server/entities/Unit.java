@@ -16,6 +16,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * JPA Entity representing a measurement unit definition (e.g. grams, cups).
+ * Maps columns in the "units" table.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Entity
 @Table(name = "units")
 @Getter
@@ -30,10 +38,10 @@ public class Unit {
     private String id;
 
     @Column(nullable = false, length = 50)
-    private String code; 
+    private String code;
 
     @Column(nullable = false, length = 255)
-    private String name; 
+    private String name;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -41,12 +49,26 @@ public class Unit {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /**
+     * Lifecycle callback establishing initial entity timestamps.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Lifecycle callback updating entity timestamp.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

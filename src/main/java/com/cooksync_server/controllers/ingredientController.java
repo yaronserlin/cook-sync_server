@@ -20,8 +20,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Controller for managing individual ingredients within a recipe.
- * Provides granular CRUD operations for ingredients.
+ * REST Controller providing granular management endpoints for recipe ingredient components.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @RestController
 @RequestMapping("/api")
@@ -30,6 +33,18 @@ public class IngredientController {
 
     private final IngredientService ingredientService;
 
+    /**
+     * Appends a new ingredient entry to a specific recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param request ingredient creation payload DTO
+     * @param authentication active Spring Security user token
+     * @return response entity containing created IngredientResponse DTO
+     */
     @PostMapping("/recipes/{recipeId}/ingredients")
     public ResponseEntity<ApiResponse<IngredientResponse>> addIngredient(
             @PathVariable String recipeId,
@@ -41,6 +56,18 @@ public class IngredientController {
                 .body(new ApiResponse<>(true, response, null, "Ingredient added successfully"));
     }
 
+    /**
+     * Updates an existing ingredient entry.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param ingredientId target ingredient ID
+     * @param request ingredient update payload DTO
+     * @param authentication active Spring Security user token
+     * @return response entity containing updated IngredientResponse DTO
+     */
     @PutMapping("/ingredients/{ingredientId}")
     public ResponseEntity<ApiResponse<IngredientResponse>> updateIngredient(
             @PathVariable String ingredientId,
@@ -51,6 +78,17 @@ public class IngredientController {
         return ResponseEntity.ok(new ApiResponse<>(true, response, null, "Ingredient updated successfully"));
     }
 
+    /**
+     * Deletes an ingredient entry from a recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param ingredientId target ingredient ID
+     * @param authentication active Spring Security user token
+     * @return response entity acknowledging ingredient deletion
+     */
     @DeleteMapping("/ingredients/{ingredientId}")
     public ResponseEntity<ApiResponse<Void>> deleteIngredient(
             @PathVariable String ingredientId,

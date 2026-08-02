@@ -7,7 +7,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration for Cloudinary client.
+ * Configuration class initializing the Cloudinary SDK client bean.
+ * Injecting environment credentials for media storage and upload signature operations.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @Configuration
 public class CloudinaryConfig {
@@ -21,6 +26,15 @@ public class CloudinaryConfig {
     @Value("${CLOUDINARY_API_SECRET}")
     private String apiSecret;
 
+    /**
+     * Instantiates and configures the Cloudinary API client bean.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @return configured Cloudinary client instance
+     */
     @Bean
     public Cloudinary cloudinary() {
         return new Cloudinary(ObjectUtils.asMap(

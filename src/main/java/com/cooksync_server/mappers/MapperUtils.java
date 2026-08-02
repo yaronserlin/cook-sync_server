@@ -3,14 +3,27 @@ package com.cooksync_server.mappers;
 import java.time.LocalDateTime;
 
 /**
- * Small shared helpers used by every entity-to-DTO mapper, so each mapper
- * doesn't repeat the same null-safe formatting logic.
+ * Shared helper methods utilized by mapper classes for null-safe formatting.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 final class MapperUtils {
 
     private MapperUtils() {
     }
 
+    /**
+     * Formats a LocalDateTime instance to ISO string format or null.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param dateTime target LocalDateTime instance
+     * @return ISO-formatted string representation or null if input is null
+     */
     static String toIsoStringOrNull(LocalDateTime dateTime) {
         return dateTime == null ? null : dateTime.toString();
     }

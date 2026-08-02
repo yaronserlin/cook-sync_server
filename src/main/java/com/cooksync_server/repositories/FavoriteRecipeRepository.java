@@ -6,17 +6,47 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Spring Data JPA Repository interface for FavoriteRecipe entity management.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Repository
 public interface FavoriteRecipeRepository extends JpaRepository<FavoriteRecipe, String> {
-    
-    // שליפת כל המתכונים המועדפים של משתמש ספציפי
+
+    /**
+     * Retrieves all favorite recipe bookmark entries for a specific user ID.
+     *
+     * @param userId unique user identifier
+     * @return list of favorite recipe entities
+     */
     List<FavoriteRecipe> findByUserId(String userId);
-    
-    // בדיקה האם משתמש כבר שמר מתכון מסוים במועדפים (לצורך סימון הלב ב-UI)
+
+    /**
+     * Finds a favorite recipe relation by user ID and recipe ID.
+     *
+     * @param userId unique user identifier
+     * @param recipeId unique recipe identifier
+     * @return optional containing favorite recipe if bookmarked
+     */
     Optional<FavoriteRecipe> findByUserIdAndRecipeId(String userId, String recipeId);
-    
+
+    /**
+     * Checks if a user has bookmarked a specific recipe.
+     *
+     * @param userId unique user identifier
+     * @param recipeId unique recipe identifier
+     * @return true if favorite relation exists
+     */
     boolean existsByUserIdAndRecipeId(String userId, String recipeId);
 
+    /**
+     * Deletes a favorite recipe bookmark relation by user ID and recipe ID.
+     *
+     * @param userId unique user identifier
+     * @param recipeId unique recipe identifier
+     */
     void deleteByUserIdAndRecipeId(String userId, String recipeId);
-    
 }

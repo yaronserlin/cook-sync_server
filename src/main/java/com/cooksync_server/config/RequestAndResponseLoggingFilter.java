@@ -16,18 +16,35 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Filter for intercepting, logging, and redacting sensitive data in HTTP requests and responses.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Component
 public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestAndResponseLoggingFilter.class);
 
-    // Matches "password"/"token"/"secret"/"apiKey"-style JSON keys (any case, optional
-    // separators) so credentials submitted to /api/auth/** never reach the DEBUG log,
-    // which is enabled by default for this package (see application.properties).
     private static final Pattern SENSITIVE_JSON_FIELD = Pattern.compile(
             "(?i)(\"[^\"]*(password|token|secret|apiKey)[^\"]*\"\\s*:\\s*)\"[^\"]*\"");
     private static final String REDACTED_JSON_VALUE = "$1\"***REDACTED***\"";
 
+    /**
+     * Wraps request/response streams to record diagnostic log lines with masked sensitive fields.
+     *
+     * Complexity:
+     * Time: O(P) where P is payload length
+     * Space: O(P)
+     *
+     * @param request current HTTP request
+     * @param response current HTTP response
+     * @param filterChain target filter chain
+     * @throws ServletException if filter error occurs
+     * @throws IOException if I/O error occurs
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -53,11 +70,7 @@ public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
         String requestData = readBody(((ContentCachingRequestWrapper) request).getContentAsByteArray());
         String clientIp = request.getRemoteAddr();
 
-        LOG.info(
-                "REQUEST | method={} uri={} ip={}",
-                method,
-                uri + queryString,
-                clientIp);
+        LOG.info("REQUEST | method={} uri={} ip={}", method, uri + queryString, clientIp);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("REQUEST payload={}", truncatePayload(requestData));
@@ -68,11 +81,7 @@ public class RequestAndResponseLoggingFilter extends OncePerRequestFilter {
         String responseData = readBody(((ContentCachingResponseWrapper) response).getContentAsByteArray());
         int status = response.getStatus();
 
-        LOG.info(
-                "RESPONSE | status={} uri={} durationMs={}",
-                status,
-                requestUri,
-                duration);
+        LOG.info("RESPONSE | status={} uri={} durationMs={}", status, requestUri, duration);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("RESPONSE payload={}", truncatePayload(responseData));

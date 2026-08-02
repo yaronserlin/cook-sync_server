@@ -23,8 +23,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * REST controller for managing recipe tags. Reading tags is public, but
- * creating, updating, and deleting requires 'ADMIN' privileges.
+ * REST Controller managing recipe tag creation, retrieval, updates, and deletion.
+ * Reading tags is public; administration actions require 'ADMIN' authority.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @RestController
 @RequestMapping("/api/tags")
@@ -33,13 +37,31 @@ public class TagsController {
 
     private final TagService tagService;
 
-    // Public endpoints for autocomplete and search features
+    /**
+     * Retrieves all recipe tags available in the catalog.
+     *
+     * Complexity:
+     * Time: O(T) where T is total tag count
+     * Space: O(T)
+     *
+     * @return response entity containing list of TagResponse DTOs
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<TagResponse>>> getAllTags() {
         List<TagResponse> tags = tagService.getAllTags();
         return ResponseEntity.ok(new ApiResponse<>(true, tags, null, "All tags retrieved successfully"));
     }
 
+    /**
+     * Retrieves a tag by unique ID.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target tag ID
+     * @return response entity containing TagResponse DTO
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TagResponse>> getTagById(@PathVariable String id) {
         TagResponse tag = tagService.getTagById(id);
@@ -47,9 +69,14 @@ public class TagsController {
     }
 
     /**
-     * Lets any authenticated user create a custom tag on the fly from the
-     * recipe creation wizard, rather than the admin-only {@link #createTag}
-     * flow below (which errors on a duplicate name instead of reusing it).
+     * Creates or retrieves an existing custom tag on-the-fly during recipe editing.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request tag request DTO
+     * @return response entity containing TagResponse DTO
      */
     @PostMapping("/custom")
     public ResponseEntity<ApiResponse<TagResponse>> createCustomTag(@Valid @RequestBody TagRequestDTO request) {
@@ -58,7 +85,16 @@ public class TagsController {
                 .body(new ApiResponse<>(true, tag, null, "Tag ready"));
     }
 
-    // Admin restricted endpoints
+    /**
+     * Creates a new tag with administrative validation against existing tag names.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request tag request DTO
+     * @return response entity containing created TagResponse DTO
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<TagResponse>> createTag(@Valid @RequestBody TagRequestDTO request) {
@@ -67,6 +103,17 @@ public class TagsController {
                 .body(new ApiResponse<>(true, createdTag, null, "Tag created successfully"));
     }
 
+    /**
+     * Updates an existing tag name.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target tag ID
+     * @param request tag update request DTO
+     * @return response entity containing updated TagResponse DTO
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TagResponse>> updateTag(
@@ -76,6 +123,16 @@ public class TagsController {
         return ResponseEntity.ok(new ApiResponse<>(true, updatedTag, null, "Tag updated successfully"));
     }
 
+    /**
+     * Deletes a tag by ID.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target tag ID
+     * @return response entity acknowledging tag deletion
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteTag(@PathVariable String id) {

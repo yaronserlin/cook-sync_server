@@ -20,6 +20,13 @@ import com.cooksync_server.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service class handling granular CRUD operations for recipe ingredient items with ownership authorization validation.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Service
 @RequiredArgsConstructor
 public class IngredientService {
@@ -29,6 +36,18 @@ public class IngredientService {
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Appends a new ingredient entry to a target recipe following authorization verification.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param request ingredient creation payload DTO
+     * @param userEmail user email address
+     * @return IngredientResponse DTO of saved ingredient
+     */
     @Transactional
     public IngredientResponse addIngredientToRecipe(String recipeId, IngredientRequestDTO request, String userEmail) {
         Recipe recipe = recipeRepository.findById(recipeId)
@@ -36,7 +55,6 @@ public class IngredientService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // Only the recipe's creator or an admin may add ingredients to it.
         OwnershipValidator.requireOwnerOrAdmin(recipe.getCreatedBy().getId(), user,
                 "You are not allowed to modify this recipe's ingredients.");
 
@@ -53,6 +71,18 @@ public class IngredientService {
         return IngredientMapper.toResponse(ingredientRepository.save(ingredient));
     }
 
+    /**
+     * Updates an existing ingredient item details.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param ingredientId target ingredient ID
+     * @param request ingredient update payload DTO
+     * @param userEmail user email address
+     * @return IngredientResponse DTO of updated ingredient
+     */
     @Transactional
     public IngredientResponse updateIngredient(String ingredientId, IngredientRequestDTO request, String userEmail) {
         Ingredient ingredient = ingredientRepository.findById(ingredientId)
@@ -60,7 +90,6 @@ public class IngredientService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        // Authorization is derived from the parent recipe's owner.
         OwnershipValidator.requireOwnerOrAdmin(ingredient.getRecipe().getCreatedBy().getId(), user,
                 "You are not allowed to modify this ingredient.");
 
@@ -74,6 +103,16 @@ public class IngredientService {
         return IngredientMapper.toResponse(ingredientRepository.save(ingredient));
     }
 
+    /**
+     * Deletes an ingredient item from a recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param ingredientId target ingredient ID
+     * @param userEmail user email address
+     */
     @Transactional
     public void deleteIngredient(String ingredientId, String userEmail) {
         Ingredient ingredient = ingredientRepository.findById(ingredientId)

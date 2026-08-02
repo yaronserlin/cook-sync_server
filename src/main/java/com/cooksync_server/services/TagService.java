@@ -15,16 +15,42 @@ import com.cooksync_server.repositories.TagRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service class handling recipe tag catalog management and custom tag creation.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @Service
 @RequiredArgsConstructor
 public class TagService {
 
     private final TagRepository tagRepository;
 
+    /**
+     * Retrieves all tag entries configured in the system.
+     *
+     * Complexity:
+     * Time: O(T) where T is total tag count
+     * Space: O(T)
+     *
+     * @return list of TagResponse DTOs
+     */
     public List<TagResponse> getAllTags() {
         return tagRepository.findAll().stream().map(TagMapper::toResponse).toList();
     }
 
+    /**
+     * Retrieves a tag by unique ID.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target tag ID
+     * @return TagResponse DTO
+     */
     public TagResponse getTagById(String id) {
         Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag", id));
@@ -32,10 +58,14 @@ public class TagService {
     }
 
     /**
-     * Used by the "create a tag on the fly" flow in the recipe wizard: unlike
-     * {@link #createTag}, an existing tag with the same (normalized) name is
-     * treated as success rather than a conflict, since the user just wants a
-     * tag they can attach to the recipe — not to be told it already exists.
+     * Finds an existing tag by name or creates a new one if not existing.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request tag request DTO
+     * @return TagResponse DTO
      */
     @Transactional
     public TagResponse getOrCreateTag(TagRequestDTO request) {
@@ -46,6 +76,16 @@ public class TagService {
                         tagRepository.save(Tag.builder().name(formattedName).build())));
     }
 
+    /**
+     * Creates a new tag ensuring uniqueness against existing tag names.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request tag creation request DTO
+     * @return TagResponse DTO of created tag
+     */
     @Transactional
     public TagResponse createTag(TagRequestDTO request) {
         String formattedName = request.name().trim().toLowerCase();
@@ -58,6 +98,17 @@ public class TagService {
         return TagMapper.toResponse(tagRepository.save(newTag));
     }
 
+    /**
+     * Updates an existing tag name.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target tag ID
+     * @param request tag update request DTO
+     * @return TagResponse DTO of updated tag
+     */
     @Transactional
     public TagResponse updateTag(String id, TagRequestDTO request) {
         Tag tag = tagRepository.findById(id)
@@ -70,6 +121,15 @@ public class TagService {
         return TagMapper.toResponse(tagRepository.save(tag));
     }
 
+    /**
+     * Deletes a tag by ID.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target tag ID
+     */
     @Transactional
     public void deleteTag(String id) {
         Tag tag = tagRepository.findById(id)
@@ -77,11 +137,6 @@ public class TagService {
         tagRepository.delete(tag);
     }
 
-    /**
-     * Shared by {@link #createTag} and {@link #updateTag}: rejects a name that
-     * collides (case-insensitively) with another tag. {@code excludeId} lets an
-     * update keep its own current name without tripping over itself.
-     */
     private void ensureNameAvailable(String formattedName, String excludeId) {
         tagRepository.findByNameIgnoreCase(formattedName)
                 .filter(existing -> excludeId == null || !existing.getId().equals(excludeId))

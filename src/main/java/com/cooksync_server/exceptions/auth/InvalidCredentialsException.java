@@ -1,42 +1,33 @@
 package com.cooksync_server.exceptions.auth;
 
 /**
- * Custom runtime exception thrown when user authentication fails due to
- * incorrect or invalid credentials.
+ * Custom runtime exception thrown when user authentication fails due to incorrect credentials.
  *
  * @author Yaron Serlin
- * @version Last Updated: 06/07/2026
+ * @version 1.0
+ * @since 02/08/2026
  */
 public class InvalidCredentialsException extends RuntimeException {
 
     /**
-     * Constructs a new InvalidCredentialsException with the specified detail
-     * message.
+     * Constructs an InvalidCredentialsException with a detailed failure message.
      *
-     * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * throw new InvalidCredentialsException("Account locked due to too many failed attempts");
-     * }</pre>
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
      *
-     * @param message The detail message explaining the specific reason for the
-     * authentication failure.
+     * @param message descriptive exception message
      */
     public InvalidCredentialsException(String message) {
         super(message);
     }
 
     /**
-     * Constructs a new InvalidCredentialsException with a default error message
-     * ("Invalid email or password").
+     * Constructs an InvalidCredentialsException with default error message.
      *
-     * <p>
-     * <b>Example:</b></p>
-     * <pre>{@code
-     * if (!isPasswordMatch) {
-     * throw new InvalidCredentialsException();
-     * }
-     * }</pre>
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
      */
     public InvalidCredentialsException() {
         super("Invalid email or password");

@@ -14,11 +14,28 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Mapper utility class transforming Recipe entities into RecipeResponse and RecipePreviewResponse DTOs.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 public final class RecipeMapper {
 
     private RecipeMapper() {
     }
 
+    /**
+     * Converts a Recipe entity into a full detail RecipeResponse DTO.
+     *
+     * Complexity:
+     * Time: O(R + T + I + S) where R=reviews, T=tags, I=ingredients, S=instructions
+     * Space: O(R + T + I + S)
+     *
+     * @param recipe target Recipe entity
+     * @return populated RecipeResponse instance or null
+     */
     public static RecipeResponse toResponse(Recipe recipe) {
         if (recipe == null) {
             return null;
@@ -49,14 +66,47 @@ public final class RecipeMapper {
         );
     }
 
+    /**
+     * Converts a Recipe entity into a lightweight RecipePreviewResponse DTO.
+     *
+     * Complexity:
+     * Time: O(T) where T is tag count
+     * Space: O(T)
+     *
+     * @param recipe target Recipe entity
+     * @return populated RecipePreviewResponse instance
+     */
     public static RecipePreviewResponse toPreview(Recipe recipe) {
         return toPreview(recipe, false, null);
     }
 
+    /**
+     * Converts a Recipe entity into a RecipePreviewResponse with personal note flag.
+     *
+     * Complexity:
+     * Time: O(T) where T is tag count
+     * Space: O(T)
+     *
+     * @param recipe target Recipe entity
+     * @param hasPersonalNote flag indicating user attached note
+     * @return populated RecipePreviewResponse instance
+     */
     public static RecipePreviewResponse toPreview(Recipe recipe, boolean hasPersonalNote) {
         return toPreview(recipe, hasPersonalNote, null);
     }
 
+    /**
+     * Converts a Recipe entity into a RecipePreviewResponse with personal note text.
+     *
+     * Complexity:
+     * Time: O(T) where T is tag count
+     * Space: O(T)
+     *
+     * @param recipe target Recipe entity
+     * @param hasPersonalNote flag indicating user attached note
+     * @param personalNoteText personal note content
+     * @return populated RecipePreviewResponse instance
+     */
     public static RecipePreviewResponse toPreview(Recipe recipe, boolean hasPersonalNote, String personalNoteText) {
         if (recipe == null) {
             return null;
@@ -113,10 +163,6 @@ public final class RecipeMapper {
                 .orElse(null);
     }
 
-    /**
-     * Ensures the primary image (if any) is first in the list, since clients render
-     * images.get(0) as the cover photo without re-checking which one is primary.
-     */
     private static List<String> resolveOrderedImageUrls(Recipe recipe, String primaryImageUrl) {
         if (recipe.getImages() == null) {
             return List.of();

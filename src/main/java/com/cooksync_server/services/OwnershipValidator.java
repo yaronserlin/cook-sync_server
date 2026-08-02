@@ -4,10 +4,11 @@ import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 
 /**
- * Shared "resource owner or admin" authorization check. Several services
- * (recipes, ingredients, instructions, reviews) gate mutations on the same
- * rule — only the resource's creator or an admin may modify/delete it — so
- * the check is centralized here rather than re-implemented per service.
+ * Utility validator providing resource ownership and administrator authorization checks.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 final class OwnershipValidator {
 
@@ -15,9 +16,16 @@ final class OwnershipValidator {
     }
 
     /**
-     * @param ownerId the id of the user who owns the resource being acted on
-     * @param currentUser the authenticated user attempting the action
-     * @param errorMessage message to surface if the user is neither the owner nor an admin
+     * Verifies that the current authenticated user is either the owner of the target resource or an administrator.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param ownerId unique user identifier of the resource creator
+     * @param currentUser authenticated user attempting the mutation
+     * @param errorMessage detail exception message thrown upon authorization failure
+     * @throws UnauthorizedActionException if user is neither owner nor administrator
      */
     static void requireOwnerOrAdmin(String ownerId, User currentUser, String errorMessage) {
         if (!ownerId.equals(currentUser.getId()) && !currentUser.isAdmin()) {
