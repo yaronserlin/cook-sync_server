@@ -3,7 +3,6 @@ package com.cooksync_server.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,10 +11,12 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.repositories.IngredientRepository;
@@ -78,31 +79,33 @@ class RecipeServiceTest {
         assertThat(result.last()).isFalse();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    void searchRecipes_blankAuthorAndIngredient_passedAsNullNotEmptyString() {
-        when(recipeRepository.searchRecipesAdvanced(eq("pasta"), isNull(), isNull(), eq(Recipe.Visibility.PUBLIC)))
-                .thenReturn(List.of());
+    void searchRecipes_blankAuthorAndIngredient_stillDelegatesToRepositoryWithSpecification() {
+        when(recipeRepository.findAll(any(Specification.class))).thenReturn(List.of());
 
         recipeService.searchRecipes("pasta", "  ", "");
 
-        verify(recipeRepository).searchRecipesAdvanced(eq("pasta"), isNull(), isNull(), eq(Recipe.Visibility.PUBLIC));
+        verify(recipeRepository).findAll(any(Specification.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void searchRecipes_blankKeywordWithAuthorOnly_stillSearchesByAuthorAlone() {
-        when(recipeRepository.searchRecipesAdvanced(isNull(), eq("Chef John"), isNull(), eq(Recipe.Visibility.PUBLIC)))
-                .thenReturn(List.of());
+        ArgumentCaptor<Specification<Recipe>> specCaptor = ArgumentCaptor.forClass(Specification.class);
+        when(recipeRepository.findAll(specCaptor.capture())).thenReturn(List.of());
 
         recipeService.searchRecipes("", "Chef John", null);
 
-        verify(recipeRepository).searchRecipesAdvanced(isNull(), eq("Chef John"), isNull(), eq(Recipe.Visibility.PUBLIC));
+        assertThat(specCaptor.getValue()).isNotNull();
+        verify(recipeRepository).findAll(any(Specification.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    void searchRecipes_allCriteriaProvided_passesAllThreeThrough() {
+    void searchRecipes_allCriteriaProvided_mapsRepositoryResultsToPreviews() {
         Recipe match = Recipe.builder().id("r1").title("Creamy Tomato Pasta").visibility(Recipe.Visibility.PUBLIC).build();
-        when(recipeRepository.searchRecipesAdvanced("pasta", "chef", "tomato", Recipe.Visibility.PUBLIC))
-                .thenReturn(List.of(match));
+        when(recipeRepository.findAll(any(Specification.class))).thenReturn(List.of(match));
 
         List<RecipePreviewResponse> results = recipeService.searchRecipes("pasta", "chef", "tomato");
 

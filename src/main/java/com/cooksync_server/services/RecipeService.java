@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ import com.cooksync_server.repositories.IngredientRepository;
 import com.cooksync_server.repositories.InstructionRepository;
 import com.cooksync_server.repositories.RecipeImageRepository;
 import com.cooksync_server.repositories.RecipeRepository;
+import com.cooksync_server.repositories.RecipeSpecifications;
 import com.cooksync_server.repositories.TagRepository;
 import com.cooksync_server.repositories.UnitRepository;
 import com.cooksync_server.repositories.UserRepository;
@@ -72,12 +74,18 @@ public class RecipeService {
         return RecipeMapper.toResponse(recipe);
     }
 
-    /** Advanced search: title/author/ingredient are each optional and ANDed together when present. */
+    /**
+     * Unified search: {@code keyword} is matched, token by token, against title/author/tag/ingredient
+     * (see {@link RecipeSpecifications#matchesUnifiedQuery}), with the optional {@code author} and
+     * {@code ingredient} filters ANDed on top for the advanced-search fields.
+     */
     public List<RecipePreviewResponse> searchRecipes(String keyword, String author, String ingredient) {
-        String title = (keyword == null || keyword.isBlank()) ? null : keyword;
-        String authorFilter = (author == null || author.isBlank()) ? null : author;
-        String ingredientFilter = (ingredient == null || ingredient.isBlank()) ? null : ingredient;
-        return recipeRepository.searchRecipesAdvanced(title, authorFilter, ingredientFilter, Recipe.Visibility.PUBLIC)
+        Specification<Recipe> spec = RecipeSpecifications.combine(
+                RecipeSpecifications.isPublicAndEnabled(),
+                RecipeSpecifications.matchesUnifiedQuery(keyword),
+                RecipeSpecifications.hasAuthor(author),
+                RecipeSpecifications.hasIngredient(ingredient));
+        return recipeRepository.findAll(spec)
                 .stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
@@ -197,22 +205,35 @@ public class RecipeService {
     }
 
     private List<Tag> fetchTags(List<String> tagIds) {
-        List<Tag> tags = new ArrayList<>();
-        if (tagIds != null) {
-            for (String tagId : tagIds) {
-                tags.add(tagRepository.findById(tagId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Tag", tagId)));
-            }
+        if (tagIds == null || tagIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Tag> tags = tagRepository.findAllById(tagIds);
+        if (tags.size() != new HashSet<>(tagIds).size()) {
+            Set<String> foundIds = tags.stream().map(Tag::getId).collect(Collectors.toSet());
+            String missingId = tagIds.stream().filter(tagId -> !foundIds.contains(tagId)).findFirst().orElse(null);
+            throw new ResourceNotFoundException("Tag", missingId);
         }
         return tags;
     }
 
+    /** Batches the unit lookups for the whole ingredient list instead of one query per ingredient. */
+    private Map<String, Unit> fetchUnitsById(List<IngredientRequestDTO> dtoList) {
+        Set<String> unitIds = dtoList.stream().map(IngredientRequestDTO::unitId).collect(Collectors.toSet());
+        return unitRepository.findAllById(unitIds).stream()
+                .collect(Collectors.toMap(Unit::getId, unit -> unit));
+    }
+
     private Set<Ingredient> saveIngredients(List<IngredientRequestDTO> dtoList, Recipe recipe,
             Map<String, Ingredient> tmpIdToIngredient) {
+        Map<String, Unit> unitsById = fetchUnitsById(dtoList);
+
         Set<Ingredient> ingredients = new HashSet<>();
         for (IngredientRequestDTO ingDto : dtoList) {
-            Unit unit = unitRepository.findById(ingDto.unitId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Unit", ingDto.unitId()));
+            Unit unit = unitsById.get(ingDto.unitId());
+            if (unit == null) {
+                throw new ResourceNotFoundException("Unit", ingDto.unitId());
+            }
             Ingredient ingredient = Ingredient.builder()
                     .recipe(recipe)
                     .name(ingDto.name())

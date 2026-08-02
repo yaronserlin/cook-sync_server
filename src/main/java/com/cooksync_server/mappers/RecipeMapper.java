@@ -19,95 +19,94 @@ public final class RecipeMapper {
     private RecipeMapper() {
     }
 
-    public static RecipeResponse toResponse(Recipe r) {
-        if (r == null) {
+    public static RecipeResponse toResponse(Recipe recipe) {
+        if (recipe == null) {
             return null;
         }
-        String primaryImageUrl = resolvePrimaryImageUrl(r);
-        List<String> imageUrls = resolveOrderedImageUrls(r, primaryImageUrl);
+        String primaryImageUrl = resolvePrimaryImageUrl(recipe);
+        List<String> imageUrls = resolveOrderedImageUrls(recipe, primaryImageUrl);
 
         return new RecipeResponse(
-                r.getId(),
-                UserMapper.toResponse(r.getCreatedBy()),
-                r.getTitle(),
-                r.getDescription(),
-                r.getDifficulty() == null ? null : r.getDifficulty().name(),
-                r.getVisibility() == null ? null : r.getVisibility().name(),
-                r.getPrepTimeMinutes(),
-                r.getCookTimeMinutes(),
-                r.getServings(),
-                r.getReviewCount(),
-                r.getAverageRating(),
-                mapReviews(r),
-                MapperUtils.toIsoStringOrNull(r.getCreatedAt()),
-                MapperUtils.toIsoStringOrNull(r.getUpdatedAt()),
-                mapTags(r),
-                mapIngredients(r),
-                mapInstructions(r),
+                recipe.getId(),
+                UserMapper.toResponse(recipe.getCreatedBy()),
+                recipe.getTitle(),
+                recipe.getDescription(),
+                recipe.getDifficulty() == null ? null : recipe.getDifficulty().name(),
+                recipe.getVisibility() == null ? null : recipe.getVisibility().name(),
+                recipe.getPrepTimeMinutes(),
+                recipe.getCookTimeMinutes(),
+                recipe.getServings(),
+                recipe.getReviewCount(),
+                recipe.getAverageRating(),
+                mapReviews(recipe),
+                MapperUtils.toIsoStringOrNull(recipe.getCreatedAt()),
+                MapperUtils.toIsoStringOrNull(recipe.getUpdatedAt()),
+                mapTags(recipe),
+                mapIngredients(recipe),
+                mapInstructions(recipe),
                 primaryImageUrl,
                 imageUrls
         );
     }
 
-    public static RecipePreviewResponse toPreview(Recipe r) {
-        return toPreview(r, false, null);
+    public static RecipePreviewResponse toPreview(Recipe recipe) {
+        return toPreview(recipe, false, null);
     }
 
-    public static RecipePreviewResponse toPreview(Recipe r, boolean hasPersonalNote) {
-        return toPreview(r, hasPersonalNote, null);
+    public static RecipePreviewResponse toPreview(Recipe recipe, boolean hasPersonalNote) {
+        return toPreview(recipe, hasPersonalNote, null);
     }
 
-    public static RecipePreviewResponse toPreview(Recipe r, boolean hasPersonalNote, String personalNoteText) {
-        if (r == null) {
+    public static RecipePreviewResponse toPreview(Recipe recipe, boolean hasPersonalNote, String personalNoteText) {
+        if (recipe == null) {
             return null;
         }
-        String authorName = r.getCreatedBy() == null ? null
-                : r.getCreatedBy().getFirstName() + " " + r.getCreatedBy().getLastName();
+        String authorName = recipe.getCreatedBy() == null ? null : recipe.getCreatedBy().getFullName();
 
         return new RecipePreviewResponse(
-                r.getId(),
+                recipe.getId(),
                 authorName,
-                r.getTitle(),
-                r.getDescription(),
-                r.getDifficulty() == null ? null : r.getDifficulty().name(),
-                r.getVisibility() == null ? null : r.getVisibility().name(),
-                r.getPrepTimeMinutes(),
-                r.getCookTimeMinutes(),
-                r.getReviewCount(),
-                r.getAverageRating(),
-                MapperUtils.toIsoStringOrNull(r.getCreatedAt()),
-                mapTags(r),
-                resolvePrimaryImageUrl(r),
+                recipe.getTitle(),
+                recipe.getDescription(),
+                recipe.getDifficulty() == null ? null : recipe.getDifficulty().name(),
+                recipe.getVisibility() == null ? null : recipe.getVisibility().name(),
+                recipe.getPrepTimeMinutes(),
+                recipe.getCookTimeMinutes(),
+                recipe.getReviewCount(),
+                recipe.getAverageRating(),
+                MapperUtils.toIsoStringOrNull(recipe.getCreatedAt()),
+                mapTags(recipe),
+                resolvePrimaryImageUrl(recipe),
                 hasPersonalNote,
                 personalNoteText
         );
     }
 
-    private static List<ReviewResponse> mapReviews(Recipe r) {
-        return r.getReviews() == null ? List.of()
-                : r.getReviews().stream().map(ReviewMapper::toResponse).collect(Collectors.toList());
+    private static List<ReviewResponse> mapReviews(Recipe recipe) {
+        return recipe.getReviews() == null ? List.of()
+                : recipe.getReviews().stream().map(ReviewMapper::toResponse).collect(Collectors.toList());
     }
 
-    private static List<TagResponse> mapTags(Recipe r) {
-        return r.getTags() == null ? List.of()
-                : r.getTags().stream().map(TagMapper::toResponse).collect(Collectors.toList());
+    private static List<TagResponse> mapTags(Recipe recipe) {
+        return recipe.getTags() == null ? List.of()
+                : recipe.getTags().stream().map(TagMapper::toResponse).collect(Collectors.toList());
     }
 
-    private static Set<IngredientResponse> mapIngredients(Recipe r) {
-        return r.getIngredients() == null ? Set.of()
-                : r.getIngredients().stream().map(IngredientMapper::toResponse).collect(Collectors.toSet());
+    private static Set<IngredientResponse> mapIngredients(Recipe recipe) {
+        return recipe.getIngredients() == null ? Set.of()
+                : recipe.getIngredients().stream().map(IngredientMapper::toResponse).collect(Collectors.toSet());
     }
 
-    private static List<InstructionResponse> mapInstructions(Recipe r) {
-        return r.getInstructions() == null ? List.of()
-                : r.getInstructions().stream().map(InstructionMapper::toResponse).collect(Collectors.toList());
+    private static List<InstructionResponse> mapInstructions(Recipe recipe) {
+        return recipe.getInstructions() == null ? List.of()
+                : recipe.getInstructions().stream().map(InstructionMapper::toResponse).collect(Collectors.toList());
     }
 
-    private static String resolvePrimaryImageUrl(Recipe r) {
-        if (r.getImages() == null) {
+    private static String resolvePrimaryImageUrl(Recipe recipe) {
+        if (recipe.getImages() == null) {
             return null;
         }
-        return r.getImages().stream()
+        return recipe.getImages().stream()
                 .filter(image -> image != null && image.isPrimary())
                 .map(RecipeImage::getImageUrl)
                 .findFirst()
@@ -118,11 +117,11 @@ public final class RecipeMapper {
      * Ensures the primary image (if any) is first in the list, since clients render
      * images.get(0) as the cover photo without re-checking which one is primary.
      */
-    private static List<String> resolveOrderedImageUrls(Recipe r, String primaryImageUrl) {
-        if (r.getImages() == null) {
+    private static List<String> resolveOrderedImageUrls(Recipe recipe, String primaryImageUrl) {
+        if (recipe.getImages() == null) {
             return List.of();
         }
-        List<String> imageUrls = r.getImages().stream()
+        List<String> imageUrls = recipe.getImages().stream()
                 .filter(image -> image != null)
                 .map(RecipeImage::getImageUrl)
                 .toList();

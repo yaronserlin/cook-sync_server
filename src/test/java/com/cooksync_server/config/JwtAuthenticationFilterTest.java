@@ -46,4 +46,23 @@ class JwtAuthenticationFilterTest {
         assertThatCode(() -> filter.doFilter(request, response, chain)).doesNotThrowAnyException();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
+
+    @Test
+    void doesNotThrowWhenBearerTokenIsBlank() throws Exception {
+        JwtUtil jwtUtil = new JwtUtil();
+        String secret = Base64.getEncoder().encodeToString("test-secret-key-1234567890-1234567890".getBytes(StandardCharsets.UTF_8));
+        ReflectionTestUtils.setField(jwtUtil, "secretKey", secret);
+
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtUtil);
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer ");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        SecurityContextHolder.clearContext();
+
+        assertThatCode(() -> filter.doFilter(request, response, chain)).doesNotThrowAnyException();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
 }

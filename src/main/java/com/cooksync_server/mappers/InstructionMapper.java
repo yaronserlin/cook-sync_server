@@ -11,15 +11,16 @@ public final class InstructionMapper {
     private InstructionMapper() {
     }
 
-    public static InstructionResponse toResponse(Instruction ins) {
-        if (ins == null) {
+    public static InstructionResponse toResponse(Instruction instruction) {
+        if (instruction == null) {
             return null;
         }
-        Set<IngredientResponse> ingr = ins.getIngredients() == null ? null
-                : ins.getIngredients().stream().map(IngredientMapper::toResponse).collect(Collectors.toSet());
-        String created = MapperUtils.toIsoStringOrNull(ins.getCreatedAt());
-        String updated = MapperUtils.toIsoStringOrNull(ins.getUpdatedAt());
-        return new InstructionResponse(ins.getId(), ins.getStepNumber(), ins.getDescription(), ins.isHasTimer(),
-                ins.getTimeSeconds(), created, updated, ingr, ins.getImageUrl());
+        Set<IngredientResponse> ingredients = instruction.getIngredients() == null ? null
+                : instruction.getIngredients().stream().map(IngredientMapper::toResponse).collect(Collectors.toSet());
+        String created = MapperUtils.toIsoStringOrNull(instruction.getCreatedAt());
+        String updated = MapperUtils.toIsoStringOrNull(instruction.getUpdatedAt());
+        return new InstructionResponse(instruction.getId(), instruction.getStepNumber(), instruction.getDescription(),
+                instruction.isHasTimer(), instruction.getTimeSeconds(), created, updated, ingredients,
+                instruction.getImageUrl());
     }
 }

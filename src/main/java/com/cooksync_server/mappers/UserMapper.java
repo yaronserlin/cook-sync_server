@@ -8,12 +8,13 @@ public final class UserMapper {
     private UserMapper() {
     }
 
-    public static UserResponse toResponse(User u) {
-        if (u == null) {
+    public static UserResponse toResponse(User user) {
+        if (user == null) {
             return null;
         }
-        String created = MapperUtils.toIsoStringOrNull(u.getCreatedAt());
-        String updated = MapperUtils.toIsoStringOrNull(u.getUpdatedAt());
-        return new UserResponse(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail(), u.isAdmin(), u.getAvatarUrl(), created, updated, u.isEnabled());
+        String created = MapperUtils.toIsoStringOrNull(user.getCreatedAt());
+        String updated = MapperUtils.toIsoStringOrNull(user.getUpdatedAt());
+        return new UserResponse(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(),
+                user.isAdmin(), user.getAvatarUrl(), created, updated, user.isEnabled());
     }
 }

@@ -61,7 +61,8 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
-        // Update recipe review count and average rating
+        // Count/average are denormalized onto Recipe so recipe list views avoid
+        // aggregating the reviews table on every read.
         recipe.setReviewCount(recipe.getReviewCount() + 1);
         recipe.getReviews().add(review);
         recomputeAverageRating(recipe);

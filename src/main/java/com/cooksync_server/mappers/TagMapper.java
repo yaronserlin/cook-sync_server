@@ -8,12 +8,12 @@ public final class TagMapper {
     private TagMapper() {
     }
 
-    public static TagResponse toResponse(Tag t) {
-        if (t == null) {
+    public static TagResponse toResponse(Tag tag) {
+        if (tag == null) {
             return null;
         }
-        String created = MapperUtils.toIsoStringOrNull(t.getCreatedAt());
-        String updated = MapperUtils.toIsoStringOrNull(t.getUpdatedAt());
-        return new TagResponse(t.getId(), t.getName(), created, updated);
+        String created = MapperUtils.toIsoStringOrNull(tag.getCreatedAt());
+        String updated = MapperUtils.toIsoStringOrNull(tag.getUpdatedAt());
+        return new TagResponse(tag.getId(), tag.getName(), created, updated);
     }
 }

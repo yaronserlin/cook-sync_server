@@ -17,13 +17,14 @@ import lombok.RequiredArgsConstructor;
 /**
  * Security configuration for the application.
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -38,6 +39,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/cloudinary/**").authenticated()
                 .anyRequest().authenticated()
             )
+            // Without this, a missing/invalid/expired token falls through to Spring
+            // Security's default handling, which returns a bare 403 with no body -
+            // the client can't tell that apart from a real authorization failure.
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

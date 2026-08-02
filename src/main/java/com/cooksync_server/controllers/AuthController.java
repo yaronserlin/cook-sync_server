@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cooksync_server.services.AuthService;
 import com.dtos.request.auth.AvatarUpdateRequestDTO;
+import com.dtos.request.auth.ChangePasswordRequestDTO;
+import com.dtos.request.auth.EmailUpdateRequestDTO;
 import com.dtos.request.auth.LoginRequestDTO;
 import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
@@ -78,6 +80,22 @@ public class AuthController {
             Authentication authentication) {
         authService.updateProfile(authentication.getName(), request);
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Profile updated successfully"));
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody ChangePasswordRequestDTO request,
+            Authentication authentication) {
+        authService.changePassword(authentication.getName(), request);
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Password updated successfully"));
+    }
+
+    @PutMapping("/email")
+    public ResponseEntity<ApiResponse<AuthResponse>> updateEmail(
+            @Valid @RequestBody EmailUpdateRequestDTO request,
+            Authentication authentication) {
+        AuthResponse response = authService.updateEmail(authentication.getName(), request);
+        return ResponseEntity.ok(new ApiResponse<>(true, response, null, "Email updated successfully"));
     }
 
     @PatchMapping("/deactivate")

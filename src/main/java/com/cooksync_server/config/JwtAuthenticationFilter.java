@@ -42,7 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String jwt = authHeader.substring(7);
+        final String jwt = authHeader.substring(7).trim();
+
+        if (jwt.isEmpty()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
             final String userEmail = jwtUtil.extractEmail(jwt);
@@ -56,9 +61,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-        } catch (JwtException ex) {
-            // Covers expired/malformed/invalid-signature tokens alike: any failure here
-            // just means the request proceeds unauthenticated, so log at debug only.
+        } catch (JwtException | IllegalArgumentException ex) {
+            // Covers expired/malformed/invalid-signature/blank tokens alike (jjwt throws
+            // IllegalArgumentException rather than JwtException for a null/blank token
+            // string): any failure here just means the request proceeds unauthenticated,
+            // so log at debug only. This must not escape the filter uncaught - filters run
+            // before the DispatcherServlet, so GlobalExceptionHandler never sees it and an
+            // uncaught exception here surfaces as a raw 500 instead of a clean 401/403.
             LOG.debug("Rejecting request with invalid JWT: {}", ex.getMessage());
             SecurityContextHolder.clearContext();
         }

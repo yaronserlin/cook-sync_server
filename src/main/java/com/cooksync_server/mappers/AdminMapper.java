@@ -8,26 +8,26 @@ public final class AdminMapper {
     private AdminMapper() {
     }
 
-    public static ReportedReviewResponse toReportedReviewResponse(Review r) {
-        if (r == null) {
+    public static ReportedReviewResponse toReportedReviewResponse(Review review) {
+        if (review == null) {
             return null;
         }
-        String reviewerName = r.getUser() == null ? null : r.getUser().getFullName();
-        String reviewerId = r.getUser() == null ? null : r.getUser().getId();
-        String recipeId = r.getRecipe() == null ? null : r.getRecipe().getId();
-        String recipeTitle = r.getRecipe() == null ? null : r.getRecipe().getTitle();
-        String reason = r.getReportReason() == null ? null : r.getReportReason().name();
-        String reportedAt = MapperUtils.toIsoStringOrNull(r.getReportedAt());
+        String reviewerName = review.getUser() == null ? null : review.getUser().getFullName();
+        String reviewerId = review.getUser() == null ? null : review.getUser().getId();
+        String recipeId = review.getRecipe() == null ? null : review.getRecipe().getId();
+        String recipeTitle = review.getRecipe() == null ? null : review.getRecipe().getTitle();
+        String reason = review.getReportReason() == null ? null : review.getReportReason().name();
+        String reportedAt = MapperUtils.toIsoStringOrNull(review.getReportedAt());
 
         return new ReportedReviewResponse(
-                r.getId(),
+                review.getId(),
                 reviewerName,
                 reviewerId,
                 recipeId,
                 recipeTitle,
                 reason,
-                r.getComment(),
-                r.getRating(),
+                review.getComment(),
+                review.getRating(),
                 reportedAt
         );
     }

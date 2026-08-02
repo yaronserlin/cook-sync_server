@@ -57,9 +57,11 @@ public class RecipeController {
     }
 
     /**
-     * Title search plus optional author/ingredient filters (each independent
-     * and ANDed together when present). Tag filtering stays on the separate
-     * {@link #getRecipesByTag} endpoint / client-side chip filtering.
+     * Unified search: {@code q} is matched against title, author, tags, and ingredients at once
+     * (space-separated terms are ANDed, e.g. "cucumber tomato lettuce" finds recipes containing all
+     * three ingredients). The optional {@code author}/{@code ingredient} params layer on additional
+     * AND-ed filters for the advanced-search fields. {@link #getRecipesByTag} remains available for
+     * direct tag-chip navigation.
      */
     @GetMapping("/public/search")
     public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> searchRecipes(

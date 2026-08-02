@@ -8,12 +8,12 @@ public final class UnitMapper {
     private UnitMapper() {
     }
 
-    public static UnitResponse toResponse(Unit u) {
-        if (u == null) {
+    public static UnitResponse toResponse(Unit unit) {
+        if (unit == null) {
             return null;
         }
-        String created = MapperUtils.toIsoStringOrNull(u.getCreatedAt());
-        String updated = MapperUtils.toIsoStringOrNull(u.getUpdatedAt());
-        return new UnitResponse(u.getId(), u.getCode(), u.getName(), created, updated);
+        String created = MapperUtils.toIsoStringOrNull(unit.getCreatedAt());
+        String updated = MapperUtils.toIsoStringOrNull(unit.getUpdatedAt());
+        return new UnitResponse(unit.getId(), unit.getCode(), unit.getName(), created, updated);
     }
 }

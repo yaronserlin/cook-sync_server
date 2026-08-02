@@ -8,15 +8,16 @@ public final class ReviewMapper {
     private ReviewMapper() {
     }
 
-    public static ReviewResponse toResponse(Review r) {
-        if (r == null) {
+    public static ReviewResponse toResponse(Review review) {
+        if (review == null) {
             return null;
         }
-        String userId = r.getUser() == null ? null : r.getUser().getId();
-        String authorName = r.getUser() == null ? null : r.getUser().getFirstName() + " " + r.getUser().getLastName();
-        String recipeId = r.getRecipe() == null ? null : r.getRecipe().getId();
-        String created = MapperUtils.toIsoStringOrNull(r.getCreatedAt());
-        String updated = MapperUtils.toIsoStringOrNull(r.getUpdatedAt());
-        return new ReviewResponse(r.getId(), userId, authorName, recipeId, r.getRating(), r.getTitle(), r.getComment(), created, updated);
+        String userId = review.getUser() == null ? null : review.getUser().getId();
+        String authorName = review.getUser() == null ? null : review.getUser().getFullName();
+        String recipeId = review.getRecipe() == null ? null : review.getRecipe().getId();
+        String created = MapperUtils.toIsoStringOrNull(review.getCreatedAt());
+        String updated = MapperUtils.toIsoStringOrNull(review.getUpdatedAt());
+        return new ReviewResponse(review.getId(), userId, authorName, recipeId, review.getRating(), review.getTitle(),
+                review.getComment(), created, updated);
     }
 }

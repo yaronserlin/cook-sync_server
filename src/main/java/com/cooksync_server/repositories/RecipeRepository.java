@@ -4,13 +4,14 @@ import com.cooksync_server.entities.Recipe;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface RecipeRepository extends JpaRepository<Recipe, String> {
+public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpecificationExecutor<Recipe> {
 
     // חיפוש חופשי לפי כותרת (עבור מסך הבית)
     List<Recipe> findByTitleContainingIgnoreCase(String title);
@@ -39,13 +40,4 @@ public interface RecipeRepository extends JpaRepository<Recipe, String> {
     // Kept alongside the unpaged version above (still used by Search/Filters, which need the full list).
     @Query("SELECT r FROM Recipe r WHERE r.visibility = :visibility AND r.createdBy.enabled = true")
     Page<Recipe> findByVisibility(@Param("visibility") Recipe.Visibility visibility, Pageable pageable);
-
-    // Advanced search: title/author/ingredient are each optional (null = don't filter on that field), ANDed together.
-    @Query("SELECT DISTINCT r FROM Recipe r LEFT JOIN r.ingredients i "
-            + "WHERE r.visibility = :visibility AND r.createdBy.enabled = true "
-            + "AND (:title IS NULL OR LOWER(r.title) LIKE LOWER(CONCAT('%', :title, '%'))) "
-            + "AND (:author IS NULL OR LOWER(CONCAT(r.createdBy.firstName, ' ', r.createdBy.lastName)) LIKE LOWER(CONCAT('%', :author, '%'))) "
-            + "AND (:ingredient IS NULL OR LOWER(i.name) LIKE LOWER(CONCAT('%', :ingredient, '%')))")
-    List<Recipe> searchRecipesAdvanced(@Param("title") String title, @Param("author") String author,
-            @Param("ingredient") String ingredient, @Param("visibility") Recipe.Visibility visibility);
 }

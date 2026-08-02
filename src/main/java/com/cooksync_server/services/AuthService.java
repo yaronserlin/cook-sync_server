@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cooksync_server.config.JwtUtil;
+import com.dtos.request.auth.ChangePasswordRequestDTO;
+import com.dtos.request.auth.EmailUpdateRequestDTO;
 import com.dtos.request.auth.LoginRequestDTO;
 import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
@@ -126,6 +128,59 @@ public class AuthService {
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
         userRepository.save(user);
+    }
+
+    /**
+     * Self-service password change. Requires the caller's current password so
+     * that a leaked/stolen access token alone can't be used to lock the real
+     * owner out of their account. Existing refresh tokens are revoked
+     * afterwards so any other signed-in device/session must re-authenticate
+     * with the new password.
+     */
+    @Transactional
+    public void changePassword(String userEmail, ChangePasswordRequestDTO request) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        refreshTokenService.deleteByUserId(user.getId());
+    }
+
+    /**
+     * Self-service email change. Requires the caller's current password for
+     * the same reason as {@link #changePassword}. Since the JWT subject is
+     * the user's email, a fresh token/refresh-token pair reflecting the new
+     * address is issued and returned so the client can keep using it.
+     */
+    @Transactional
+    public AuthResponse updateEmail(String userEmail, EmailUpdateRequestDTO request) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+
+        String newEmail = request.newEmail().trim().toLowerCase();
+        if (!newEmail.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmail(newEmail)) {
+            throw new UserAlreadyExistsException("Email is already registered");
+        }
+
+        user.setEmail(newEmail);
+        try {
+            userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new UserAlreadyExistsException("Email is already registered");
+        }
+
+        String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.isAdmin());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+        return new AuthResponse(token, refreshToken.getToken(), user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin(), user.getAvatarUrl());
     }
 
     /**
