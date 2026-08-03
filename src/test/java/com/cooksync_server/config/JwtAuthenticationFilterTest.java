@@ -19,8 +19,24 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+/**
+ * Unit test for JwtAuthenticationFilter verifying boundary cases for token authentication.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 class JwtAuthenticationFilterTest {
 
+    /**
+     * Verifies that expired Bearer tokens pass through without throwing exceptions.
+     *
+     * @throws Exception if filter execution fails
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void doesNotThrowWhenBearerTokenIsExpired() throws Exception {
         JwtUtil jwtUtil = new JwtUtil();
@@ -47,6 +63,15 @@ class JwtAuthenticationFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
+    /**
+     * Verifies that empty Bearer headers pass through safely.
+     *
+     * @throws Exception if filter execution fails
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void doesNotThrowWhenBearerTokenIsBlank() throws Exception {
         JwtUtil jwtUtil = new JwtUtil();

@@ -23,9 +23,11 @@ import com.cooksync_server.repositories.UserRepository;
 import com.dtos.response.recipe.RecipePreviewResponse;
 
 /**
- * Covers the Favorites-list fix where a note *indicator* was shown
- * (hasPersonalNote) but the actual note text was never included in the
- * response, so the UI could only ever render a hardcoded placeholder string.
+ * Unit test for FavoriteService managing user favorite recipe entries and note presence flags.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @ExtendWith(MockitoExtension.class)
 class FavoriteServiceTest {
@@ -45,6 +47,13 @@ class FavoriteServiceTest {
     private final String userEmail = "ada@example.com";
     private User user;
 
+    /**
+     * Initializes mocks and service instance before each test.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @BeforeEach
     void setUp() {
         favoriteService = new FavoriteService(favoriteRepository, recipeRepository, userRepository, personalInstructionNoteRepository);
@@ -52,6 +61,13 @@ class FavoriteServiceTest {
         when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
     }
 
+    /**
+     * Verifies that retrieving user favorites populates the general note text snippet.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getUserFavorites_recipeWithGeneralNote_includesActualNoteText() {
         Recipe recipe = Recipe.builder().id("recipe-1").title("Pasta").build();
@@ -72,12 +88,18 @@ class FavoriteServiceTest {
         assertThat(preview.personalNoteText()).isEqualTo("Add extra lime juice");
     }
 
+    /**
+     * Verifies that a recipe with only a per-step note sets the note presence indicator without general text.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getUserFavorites_recipeWithOnlyAPerStepNote_hasPersonalNoteTrueButNoTextPreview() {
         Recipe recipe = Recipe.builder().id("recipe-2").title("Soup").build();
         FavoriteRecipe favorite = FavoriteRecipe.builder().id("fav-2").user(user).recipe(recipe).build();
         when(favoriteRepository.findByUserId(userId)).thenReturn(List.of(favorite));
-        // A per-step note exists (hasPersonalNote reflects "any note"), but there is no general/whole-recipe note.
         when(personalInstructionNoteRepository.existsByUserIdAndRecipeId(userId, "recipe-2")).thenReturn(true);
         when(personalInstructionNoteRepository.findByUserIdAndRecipeIdAndInstructionIdIsNull(userId, "recipe-2"))
                 .thenReturn(Optional.empty());
@@ -88,6 +110,13 @@ class FavoriteServiceTest {
         assertThat(preview.personalNoteText()).isNull();
     }
 
+    /**
+     * Verifies that a recipe with no note sets false for note presence.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getUserFavorites_recipeWithNoNote_hasPersonalNoteFalseAndNoText() {
         Recipe recipe = Recipe.builder().id("recipe-3").title("Salad").build();

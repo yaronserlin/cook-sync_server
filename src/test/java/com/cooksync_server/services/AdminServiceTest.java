@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -34,6 +35,13 @@ import com.dtos.response.PagedResponse;
 import com.dtos.response.admin.DuplicateTagGroupResponse;
 import com.dtos.response.user.UserResponse;
 
+/**
+ * Unit test for AdminService verifying administrative user management, account enabling/disabling, and tag merging operations.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 @ExtendWith(MockitoExtension.class)
 class AdminServiceTest {
 
@@ -50,19 +58,33 @@ class AdminServiceTest {
 
     private AdminService adminService;
 
+    /**
+     * Initializes test fixtures and mocks before each test execution.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @BeforeEach
     void setUp() {
         adminService = new AdminService(reviewRepository, recipeRepository, tagRepository, userRepository, jdbcTemplate);
     }
 
+    /**
+     * Verifies that getAllUsers returns requested page results with metadata.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getAllUsers_returnsRequestedPageWithMetadata() {
         User u1 = User.builder().id("u1").firstName("Ada").lastName("Lovelace").email("ada@example.com").build();
         User u2 = User.builder().id("u2").firstName("Chef").lastName("John").email("chef@example.com").build();
         Pageable pageable = PageRequest.of(1, 2);
-        when(userRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(u1, u2), pageable, 5));
+        when(userRepository.search(any(), any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(u1, u2), pageable, 5));
 
-        PagedResponse<UserResponse> result = adminService.getAllUsers(1, 2);
+        PagedResponse<UserResponse> result = adminService.getAllUsers(1, 2, null, null, "createdAt", "desc");
 
         assertThat(result.content()).hasSize(2);
         assertThat(result.content().get(0).email()).isEqualTo("ada@example.com");
@@ -71,6 +93,100 @@ class AdminServiceTest {
         assertThat(result.last()).isFalse();
     }
 
+    /**
+     * Verifies normalization and trimming of user search queries.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
+    @Test
+    void getAllUsers_normalizesSearchQueryToLowercaseAndTrimsWhitespace() {
+        Pageable pageable = PageRequest.of(0, 30);
+        when(userRepository.search(eq("ada"), any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        adminService.getAllUsers(0, 30, "  Ada  ", null, "createdAt", "desc");
+
+        verify(userRepository).search(eq("ada"), eq(null), any(Pageable.class));
+    }
+
+    /**
+     * Verifies that blank search queries pass null into the search specification.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
+    @Test
+    void getAllUsers_blankSearchQuery_passesNullToRepository() {
+        Pageable pageable = PageRequest.of(0, 30);
+        when(userRepository.search(eq(null), any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        adminService.getAllUsers(0, 30, "   ", true, "createdAt", "desc");
+
+        verify(userRepository).search(eq(null), eq(true), any(Pageable.class));
+    }
+
+    /**
+     * Verifies filtering by enabled user status.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
+    @Test
+    void getAllUsers_passesEnabledFilterThrough() {
+        Pageable pageable = PageRequest.of(0, 30);
+        when(userRepository.search(any(), eq(false), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        adminService.getAllUsers(0, 30, null, false, "createdAt", "desc");
+
+        verify(userRepository).search(eq(null), eq(false), any(Pageable.class));
+    }
+
+    /**
+     * Verifies fallback to createdAt sorting when provided with invalid sort fields.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
+    @Test
+    void getAllUsers_unsortableFieldFallsBackToCreatedAt() {
+        Pageable pageable = PageRequest.of(0, 30);
+        when(userRepository.search(any(), any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        adminService.getAllUsers(0, 30, null, null, "passwordHash", "desc");
+
+        verify(userRepository).search(eq(null), eq(null), argThat(p ->
+                p.getSort().getOrderFor("createdAt") != null));
+    }
+
+    /**
+     * Verifies ascending direction sort configuration.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
+    @Test
+    void getAllUsers_ascendingDirection_sortsAscending() {
+        Pageable pageable = PageRequest.of(0, 30);
+        when(userRepository.search(any(), any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        adminService.getAllUsers(0, 30, null, null, "email", "asc");
+
+        verify(userRepository).search(eq(null), eq(null), argThat(p ->
+                p.getSort().getOrderFor("email").isAscending()));
+    }
+
+    /**
+     * Verifies disabling a user account.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void disableUser_setsEnabledFalseAndSaves() {
         User user = User.builder().id("u1").enabled(true).build();
@@ -82,6 +198,13 @@ class AdminServiceTest {
         verify(userRepository).save(user);
     }
 
+    /**
+     * Verifies enabling a user account.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void enableUser_setsEnabledTrueAndSaves() {
         User user = User.builder().id("u1").enabled(false).build();
@@ -93,6 +216,13 @@ class AdminServiceTest {
         verify(userRepository).save(user);
     }
 
+    /**
+     * Verifies exception thrown when targeting unknown user ID.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void disableUser_unknownId_throws() {
         when(userRepository.findById("missing")).thenReturn(java.util.Optional.empty());
@@ -100,6 +230,13 @@ class AdminServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> adminService.disableUser("missing"));
     }
 
+    /**
+     * Verifies duplicate tag grouping across casing and whitespace variations.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getDuplicateTagGroups_groupsNameVariantsIgnoringCaseWhitespaceAndSeparators() {
         Tag vegan1 = Tag.builder().id("t1").name("vegan").build();
@@ -115,6 +252,13 @@ class AdminServiceTest {
         assertThat(groups.get(0).variants()).hasSize(3);
     }
 
+    /**
+     * Verifies empty duplicate tag groups when all tags are unique.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getDuplicateTagGroups_noDuplicates_returnsEmpty() {
         when(tagRepository.findAll()).thenReturn(List.of(
@@ -124,6 +268,13 @@ class AdminServiceTest {
         assertThat(adminService.getDuplicateTagGroups()).isEmpty();
     }
 
+    /**
+     * Verifies validation check preventing tag merging onto itself.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void mergeTags_sameSourceAndTarget_throwsWithoutTouchingDatabase() {
         assertThrows(IllegalArgumentException.class, () ->
@@ -132,6 +283,13 @@ class AdminServiceTest {
         verify(jdbcTemplate, never()).update(anyString(), any(), any());
     }
 
+    /**
+     * Verifies exception thrown when source tag is missing.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void mergeTags_missingSourceTag_throwsNotFound() {
         when(tagRepository.existsById("missing-source")).thenReturn(false);
@@ -142,6 +300,13 @@ class AdminServiceTest {
         verify(jdbcTemplate, never()).update(anyString(), any(), any());
     }
 
+    /**
+     * Verifies tag merge database updates reassigning recipes and deleting source tag.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void mergeTags_validRequest_reassignsRecipesThenDeletesSourceTag() {
         when(tagRepository.existsById("tag-source")).thenReturn(true);
@@ -149,15 +314,12 @@ class AdminServiceTest {
 
         adminService.mergeTags(new TagMergeRequestDTO("tag-source", "tag-target"));
 
-        // 1) drop rows that would become duplicate recipe_tags entries
         verify(jdbcTemplate).update(eq(
                 "DELETE rt FROM recipe_tags rt JOIN recipe_tags rt2 ON rt.recipe_id = rt2.recipe_id "
                         + "WHERE rt.tag_id = ? AND rt2.tag_id = ?"),
                 eq("tag-source"), eq("tag-target"));
-        // 2) re-point remaining rows at the target tag
         verify(jdbcTemplate).update(eq("UPDATE recipe_tags SET tag_id = ? WHERE tag_id = ?"),
                 eq("tag-target"), eq("tag-source"));
-        // 3) delete the now-unreferenced source tag
         verify(jdbcTemplate).update(eq("DELETE FROM tags WHERE id = ?"), eq("tag-source"));
         verifyNoMoreInteractions(jdbcTemplate);
     }

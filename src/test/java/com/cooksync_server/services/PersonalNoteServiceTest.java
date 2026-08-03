@@ -31,9 +31,11 @@ import com.dtos.request.note.NoteRequestDTO;
 import com.dtos.response.note.NoteResponse;
 
 /**
- * Regression coverage for the personal-notes fix: a recipe can carry both a
- * general (whole-recipe) note and independent per-step notes, and saving one
- * must never look up or overwrite the other.
+ * Unit test for PersonalNoteService verifying creation, retrieval, and deletion of general and step-specific personal notes.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @ExtendWith(MockitoExtension.class)
 class PersonalNoteServiceTest {
@@ -55,6 +57,13 @@ class PersonalNoteServiceTest {
     private User user;
     private Recipe recipe;
 
+    /**
+     * Initializes test fixtures and service instance before each test.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @BeforeEach
     void setUp() {
         service = new PersonalNoteService(noteRepository, recipeRepository, userRepository);
@@ -65,6 +74,13 @@ class PersonalNoteServiceTest {
         lenient().when(recipeRepository.findById(recipeId)).thenReturn(Optional.of(recipe));
     }
 
+    /**
+     * Verifies that saving a general note searches for null instructionId.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void savingGeneralNote_looksUpByInstructionIdIsNull() {
         when(noteRepository.findByUserIdAndRecipeIdAndInstructionIdIsNull(userId, recipeId)).thenReturn(Optional.empty());
@@ -80,6 +96,13 @@ class PersonalNoteServiceTest {
         assertThat(captor.getValue().getInstruction()).isNull();
     }
 
+    /**
+     * Verifies that saving a step note searches by instructionId specifically.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void savingStepNote_looksUpByInstructionId_notGeneralLookup() {
         UUID instructionUuid = UUID.randomUUID();
@@ -99,10 +122,11 @@ class PersonalNoteServiceTest {
     }
 
     /**
-     * Regression test for the original bug: the note-lookup only matched on
-     * (user, recipe) and ignored instructionId, so saving a per-step note
-     * after a general note existed would find and silently overwrite the
-     * general note instead of creating an independent row.
+     * Verifies that saving a step note does not touch an existing general note.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
      */
     @Test
     void savingStepNote_afterGeneralNoteExists_doesNotTouchOrOverwriteGeneralNote() {
@@ -118,7 +142,6 @@ class PersonalNoteServiceTest {
 
         service.saveNote(new NoteRequestDTO(recipeUuid, instructionUuid, "Step note"), userEmail);
 
-        // The general note's own lookup must never even be consulted while saving a step note.
         verify(noteRepository, never()).findByUserIdAndRecipeIdAndInstructionIdIsNull(any(), any());
 
         ArgumentCaptor<PersonalInstructionNote> captor = ArgumentCaptor.forClass(PersonalInstructionNote.class);
@@ -129,6 +152,13 @@ class PersonalNoteServiceTest {
         assertThat(saved.getId()).isNotEqualTo(existingGeneralNote.getId());
     }
 
+    /**
+     * Verifies that saving a general note updates existing text in place.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void savingGeneralNote_whenOneAlreadyExists_updatesInPlaceRatherThanCreatingANewRow() {
         PersonalInstructionNote existing = PersonalInstructionNote.builder()
@@ -147,6 +177,13 @@ class PersonalNoteServiceTest {
         assertThat(captor.getValue().getNote()).isEqualTo("New text");
     }
 
+    /**
+     * Verifies exception when saving a note for a non-existent recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void saveNote_recipeNotFound_throwsAndNeverSaves() {
         when(recipeRepository.findById(recipeId)).thenReturn(Optional.empty());
@@ -157,6 +194,13 @@ class PersonalNoteServiceTest {
         verify(noteRepository, never()).save(any());
     }
 
+    /**
+     * Verifies exception when saving a note for a non-existent user.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void saveNote_userNotFound_throws() {
         when(userRepository.findByEmail(userEmail)).thenReturn(Optional.empty());
@@ -165,6 +209,13 @@ class PersonalNoteServiceTest {
                 service.saveNote(new NoteRequestDTO(recipeUuid, null, "text"), userEmail));
     }
 
+    /**
+     * Verifies retrieval of general note for a recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getNote_returnsOnlyTheGeneralNote() {
         PersonalInstructionNote general = PersonalInstructionNote.builder()
@@ -177,6 +228,13 @@ class PersonalNoteServiceTest {
         assertThat(response.instructionId()).isNull();
     }
 
+    /**
+     * Verifies null response when no general note exists.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getNote_whenNoneExists_returnsNull() {
         when(noteRepository.findByUserIdAndRecipeIdAndInstructionIdIsNull(userId, recipeId)).thenReturn(Optional.empty());
@@ -184,6 +242,13 @@ class PersonalNoteServiceTest {
         assertThat(service.getNote(recipeId, userEmail)).isNull();
     }
 
+    /**
+     * Verifies retrieval of all notes (both general and per-step) for a recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getNotesForRecipe_returnsBothGeneralAndPerStepNotes() {
         Instruction instruction = Instruction.builder().id("instr-1").build();
@@ -206,6 +271,13 @@ class PersonalNoteServiceTest {
         });
     }
 
+    /**
+     * Verifies note deletion by its owner.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void deleteNote_byOwner_deletes() {
         PersonalInstructionNote note = PersonalInstructionNote.builder().id("note-1").user(user).recipe(recipe).note("x").build();
@@ -216,6 +288,13 @@ class PersonalNoteServiceTest {
         verify(noteRepository).delete(note);
     }
 
+    /**
+     * Verifies security exception when attempting note deletion by non-owner.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void deleteNote_byNonOwner_throwsAndDoesNotDelete() {
         User owner = User.builder().id("other-user").email("owner@example.com").build();

@@ -13,8 +13,22 @@ import com.dtos.response.recipe.RecipePreviewResponse;
 import com.dtos.response.recipe.RecipeResponse;
 import com.dtos.response.user.UserResponse;
 
+/**
+ * Unit test for ImageMapping entity-to-DTO image extraction functions.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 class ImageMappingTest {
 
+    /**
+     * Verifies that primary and secondary recipe image URLs map to response DTOs.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void shouldExposePrimaryAndAdditionalRecipeImagesInResponses() {
         Recipe recipe = Recipe.builder()
@@ -38,6 +52,13 @@ class ImageMappingTest {
         assertEquals("https://example.com/primary.jpg", preview.primaryImageUrl());
     }
 
+    /**
+     * Verifies that user avatar URLs map to user response DTOs.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void shouldExposeUserAvatarInResponse() {
         User user = User.builder()

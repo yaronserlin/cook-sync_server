@@ -19,8 +19,24 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 
+/**
+ * Unit test for RequestAndResponseLoggingFilter ensuring request/response metadata is logged.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
+ */
 class RequestAndMachineLoggingFilterTest {
 
+    /**
+     * Verifies that request and response details are formatted into logging events.
+     *
+     * @throws Exception if filter execution fails
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void logsRequestAndResponseDetailsForEachRequest() throws Exception {
         RequestAndResponseLoggingFilter filter = new RequestAndResponseLoggingFilter();

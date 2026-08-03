@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dtos.request.recipe.RecipeCreateRequestDTO;
+import com.dtos.request.recipe.RecipeVisibilityUpdateRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.PagedResponse;
 import com.dtos.response.recipe.RecipeResponse;
@@ -182,6 +184,28 @@ public class RecipeController {
         String userEmail = authentication.getName();
         RecipeResponse updatedRecipe = recipeService.updateRecipe(id, request, userEmail);
         return ResponseEntity.ok(new ApiResponse<>(true, updatedRecipe, null, "Recipe updated successfully"));
+    }
+
+    /**
+     * Updates only a recipe's visibility (PUBLIC/PRIVATE), without resubmitting the rest of the recipe.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param id target recipe unique identifier
+     * @param request visibility update payload DTO
+     * @param authentication active user authentication token
+     * @return response entity containing updated RecipeResponse DTO
+     */
+    @PatchMapping("/{id}/visibility")
+    public ResponseEntity<ApiResponse<RecipeResponse>> updateVisibility(
+            @PathVariable String id,
+            @Valid @RequestBody RecipeVisibilityUpdateRequestDTO request,
+            Authentication authentication) {
+        String userEmail = authentication.getName();
+        RecipeResponse updatedRecipe = recipeService.updateVisibility(id, request, userEmail);
+        return ResponseEntity.ok(new ApiResponse<>(true, updatedRecipe, null, "Visibility updated successfully"));
     }
 
     /**

@@ -56,7 +56,8 @@ public class AdminController {
     }
 
     /**
-     * Retrieves paginated list of registered user accounts.
+     * Retrieves paginated list of registered user accounts, optionally search-filtered by
+     * name/email, filtered by enabled status, and sorted.
      *
      * Complexity:
      * Time: O(N) where N is page size
@@ -64,13 +65,21 @@ public class AdminController {
      *
      * @param page zero-based page index
      * @param size page size limit
+     * @param q optional search fragment matched against first name, last name, or email
+     * @param enabled optional account status filter (true = active, false = disabled)
+     * @param sortBy field to sort by: firstName, lastName, email, or createdAt (default createdAt)
+     * @param direction sort direction, "asc" or "desc" (default desc)
      * @return response entity containing PagedResponse of UserResponse DTOs
      */
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<PagedResponse<UserResponse>>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "30") int size) {
-        return ResponseEntity.ok(new ApiResponse<>(true, adminService.getAllUsers(page, size), null, "Users retrieved successfully"));
+            @RequestParam(defaultValue = "30") int size,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean enabled,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        return ResponseEntity.ok(new ApiResponse<>(true, adminService.getAllUsers(page, size, q, enabled, sortBy, direction), null, "Users retrieved successfully"));
     }
 
     /**

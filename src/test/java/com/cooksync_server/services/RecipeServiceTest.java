@@ -30,9 +30,11 @@ import com.dtos.response.PagedResponse;
 import com.dtos.response.recipe.RecipePreviewResponse;
 
 /**
- * Covers the two server-side additions for the Home feed / search work:
- * paginated public recipes, and the optional author/ingredient filters
- * layered onto the existing title search.
+ * Unit test for RecipeService managing recipe queries, pagination, and multi-criteria searching.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @ExtendWith(MockitoExtension.class)
 class RecipeServiceTest {
@@ -54,12 +56,26 @@ class RecipeServiceTest {
 
     private RecipeService recipeService;
 
+    /**
+     * Initializes service with mocked dependencies before each test.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @BeforeEach
     void setUp() {
         recipeService = new RecipeService(recipeRepository, userRepository, ingredientRepository,
                 instructionRepository, recipeImageRepository, tagRepository, unitRepository);
     }
 
+    /**
+     * Verifies that paginated recipe queries map metadata into PagedResponse DTOs.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getAllRecipesPaged_mapsPageMetadataOntoPagedResponse() {
         Recipe r1 = Recipe.builder().id("r1").title("Pasta").visibility(Recipe.Visibility.PUBLIC).build();
@@ -79,6 +95,13 @@ class RecipeServiceTest {
         assertThat(result.last()).isFalse();
     }
 
+    /**
+     * Verifies that search requests execute JPA Specifications even with blank filter criteria.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @SuppressWarnings("unchecked")
     @Test
     void searchRecipes_blankAuthorAndIngredient_stillDelegatesToRepositoryWithSpecification() {
@@ -89,6 +112,13 @@ class RecipeServiceTest {
         verify(recipeRepository).findAll(any(Specification.class));
     }
 
+    /**
+     * Verifies author-only recipe searches with empty keyword string.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @SuppressWarnings("unchecked")
     @Test
     void searchRecipes_blankKeywordWithAuthorOnly_stillSearchesByAuthorAlone() {
@@ -101,6 +131,13 @@ class RecipeServiceTest {
         verify(recipeRepository).findAll(any(Specification.class));
     }
 
+    /**
+     * Verifies combined multi-criteria searches matching keyword, author, and ingredient filter terms.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @SuppressWarnings("unchecked")
     @Test
     void searchRecipes_allCriteriaProvided_mapsRepositoryResultsToPreviews() {

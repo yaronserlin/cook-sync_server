@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -70,8 +71,10 @@ public class AdminService {
         );
     }
 
+    private static final Set<String> SORTABLE_USER_FIELDS = Set.of("firstName", "lastName", "email", "createdAt");
+
     /**
-     * Retrieves paginated list of all registered users sorted by creation date descending.
+     * Retrieves paginated, optionally search-filtered and sorted list of registered users.
      *
      * Complexity:
      * Time: O(S) where S is page size limit
@@ -79,10 +82,18 @@ public class AdminService {
      *
      * @param page page number index
      * @param size page size limit
+     * @param q optional search fragment matched against first name, last name, or email
+     * @param enabled optional account status filter (true = active, false = disabled, null = both)
+     * @param sortBy field to sort by; must be one of firstName, lastName, email, createdAt
+     * @param direction sort direction, "asc" or "desc" (default desc)
      * @return PagedResponse containing UserResponse DTO list
      */
-    public PagedResponse<UserResponse> getAllUsers(int page, int size) {
-        Page<User> result = userRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+    public PagedResponse<UserResponse> getAllUsers(int page, int size, String q, Boolean enabled, String sortBy, String direction) {
+        String sortField = SORTABLE_USER_FIELDS.contains(sortBy) ? sortBy : "createdAt";
+        Sort sort = "asc".equalsIgnoreCase(direction) ? Sort.by(sortField).ascending() : Sort.by(sortField).descending();
+        String normalizedQ = (q == null || q.isBlank()) ? null : q.trim().toLowerCase();
+
+        Page<User> result = userRepository.search(normalizedQ, enabled, PageRequest.of(page, size, sort));
         List<UserResponse> content = result.getContent().stream()
                 .map(UserMapper::toResponse)
                 .collect(Collectors.toList());

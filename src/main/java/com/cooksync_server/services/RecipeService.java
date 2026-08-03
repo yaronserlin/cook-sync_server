@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dtos.request.ingredient.IngredientRequestDTO;
 import com.dtos.request.instruction.InstructionRequestDTO;
 import com.dtos.request.recipe.RecipeCreateRequestDTO;
+import com.dtos.request.recipe.RecipeVisibilityUpdateRequestDTO;
 import com.dtos.response.PagedResponse;
 import com.dtos.response.recipe.RecipeResponse;
 import com.dtos.response.recipe.RecipePreviewResponse;
@@ -242,6 +243,33 @@ public class RecipeService {
         recipe.getInstructions().clear();
         recipe.getInstructions().addAll(saveInstructions(request.instructions(), recipe, tmpIdToIngredient));
         saveImages(recipe, request.primaryImageUrl(), request.additionalImageUrls());
+
+        return RecipeMapper.toResponse(recipeRepository.save(recipe));
+    }
+
+    /**
+     * Updates only a recipe's visibility, without touching its other fields.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param recipeId target recipe ID
+     * @param request visibility update request DTO
+     * @param userEmail user email address
+     * @return updated RecipeResponse DTO
+     */
+    @Transactional
+    public RecipeResponse updateVisibility(String recipeId, RecipeVisibilityUpdateRequestDTO request, String userEmail) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe", recipeId));
+        User currentUser = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+
+        OwnershipValidator.requireOwnerOrAdmin(recipe.getCreatedBy().getId(), currentUser,
+                "You are not allowed to edit this recipe.");
+
+        recipe.setVisibility(parseVisibility(request.visibility()));
 
         return RecipeMapper.toResponse(recipeRepository.save(recipe));
     }

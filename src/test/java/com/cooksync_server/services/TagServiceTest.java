@@ -22,9 +22,11 @@ import com.dtos.request.tags.TagRequestDTO;
 import com.dtos.response.tags.TagResponse;
 
 /**
- * Covers the "create a custom tag on the fly" flow added for the recipe
- * wizard: unlike the admin-only {@code createTag}, {@code getOrCreateTag}
- * must treat an existing tag as success (reuse it) rather than a conflict.
+ * Unit test for TagService verifying tag creation, normalization, and deduplication logic.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @ExtendWith(MockitoExtension.class)
 class TagServiceTest {
@@ -34,11 +36,25 @@ class TagServiceTest {
 
     private TagService tagService;
 
+    /**
+     * Initializes service instance with mock dependencies before each test.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @BeforeEach
     void setUp() {
         tagService = new TagService(tagRepository);
     }
 
+    /**
+     * Verifies that getOrCreateTag creates and normalizes a new tag name.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getOrCreateTag_newName_createsAndSavesNormalizedTag() {
         when(tagRepository.findByNameIgnoreCase("vegan")).thenReturn(Optional.empty());
@@ -51,6 +67,13 @@ class TagServiceTest {
         assertThat(response.name()).isEqualTo("vegan");
     }
 
+    /**
+     * Verifies that getOrCreateTag reuses an existing tag without inserting duplicates.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void getOrCreateTag_existingName_reusesExistingTagInsteadOfCreating() {
         Tag existing = Tag.builder().id("tag-existing").name("vegan").build();
@@ -62,6 +85,13 @@ class TagServiceTest {
         verify(tagRepository, never()).save(any());
     }
 
+    /**
+     * Verifies that createTag throws an exception when attempting to register a duplicate tag.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void createTag_duplicateName_throwsInsteadOfReusing() {
         Tag existing = Tag.builder().id("tag-existing").name("vegan").build();
@@ -72,6 +102,13 @@ class TagServiceTest {
         verify(tagRepository, never()).save(any());
     }
 
+    /**
+     * Verifies successful tag creation when given a brand new tag name.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     */
     @Test
     void createTag_newName_createsIt() {
         when(tagRepository.findByNameIgnoreCase("quick")).thenReturn(Optional.empty());

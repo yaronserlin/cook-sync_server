@@ -23,8 +23,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 /**
- * Data Seeder that runs only when the 'seed' profile is active. Clears all
- * existing data and seeds the database with realistic, connected sample data.
+ * Data Seeder component for seeding database records under the seed active profile.
+ *
+ * @author Yaron Serlin
+ * @version 1.0
+ * @since 02/08/2026
  */
 @Component
 @Profile("seed")
@@ -66,10 +69,6 @@ public class DataSeeder implements CommandLineRunner {
         logger.info(">>> Clearing existing database data...");
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
 
-        // Table identifiers can't be bound as PreparedStatement parameters, so this stays
-        // string concatenation - it's safe only because `tables` is this fixed, compile-time
-        // constant list, never user/request input, and this code path never runs outside
-        // the "seed" profile.
         String[] tables = {
                 "users", "recipes", "units", "ingredients", "instructions",
                 "instruction_ingredients", "reviews", "favorite_recipes",
@@ -112,10 +111,6 @@ public class DataSeeder implements CommandLineRunner {
                 Tag.builder().name("high-protein").build(),
                 Tag.builder().name("comfort-food").build(),
                 Tag.builder().name("spicy").build(),
-                // Intentional near-duplicates so the admin console's tag-merge
-                // screen has more cases to show out of the box, without
-                // risking a case-insensitive unique collision at the DB
-                // collation level.
                 Tag.builder().name("gluten free").build(),
                 Tag.builder().name("high protein").build(),
                 Tag.builder().name("comfort food").build()
@@ -703,7 +698,6 @@ public class DataSeeder implements CommandLineRunner {
         return reviews;
     }
 
-    /** A few reported reviews so the admin moderation queue isn't empty and multiple users show up as reporters. */
     private List<Review> buildReportedReviews(List<Recipe> recipes, List<User> users) {
         List<Review> reviews = new ArrayList<>();
         if (recipes.size() < 4) {
@@ -752,7 +746,6 @@ public class DataSeeder implements CommandLineRunner {
         return reviews;
     }
 
-    /** 50 additional comment-style reviews per recipe, so review lists/paging have enough data to populate UI. */
     private List<Review> buildBulkComments(List<Recipe> recipes, List<User> users) {
         String[] sampleComments = {
                 "Loved the balance of flavors, will make again!",
@@ -787,10 +780,6 @@ public class DataSeeder implements CommandLineRunner {
         return reviews;
     }
 
-    /**
-     * Aggregates the in-memory review list per recipe rather than re-querying the
-     * database once per recipe (that N+1 pattern was the previous implementation).
-     */
     private void recalculateRecipeStats(List<Recipe> recipes, List<Review> reviews) {
         Map<String, List<Review>> reviewsByRecipeId = reviews.stream()
                 .collect(Collectors.groupingBy(review -> review.getRecipe().getId()));
