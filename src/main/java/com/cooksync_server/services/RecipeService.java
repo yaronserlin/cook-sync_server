@@ -27,6 +27,7 @@ import com.dtos.response.recipe.RecipePreviewResponse;
 import com.cooksync_server.entities.Ingredient;
 import com.cooksync_server.entities.Instruction;
 import com.cooksync_server.entities.Recipe;
+import com.cooksync_server.entities.DescriptionBlock;
 import com.cooksync_server.entities.RecipeImage;
 import com.cooksync_server.entities.Tag;
 import com.cooksync_server.entities.Unit;
@@ -41,6 +42,7 @@ import com.cooksync_server.repositories.TagRepository;
 import com.cooksync_server.repositories.UnitRepository;
 import com.cooksync_server.repositories.UserRepository;
 import com.cooksync_server.mappers.RecipeMapper;
+import com.dtos.response.recipe.DescriptionBlockDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,10 +95,15 @@ public class RecipeService {
      * @return PagedResponse containing RecipePreviewResponse DTOs
      */
     @Transactional(readOnly = true)
-    public PagedResponse<RecipePreviewResponse> getAllRecipesPaged(int page, int size) {
-        log.debug("Fetching paginated public recipes. Page: {}, Size: {}", page, size);
-        Page<Recipe> result = recipeRepository.findByVisibility(Recipe.Visibility.PUBLIC,
-                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+    public PagedResponse<RecipePreviewResponse> getAllRecipesPaged(int page, int size, String sortBy, String difficulty, Double minRating) {
+        log.debug("Fetching paginated public recipes. Page: {}, Size: {}, SortBy: {}, Difficulty: {}, MinRating: {}", page, size, sortBy, difficulty, minRating);
+        Sort sort = RecipeSpecifications.resolveSortOrder(sortBy);
+        Specification<Recipe> spec = RecipeSpecifications.combine(
+                RecipeSpecifications.isPublicAndEnabled(),
+                RecipeSpecifications.hasDifficulty(difficulty),
+                RecipeSpecifications.hasMinRating(minRating)
+        );
+        Page<Recipe> result = recipeRepository.findAll(spec, PageRequest.of(page, size, sort));
         List<RecipePreviewResponse> content = result.getContent().stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
         return new PagedResponse<>(content, result.getNumber(), result.getSize(),
                 result.getTotalElements(), result.getTotalPages(), result.isLast());
@@ -134,14 +141,17 @@ public class RecipeService {
      * @return list of RecipePreviewResponse DTOs
      */
     @Transactional(readOnly = true)
-    public List<RecipePreviewResponse> searchRecipes(String keyword, String author, String ingredient) {
-        log.debug("Executing recipe search. Keyword: {}, Author: {}, Ingredient: {}", keyword, author, ingredient);
+    public List<RecipePreviewResponse> searchRecipes(String keyword, String author, String ingredient, String sortBy, String difficulty, Double minRating) {
+        log.debug("Executing recipe search. Keyword: {}, Author: {}, Ingredient: {}, SortBy: {}, Difficulty: {}, MinRating: {}", keyword, author, ingredient, sortBy, difficulty, minRating);
+        Sort sort = RecipeSpecifications.resolveSortOrder(sortBy);
         Specification<Recipe> spec = RecipeSpecifications.combine(
                 RecipeSpecifications.isPublicAndEnabled(),
                 RecipeSpecifications.matchesUnifiedQuery(keyword),
                 RecipeSpecifications.hasAuthor(author),
-                RecipeSpecifications.hasIngredient(ingredient));
-        return recipeRepository.findAll(spec)
+                RecipeSpecifications.hasIngredient(ingredient),
+                RecipeSpecifications.hasDifficulty(difficulty),
+                RecipeSpecifications.hasMinRating(minRating));
+        return recipeRepository.findAll(spec, sort)
                 .stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
@@ -156,9 +166,15 @@ public class RecipeService {
      * @return list of RecipePreviewResponse DTOs
      */
     @Transactional(readOnly = true)
-    public List<RecipePreviewResponse> findRecipesByTag(String tagName) {
-        log.debug("Fetching recipes by tag name: {}", tagName);
-        return recipeRepository.findByTagNameAndVisibility(tagName, Recipe.Visibility.PUBLIC)
+    public List<RecipePreviewResponse> findRecipesByTag(String tagName, String sortBy, String difficulty, Double minRating) {
+        log.debug("Fetching recipes by tag name: {}, SortBy: {}, Difficulty: {}, MinRating: {}", tagName, sortBy, difficulty, minRating);
+        Sort sort = RecipeSpecifications.resolveSortOrder(sortBy);
+        Specification<Recipe> spec = RecipeSpecifications.combine(
+                RecipeSpecifications.isPublicAndEnabled(),
+                RecipeSpecifications.hasTag(tagName),
+                RecipeSpecifications.hasDifficulty(difficulty),
+                RecipeSpecifications.hasMinRating(minRating));
+        return recipeRepository.findAll(spec, sort)
                 .stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
@@ -201,7 +217,7 @@ public class RecipeService {
         Recipe recipe = Recipe.builder()
                 .createdBy(creator)
                 .title(request.title())
-                .description(request.description())
+                .description(deriveDescription(request.descriptionBlocks()))
                 .difficulty(Recipe.Difficulty.valueOf(request.difficulty().toUpperCase()))
                 .visibility(parseVisibility(request.visibility()))
                 .prepTimeMinutes(request.prepTimeMinutes())
@@ -216,7 +232,8 @@ public class RecipeService {
         Map<String, Ingredient> tmpIdToIngredient = new HashMap<>();
         savedRecipe.setIngredients(saveIngredients(request.ingredients(), savedRecipe, tmpIdToIngredient));
         savedRecipe.setInstructions(saveInstructions(request.instructions(), savedRecipe, tmpIdToIngredient));
-        saveImages(savedRecipe, request.primaryImageUrl(), request.additionalImageUrls());
+        saveImages(savedRecipe, request.primaryImageUrl(), null);
+        saveDescriptionBlocks(savedRecipe, request.descriptionBlocks());
 
         return RecipeMapper.toResponse(savedRecipe);
     }
@@ -244,7 +261,7 @@ public class RecipeService {
                 "You are not allowed to edit this recipe.");
 
         recipe.setTitle(request.title());
-        recipe.setDescription(request.description());
+        recipe.setDescription(deriveDescription(request.descriptionBlocks()));
         recipe.setDifficulty(Recipe.Difficulty.valueOf(request.difficulty().toUpperCase()));
         recipe.setVisibility(parseVisibility(request.visibility()));
         recipe.setPrepTimeMinutes(request.prepTimeMinutes());
@@ -258,7 +275,8 @@ public class RecipeService {
 
         recipe.getInstructions().clear();
         recipe.getInstructions().addAll(saveInstructions(request.instructions(), recipe, tmpIdToIngredient));
-        saveImages(recipe, request.primaryImageUrl(), request.additionalImageUrls());
+        saveImages(recipe, request.primaryImageUrl(), null);
+        saveDescriptionBlocks(recipe, request.descriptionBlocks());
 
         return RecipeMapper.toResponse(recipeRepository.save(recipe));
     }
@@ -411,5 +429,48 @@ public class RecipeService {
             instructions.add(instruction);
         }
         return instructions;
+    }
+
+    /**
+     * Derives a flat description summary from description blocks for preview card display.
+     *
+     * @param blocks list of description block DTOs
+     * @return first TEXT block content or empty string
+     */
+    private String deriveDescription(List<DescriptionBlockDTO> blocks) {
+        if (blocks == null || blocks.isEmpty()) {
+            return "";
+        }
+        return blocks.stream()
+                .filter(b -> "TEXT".equalsIgnoreCase(b.type()))
+                .map(DescriptionBlockDTO::text)
+                .filter(t -> t != null && !t.isBlank())
+                .findFirst()
+                .orElse("");
+    }
+
+    /**
+     * Persists description block entities from DTO list, maintaining author-intended sort order.
+     *
+     * @param recipe target recipe entity
+     * @param blockDTOs list of description block DTOs
+     */
+    private void saveDescriptionBlocks(Recipe recipe, List<DescriptionBlockDTO> blockDTOs) {
+        recipe.getDescriptionBlocks().clear();
+        if (blockDTOs == null || blockDTOs.isEmpty()) {
+            return;
+        }
+        for (int i = 0; i < blockDTOs.size(); i++) {
+            DescriptionBlockDTO dto = blockDTOs.get(i);
+            DescriptionBlock block = DescriptionBlock.builder()
+                    .recipe(recipe)
+                    .type(DescriptionBlock.BlockType.valueOf(dto.type().toUpperCase()))
+                    .text(dto.text())
+                    .imageUrl(dto.imageUrl())
+                    .caption(dto.caption())
+                    .sortOrder(i)
+                    .build();
+            recipe.getDescriptionBlocks().add(block);
+        }
     }
 }

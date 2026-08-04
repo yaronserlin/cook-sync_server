@@ -1,9 +1,11 @@
 package com.cooksync_server.mappers;
 
+import com.cooksync_server.entities.DescriptionBlock;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.RecipeImage;
 import com.dtos.response.ingredient.IngredientResponse;
 import com.dtos.response.instruction.InstructionResponse;
+import com.dtos.response.recipe.DescriptionBlockDTO;
 import com.dtos.response.recipe.RecipePreviewResponse;
 import com.dtos.response.recipe.RecipeResponse;
 import com.dtos.response.review.ReviewResponse;
@@ -18,7 +20,7 @@ import java.util.stream.Collectors;
  * Mapper utility class transforming Recipe entities into RecipeResponse and RecipePreviewResponse DTOs.
  *
  * @author Yaron Serlin
- * @version 1.0
+ * @version 1.1
  * @since 02/08/2026
  */
 public final class RecipeMapper {
@@ -28,10 +30,12 @@ public final class RecipeMapper {
 
     /**
      * Converts a Recipe entity into a full detail RecipeResponse DTO.
+     * Maps structured description blocks; falls back to synthesizing blocks from
+     * legacy flat description and non-primary images when no blocks are persisted.
      *
      * Complexity:
-     * Time: O(R + T + I + S) where R=reviews, T=tags, I=ingredients, S=instructions
-     * Space: O(R + T + I + S)
+     * Time: O(R + T + I + S + B) where R=reviews, T=tags, I=ingredients, S=instructions, B=descriptionBlocks
+     * Space: O(R + T + I + S + B)
      *
      * @param recipe target Recipe entity
      * @return populated RecipeResponse instance or null
@@ -41,13 +45,11 @@ public final class RecipeMapper {
             return null;
         }
         String primaryImageUrl = resolvePrimaryImageUrl(recipe);
-        List<String> imageUrls = resolveOrderedImageUrls(recipe, primaryImageUrl);
 
         return new RecipeResponse(
                 recipe.getId(),
                 UserMapper.toResponse(recipe.getCreatedBy()),
                 recipe.getTitle(),
-                recipe.getDescription(),
                 recipe.getDifficulty() == null ? null : recipe.getDifficulty().name(),
                 recipe.getVisibility() == null ? null : recipe.getVisibility().name(),
                 recipe.getPrepTimeMinutes(),
@@ -62,7 +64,7 @@ public final class RecipeMapper {
                 mapIngredients(recipe),
                 mapInstructions(recipe),
                 primaryImageUrl,
-                imageUrls
+                mapDescriptionBlocks(recipe)
         );
     }
 
@@ -132,6 +134,42 @@ public final class RecipeMapper {
         );
     }
 
+    /**
+     * Maps recipe description blocks from entity to DTO list.
+     * Falls back to synthesizing blocks from legacy flat description and non-primary images
+     * when no explicit blocks are persisted on the recipe.
+     *
+     * Complexity:
+     * Time: O(B) where B is description block count
+     * Space: O(B)
+     *
+     * @param recipe target Recipe entity
+     * @return ordered list of DescriptionBlockDTO instances
+     */
+    private static List<DescriptionBlockDTO> mapDescriptionBlocks(Recipe recipe) {
+        if (recipe.getDescriptionBlocks() != null && !recipe.getDescriptionBlocks().isEmpty()) {
+            return recipe.getDescriptionBlocks().stream()
+                    .map(block -> new DescriptionBlockDTO(
+                            block.getType().name(),
+                            block.getText(),
+                            block.getImageUrl(),
+                            block.getCaption()
+                    ))
+                    .collect(Collectors.toList());
+        }
+        // Fallback: synthesize from legacy flat description + non-primary images
+        List<DescriptionBlockDTO> blocks = new ArrayList<>();
+        if (recipe.getDescription() != null && !recipe.getDescription().isBlank()) {
+            blocks.add(new DescriptionBlockDTO("TEXT", recipe.getDescription(), null, null));
+        }
+        if (recipe.getImages() != null) {
+            recipe.getImages().stream()
+                    .filter(img -> img != null && !img.isPrimary())
+                    .forEach(img -> blocks.add(new DescriptionBlockDTO("IMAGE", null, img.getImageUrl(), null)));
+        }
+        return blocks;
+    }
+
     private static List<ReviewResponse> mapReviews(Recipe recipe) {
         return recipe.getReviews() == null ? List.of()
                 : recipe.getReviews().stream().map(ReviewMapper::toResponse).collect(Collectors.toList());
@@ -161,22 +199,5 @@ public final class RecipeMapper {
                 .map(RecipeImage::getImageUrl)
                 .findFirst()
                 .orElse(null);
-    }
-
-    private static List<String> resolveOrderedImageUrls(Recipe recipe, String primaryImageUrl) {
-        if (recipe.getImages() == null) {
-            return List.of();
-        }
-        List<String> imageUrls = recipe.getImages().stream()
-                .filter(image -> image != null)
-                .map(RecipeImage::getImageUrl)
-                .toList();
-
-        if (primaryImageUrl != null && !imageUrls.isEmpty() && !imageUrls.get(0).equals(primaryImageUrl)) {
-            imageUrls = new ArrayList<>(imageUrls);
-            imageUrls.remove(primaryImageUrl);
-            imageUrls.add(0, primaryImageUrl);
-        }
-        return imageUrls;
     }
 }

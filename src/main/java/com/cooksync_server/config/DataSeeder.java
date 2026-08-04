@@ -1,6 +1,7 @@
 package com.cooksync_server.config;
 
 import com.cooksync_server.entities.*;
+import com.cooksync_server.entities.DescriptionBlock;
 import com.cooksync_server.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -72,7 +73,8 @@ public class DataSeeder implements CommandLineRunner {
         String[] tables = {
                 "users", "recipes", "units", "ingredients", "instructions",
                 "instruction_ingredients", "reviews", "favorite_recipes",
-                "personal_instruction_notes", "tags", "recipe_tags", "recipe_images"
+                "personal_instruction_notes", "tags", "recipe_tags", "recipe_images",
+                "description_blocks"
         };
 
         for (String table : tables) {
@@ -113,7 +115,8 @@ public class DataSeeder implements CommandLineRunner {
                 Tag.builder().name("spicy").build(),
                 Tag.builder().name("gluten free").build(),
                 Tag.builder().name("high protein").build(),
-                Tag.builder().name("comfort food").build()
+                Tag.builder().name("comfort food").build(),
+                Tag.builder().name("vegetarian").build()
         ));
     }
 
@@ -414,7 +417,7 @@ public class DataSeeder implements CommandLineRunner {
                 0,
                 2,
                 chef,
-                List.of(tags.get(0), tags.get(1), tags.get(2)),
+                List.of(tags.get(0), tags.get(1), tags.get(2), tags.get(13)),
                 saladIngredients,
                 List.of(
                         createInstruction(1, "Wash and chop the vegetables.", false, null,
@@ -436,7 +439,7 @@ public class DataSeeder implements CommandLineRunner {
                 20,
                 4,
                 regularUser,
-                List.of(tags.get(4), tags.get(8), tags.get(1)),
+                List.of(tags.get(4), tags.get(8), tags.get(1), tags.get(13)),
                 pastaIngredients,
                 List.of(
                         createInstruction(1, "Boil the pasta until al dente.", false, null,
@@ -460,7 +463,7 @@ public class DataSeeder implements CommandLineRunner {
                 15,
                 3,
                 regularUser,
-                List.of(tags.get(5), tags.get(1), tags.get(3)),
+                List.of(tags.get(5), tags.get(1), tags.get(3), tags.get(13)),
                 pancakeIngredients,
                 List.of(
                         createInstruction(1, "Mash the bananas until smooth.", false, null,
@@ -484,7 +487,7 @@ public class DataSeeder implements CommandLineRunner {
                 20,
                 2,
                 users.get(3),
-                List.of(tags.get(0), tags.get(9), tags.get(7)),
+                List.of(tags.get(0), tags.get(9), tags.get(7), tags.get(13)),
                 bowlIngredients,
                 List.of(
                         createInstruction(1, "Roast the chickpeas with spices.", true, 600,
@@ -508,7 +511,7 @@ public class DataSeeder implements CommandLineRunner {
                 35,
                 4,
                 users.get(4),
-                List.of(tags.get(2), tags.get(4), tags.get(8)),
+                List.of(tags.get(2), tags.get(4), tags.get(8), tags.get(13)),
                 soupIngredients,
                 List.of(
                         createInstruction(1, "Saute the vegetables until softened.", false, null,
@@ -532,7 +535,7 @@ public class DataSeeder implements CommandLineRunner {
                 0,
                 2,
                 users.get(5),
-                List.of(tags.get(5), tags.get(2), tags.get(1)),
+                List.of(tags.get(5), tags.get(2), tags.get(1), tags.get(13)),
                 dessertIngredients,
                 List.of(
                         createInstruction(1, "Layer yogurt, berries, and granola in glasses.", false, null,
@@ -635,6 +638,17 @@ public class DataSeeder implements CommandLineRunner {
             instructionSet.add(instruction);
         }
         recipe.setInstructions(instructionSet);
+
+        List<DescriptionBlock> blocks = new ArrayList<>();
+        if (description != null && !description.isBlank()) {
+            blocks.add(DescriptionBlock.builder()
+                    .recipe(recipe)
+                    .type(DescriptionBlock.BlockType.TEXT)
+                    .text(description)
+                    .sortOrder(0)
+                    .build());
+        }
+        recipe.setDescriptionBlocks(blocks);
 
         return recipe;
     }

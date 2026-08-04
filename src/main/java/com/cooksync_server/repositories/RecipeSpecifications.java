@@ -3,6 +3,7 @@ package com.cooksync_server.repositories;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.cooksync_server.entities.Ingredient;
@@ -133,6 +134,70 @@ public final class RecipeSpecifications {
             }
         }
         return result;
+    }
+
+    /**
+     * Specification filtering recipes by difficulty classification level.
+     *
+     * @param difficulty difficulty enum string (EASY, MEDIUM, HARD)
+     * @return Specification predicate or null if difficulty is empty
+     */
+    public static Specification<Recipe> hasDifficulty(String difficulty) {
+        if (difficulty == null || difficulty.isBlank()) {
+            return null;
+        }
+        Recipe.Difficulty difficultyEnum = Recipe.Difficulty.valueOf(difficulty.toUpperCase());
+        return (root, query, cb) -> cb.equal(root.get("difficulty"), difficultyEnum);
+    }
+
+    /**
+     * Specification filtering recipes with average rating greater than or equal to minimum threshold.
+     *
+     * @param minRating minimum average rating threshold
+     * @return Specification predicate or null if minRating is null
+     */
+    public static Specification<Recipe> hasMinRating(Double minRating) {
+        if (minRating == null) {
+            return null;
+        }
+        return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("averageRating"), minRating);
+    }
+
+    /**
+     * Specification filtering recipes associated with a specific tag name.
+     *
+     * @param tagName target tag label name
+     * @return Specification predicate or null if tagName is empty
+     */
+    public static Specification<Recipe> hasTag(String tagName) {
+        if (tagName == null || tagName.isBlank()) {
+            return null;
+        }
+        return (root, query, cb) -> {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<Recipe> subRoot = subquery.correlate(root);
+            Join<Recipe, Tag> tagJoin = subRoot.join("tags");
+            subquery.select(cb.literal(1L)).where(cb.equal(tagJoin.get("name"), tagName));
+            return cb.exists(subquery);
+        };
+    }
+
+    /**
+     * Resolves sort order from a client-supplied sortBy string.
+     * Supported values: "newest" (default), "rating", "fastest".
+     *
+     * @param sortBy sort criterion string
+     * @return Spring Data Sort descriptor
+     */
+    public static Sort resolveSortOrder(String sortBy) {
+        if (sortBy == null || sortBy.isBlank() || "newest".equalsIgnoreCase(sortBy)) {
+            return Sort.by("createdAt").descending();
+        }
+        return switch (sortBy.toLowerCase()) {
+            case "rating" -> Sort.by("averageRating").descending();
+            case "fastest" -> Sort.by("cookTimeMinutes").ascending();
+            default -> Sort.by("createdAt").descending();
+        };
     }
 
     private static jakarta.persistence.criteria.Expression<String> authorName(Root<Recipe> root, CriteriaBuilder cb) {

@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
  * REST Controller managing recipe catalog browsing, searching, creation, update, and deletion endpoints.
  *
  * @author Yaron Serlin
- * @version 1.0
+ * @version 1.1
  * @since 02/08/2026
  */
 @RestController
@@ -58,6 +58,7 @@ public class RecipeController {
 
     /**
      * Retrieves a paginated slice of public recipes for feed infinite scrolling.
+     * Supports server-side sorting and filtering via optional query parameters.
      *
      * Complexity:
      * Time: O(S) where S is page size
@@ -65,13 +66,21 @@ public class RecipeController {
      *
      * @param page zero-based page index
      * @param size page size limit
+     * @param sortBy sort criterion: newest (default), rating, fastest
+     * @param difficulty optional difficulty filter: EASY, MEDIUM, HARD
+     * @param minRating optional minimum average rating threshold
      * @return response entity containing PagedResponse of RecipePreviewResponse DTOs
      */
     @GetMapping("/public/paged")
     public ResponseEntity<ApiResponse<PagedResponse<RecipePreviewResponse>>> getAllRecipesPaged(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(new ApiResponse<>(true, recipeService.getAllRecipesPaged(page, size), null, "Recipes retrieved successfully"));
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) Double minRating) {
+        return ResponseEntity.ok(new ApiResponse<>(true,
+                recipeService.getAllRecipesPaged(page, size, sortBy, difficulty, minRating),
+                null, "Recipes retrieved successfully"));
     }
 
     /**
@@ -92,6 +101,7 @@ public class RecipeController {
 
     /**
      * Executes unified keyword and faceted attribute search across recipe catalog.
+     * Supports server-side sorting and filtering via optional query parameters.
      *
      * Complexity:
      * Time: O(M) where M is number of matching recipes returned
@@ -100,30 +110,44 @@ public class RecipeController {
      * @param q unified free-text search string
      * @param author author name filter string
      * @param ingredient ingredient name filter string
+     * @param sortBy sort criterion: newest (default), rating, fastest
+     * @param difficulty optional difficulty filter: EASY, MEDIUM, HARD
+     * @param minRating optional minimum average rating threshold
      * @return response entity containing search result list of RecipePreviewResponse DTOs
      */
     @GetMapping("/public/search")
     public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> searchRecipes(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String author,
-            @RequestParam(required = false) String ingredient) {
-        List<RecipePreviewResponse> recipes = recipeService.searchRecipes(q, author, ingredient);
+            @RequestParam(required = false) String ingredient,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) Double minRating) {
+        List<RecipePreviewResponse> recipes = recipeService.searchRecipes(q, author, ingredient, sortBy, difficulty, minRating);
         return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Search completed"));
     }
 
     /**
      * Filters public recipes associated with a specific tag name.
+     * Supports server-side sorting and filtering via optional query parameters.
      *
      * Complexity:
      * Time: O(T) where T is count of recipes tagged with tag name
      * Space: O(T)
      *
      * @param tagName target tag label name
+     * @param sortBy sort criterion: newest (default), rating, fastest
+     * @param difficulty optional difficulty filter: EASY, MEDIUM, HARD
+     * @param minRating optional minimum average rating threshold
      * @return response entity containing list of RecipePreviewResponse DTOs
      */
     @GetMapping("/public/tag/{tagName}")
-    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> getRecipesByTag(@PathVariable String tagName) {
-        List<RecipePreviewResponse> recipes = recipeService.findRecipesByTag(tagName);
+    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> getRecipesByTag(
+            @PathVariable String tagName,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) Double minRating) {
+        List<RecipePreviewResponse> recipes = recipeService.findRecipesByTag(tagName, sortBy, difficulty, minRating);
         return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Recipes retrieved by tag"));
     }
 

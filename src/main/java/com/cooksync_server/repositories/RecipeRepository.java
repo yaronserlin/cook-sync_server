@@ -147,6 +147,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
            "LEFT JOIN FETCH r.ingredients i " +
            "LEFT JOIN FETCH i.unit " +
            "LEFT JOIN FETCH r.instructions " +
+           "LEFT JOIN FETCH r.descriptionBlocks " +
            "WHERE r.id = :id")
     Optional<Recipe> findByIdWithDetails(@Param("id") String id);
 }
