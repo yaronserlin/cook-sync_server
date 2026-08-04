@@ -90,7 +90,7 @@ public class Recipe {
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Review> reviews = new ArrayList<>();
+    private Set<Review> reviews = new java.util.LinkedHashSet<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -105,19 +105,19 @@ public class Recipe {
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     @Builder.Default
-    private List<Tag> tags = new ArrayList<>();
+    private Set<Tag> tags = new java.util.LinkedHashSet<>();
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private Set<Ingredient> ingredients = new HashSet<>();
+    private Set<Ingredient> ingredients = new java.util.LinkedHashSet<>();
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Instruction> instructions = new ArrayList<>();
+    private Set<Instruction> instructions = new java.util.LinkedHashSet<>();
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<RecipeImage> images = new ArrayList<>();
+    private Set<RecipeImage> images = new java.util.LinkedHashSet<>();
 
     /**
      * Initializes timestamps prior to persistence.

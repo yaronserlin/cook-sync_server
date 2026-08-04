@@ -620,7 +620,7 @@ public class DataSeeder implements CommandLineRunner {
                 .createdBy(creator)
                 .build();
 
-        recipe.setTags(new ArrayList<>(tags));
+        recipe.setTags(new LinkedHashSet<>(tags));
 
         Set<Ingredient> ingredientSet = new LinkedHashSet<>();
         for (Ingredient ingredient : ingredients) {
@@ -629,12 +629,12 @@ public class DataSeeder implements CommandLineRunner {
         }
         recipe.setIngredients(ingredientSet);
 
-        List<Instruction> instructionList = new ArrayList<>();
+        Set<Instruction> instructionSet = new LinkedHashSet<>();
         for (Instruction instruction : instructions) {
             instruction.setRecipe(recipe);
-            instructionList.add(instruction);
+            instructionSet.add(instruction);
         }
-        recipe.setInstructions(instructionList);
+        recipe.setInstructions(instructionSet);
 
         return recipe;
     }

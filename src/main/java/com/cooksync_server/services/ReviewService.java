@@ -144,7 +144,7 @@ public class ReviewService {
     }
 
     private void recomputeAverageRating(Recipe recipe) {
-        List<Review> reviews = recipe.getReviews();
+        java.util.Set<Review> reviews = recipe.getReviews();
         if (reviews == null || reviews.isEmpty()) {
             recipe.setAverageRating(null);
             return;

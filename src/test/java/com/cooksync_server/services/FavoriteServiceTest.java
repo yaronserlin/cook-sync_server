@@ -123,8 +123,6 @@ class FavoriteServiceTest {
         FavoriteRecipe favorite = FavoriteRecipe.builder().id("fav-3").user(user).recipe(recipe).build();
         when(favoriteRepository.findByUserId(userId)).thenReturn(List.of(favorite));
         when(personalInstructionNoteRepository.existsByUserIdAndRecipeId(userId, "recipe-3")).thenReturn(false);
-        when(personalInstructionNoteRepository.findByUserIdAndRecipeIdAndInstructionIdIsNull(userId, "recipe-3"))
-                .thenReturn(Optional.empty());
 
         RecipePreviewResponse preview = favoriteService.getUserFavorites(userEmail).get(0);
 

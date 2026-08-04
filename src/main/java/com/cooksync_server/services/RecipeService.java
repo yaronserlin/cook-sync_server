@@ -43,14 +43,17 @@ import com.cooksync_server.repositories.UserRepository;
 import com.cooksync_server.mappers.RecipeMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service class handling core recipe management business logic including catalog listing, search, creation, updates, and deletion.
+ * Enforces transactional read-only boundaries and structured SLF4J logging for monitoring.
  *
  * @author Yaron Serlin
  * @version 1.0
  * @since 02/08/2026
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecipeService {
@@ -72,7 +75,9 @@ public class RecipeService {
      *
      * @return list of RecipePreviewResponse DTOs
      */
+    @Transactional(readOnly = true)
     public List<RecipePreviewResponse> getAllRecipes() {
+        log.debug("Fetching all public recipes");
         return recipeRepository.findByVisibility(Recipe.Visibility.PUBLIC).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
 
@@ -87,7 +92,9 @@ public class RecipeService {
      * @param size page size limit
      * @return PagedResponse containing RecipePreviewResponse DTOs
      */
+    @Transactional(readOnly = true)
     public PagedResponse<RecipePreviewResponse> getAllRecipesPaged(int page, int size) {
+        log.debug("Fetching paginated public recipes. Page: {}, Size: {}", page, size);
         Page<Recipe> result = recipeRepository.findByVisibility(Recipe.Visibility.PUBLIC,
                 PageRequest.of(page, size, Sort.by("createdAt").descending()));
         List<RecipePreviewResponse> content = result.getContent().stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
@@ -96,7 +103,7 @@ public class RecipeService {
     }
 
     /**
-     * Retrieves full detail view of a single recipe by ID.
+     * Retrieves full detail view of a single recipe by ID using optimized fetch join.
      *
      * Complexity:
      * Time: O(1)
@@ -105,9 +112,12 @@ public class RecipeService {
      * @param id target recipe ID
      * @return RecipeResponse DTO
      */
+    @Transactional(readOnly = true)
     public RecipeResponse getRecipeById(String id) {
-        Recipe recipe = recipeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Recipe", id));
+        log.debug("Fetching detailed recipe by ID: {}", id);
+        Recipe recipe = recipeRepository.findByIdWithDetails(id)
+                .orElseGet(() -> recipeRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Recipe", id)));
         return RecipeMapper.toResponse(recipe);
     }
 
@@ -123,7 +133,9 @@ public class RecipeService {
      * @param ingredient ingredient filter
      * @return list of RecipePreviewResponse DTOs
      */
+    @Transactional(readOnly = true)
     public List<RecipePreviewResponse> searchRecipes(String keyword, String author, String ingredient) {
+        log.debug("Executing recipe search. Keyword: {}, Author: {}, Ingredient: {}", keyword, author, ingredient);
         Specification<Recipe> spec = RecipeSpecifications.combine(
                 RecipeSpecifications.isPublicAndEnabled(),
                 RecipeSpecifications.matchesUnifiedQuery(keyword),
@@ -143,7 +155,9 @@ public class RecipeService {
      * @param tagName target tag label name
      * @return list of RecipePreviewResponse DTOs
      */
+    @Transactional(readOnly = true)
     public List<RecipePreviewResponse> findRecipesByTag(String tagName) {
+        log.debug("Fetching recipes by tag name: {}", tagName);
         return recipeRepository.findByTagNameAndVisibility(tagName, Recipe.Visibility.PUBLIC)
                 .stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
     }
@@ -158,7 +172,9 @@ public class RecipeService {
      * @param userEmail user email address
      * @return list of RecipePreviewResponse DTOs
      */
+    @Transactional(readOnly = true)
     public List<RecipePreviewResponse> getMyRecipes(String userEmail) {
+        log.debug("Fetching recipes for user email: {}", userEmail);
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
         return recipeRepository.findByCreatedById(user.getId()).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
@@ -180,7 +196,7 @@ public class RecipeService {
         User creator = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        List<Tag> tags = fetchTags(request.tagIds());
+        Set<Tag> tags = fetchTags(request.tagIds());
 
         Recipe recipe = Recipe.builder()
                 .createdBy(creator)
@@ -327,9 +343,9 @@ public class RecipeService {
         }
     }
 
-    private List<Tag> fetchTags(List<String> tagIds) {
+    private Set<Tag> fetchTags(List<String> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
-            return new ArrayList<>();
+            return new java.util.LinkedHashSet<>();
         }
         List<Tag> tags = tagRepository.findAllById(tagIds);
         if (tags.size() != new HashSet<>(tagIds).size()) {
@@ -337,7 +353,7 @@ public class RecipeService {
             String missingId = tagIds.stream().filter(tagId -> !foundIds.contains(tagId)).findFirst().orElse(null);
             throw new ResourceNotFoundException("Tag", missingId);
         }
-        return tags;
+        return new java.util.LinkedHashSet<>(tags);
     }
 
     private Map<String, Unit> fetchUnitsById(List<IngredientRequestDTO> dtoList) {
@@ -350,7 +366,7 @@ public class RecipeService {
             Map<String, Ingredient> tmpIdToIngredient) {
         Map<String, Unit> unitsById = fetchUnitsById(dtoList);
 
-        Set<Ingredient> ingredients = new HashSet<>();
+        Set<Ingredient> ingredients = new java.util.LinkedHashSet<>();
         for (IngredientRequestDTO ingDto : dtoList) {
             Unit unit = unitsById.get(ingDto.unitId());
             if (unit == null) {
@@ -370,9 +386,9 @@ public class RecipeService {
         return ingredients;
     }
 
-    private List<Instruction> saveInstructions(List<InstructionRequestDTO> dtoList, Recipe recipe,
+    private Set<Instruction> saveInstructions(List<InstructionRequestDTO> dtoList, Recipe recipe,
             Map<String, Ingredient> tmpIdToIngredient) {
-        List<Instruction> instructions = new ArrayList<>();
+        Set<Instruction> instructions = new java.util.LinkedHashSet<>();
         for (InstructionRequestDTO instDto : dtoList) {
             Set<Ingredient> stepIngredients = new HashSet<>();
             if (instDto.ingredientIds() != null) {

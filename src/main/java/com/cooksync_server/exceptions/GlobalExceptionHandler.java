@@ -137,6 +137,38 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles database constraint and integrity violations and responds with HTTP 409 CONFLICT.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param ex target data integrity exception
+     * @return response entity with conflict error payload
+     */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<ApiErrorResponse>> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+        LOG.warn("Database data integrity violation: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, "Conflict", "DATA_INTEGRITY_VIOLATION", "Database constraint or duplicate entry violation");
+    }
+
+    /**
+     * Handles malformed request JSON bodies and responds with HTTP 400 BAD_REQUEST.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param ex message parsing exception
+     * @return response entity with bad request payload
+     */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<ApiErrorResponse>> handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        LOG.warn("Malformed HTTP message payload: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "MALFORMED_JSON_PAYLOAD", "Malformed request payload format");
+    }
+
+    /**
      * Fallback exception handler catching uncaught exceptions and returning HTTP 500.
      *
      * Complexity:

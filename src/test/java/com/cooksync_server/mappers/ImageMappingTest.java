@@ -36,10 +36,10 @@ class ImageMappingTest {
                 .title("Pasta")
                 .build();
 
-        recipe.setImages(List.of(
+        recipe.setImages(new java.util.LinkedHashSet<>(List.of(
                 RecipeImage.builder().imageUrl("https://example.com/primary.jpg").isPrimary(true).build(),
                 RecipeImage.builder().imageUrl("https://example.com/extra-1.jpg").isPrimary(false).build(),
-                RecipeImage.builder().imageUrl("https://example.com/extra-2.jpg").isPrimary(false).build()));
+                RecipeImage.builder().imageUrl("https://example.com/extra-2.jpg").isPrimary(false).build())));
 
         RecipeResponse response = RecipeMapper.toResponse(recipe);
         RecipePreviewResponse preview = RecipeMapper.toPreview(recipe);

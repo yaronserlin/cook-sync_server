@@ -23,13 +23,17 @@ import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
 import com.cooksync_server.repositories.UserRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Service class handling user authentication, registration, token refresh, password changes, and account settings.
+ * Includes SLF4J structured logging for monitoring security events.
  *
  * @author Yaron Serlin
  * @version 1.0
  * @since 02/08/2026
  */
+@Slf4j
 @Service
 public class AuthService {
 
@@ -69,8 +73,11 @@ public class AuthService {
      * @param request registration details payload
      * @return AuthResponse containing access token, refresh token, and user info
      */
+    @Transactional
     public AuthResponse register(RegisterRequestDTO request) {
+        log.info("Processing user registration attempt for email: {}", request.email());
         if (userRepository.existsByEmail(request.email())) {
+            log.warn("Registration rejected - email already exists: {}", request.email());
             throw new UserAlreadyExistsException("Email is already registered");
         }
 
@@ -85,12 +92,14 @@ public class AuthService {
         try {
             userRepository.save(newUser);
         } catch (DataIntegrityViolationException e) {
+            log.warn("DataIntegrityViolation during registration for email: {}", request.email());
             throw new UserAlreadyExistsException("Email is already registered");
         }
 
         String token = jwtUtil.generateToken(newUser.getEmail(), newUser.getId(), newUser.isAdmin());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(newUser.getId());
 
+        log.info("User registered successfully with ID: {}", newUser.getId());
         return new AuthResponse(token, refreshToken.getToken(), newUser.getId(), newUser.getFirstName(), newUser.getLastName(), newUser.isAdmin(), newUser.getAvatarUrl());
     }
 
@@ -104,23 +113,28 @@ public class AuthService {
      * @param request login credentials payload
      * @return AuthResponse containing fresh tokens and user info
      */
+    @Transactional
     public AuthResponse login(LoginRequestDTO request) {
+        log.info("Processing user login attempt for email: {}", request.email());
         Optional<User> optionalUser = userRepository.findByEmail(request.email());
 
         String hashToTest = optionalUser.map(User::getPasswordHash).orElse(this.dummyPasswordHash);
         boolean isPasswordMatch = passwordEncoder.matches(request.password(), hashToTest);
 
         if (optionalUser.isEmpty() || !isPasswordMatch) {
+            log.warn("Login failed - invalid credentials for email: {}", request.email());
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
         User user = optionalUser.get();
         if (!user.isEnabled()) {
+            log.warn("Login failed - account disabled for user ID: {}", user.getId());
             throw new UnauthorizedActionException("This account has been disabled.");
         }
         String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.isAdmin());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
+        log.info("User logged in successfully with ID: {}", user.getId());
         return new AuthResponse(token, refreshToken.getToken(), user.getId(), user.getFirstName(), user.getLastName(), user.isAdmin(), user.getAvatarUrl());
     }
 
@@ -134,6 +148,7 @@ public class AuthService {
      * @param request refresh token request payload
      * @return AuthResponse containing new access token and existing refresh token
      */
+    @Transactional
     public AuthResponse refreshToken(TokenRefreshRequestDTO request) {
         String requestRefreshToken = request.refreshToken();
 
@@ -157,6 +172,7 @@ public class AuthService {
      * @param userEmail authenticated user email
      * @return AuthResponse with profile details
      */
+    @Transactional(readOnly = true)
     public AuthResponse validateToken(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
@@ -173,6 +189,7 @@ public class AuthService {
      *
      * @param userEmail authenticated user email
      */
+    @Transactional
     public void logout(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));

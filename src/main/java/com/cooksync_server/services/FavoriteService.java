@@ -93,15 +93,17 @@ public class FavoriteService {
      * @param userEmail authenticated user email address
      * @return list of RecipePreviewResponse DTOs with personal notes if present
      */
+    @Transactional(readOnly = true)
     public List<RecipePreviewResponse> getUserFavorites(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
         return favoriteRepository.findByUserId(user.getId()).stream()
                 .map(fav -> {
+                    boolean hasNote = personalInstructionNoteRepository.existsByUserIdAndRecipeId(user.getId(), fav.getRecipe().getId());
                     Optional<PersonalInstructionNote> note = personalInstructionNoteRepository
                             .findByUserIdAndRecipeIdAndInstructionIdIsNull(user.getId(), fav.getRecipe().getId());
-                    return RecipeMapper.toPreview(fav.getRecipe(), note.isPresent(), note.map(PersonalInstructionNote::getNote).orElse(null));
+                    return RecipeMapper.toPreview(fav.getRecipe(), hasNote, note.map(PersonalInstructionNote::getNote).orElse(null));
                 })
                 .collect(Collectors.toList());
     }
