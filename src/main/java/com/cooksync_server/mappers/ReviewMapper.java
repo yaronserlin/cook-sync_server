@@ -31,6 +31,7 @@ public final class ReviewMapper {
         }
         String userId = review.getUser() == null ? null : review.getUser().getId();
         String authorName = review.getUser() == null ? null : review.getUser().getFullName();
+        String authorAvatarUrl = review.getUser() == null ? null : review.getUser().getAvatarUrl();
         String recipeId = review.getRecipe() == null ? null : review.getRecipe().getId();
         String created = MapperUtils.toIsoStringOrNull(review.getCreatedAt());
         String updated = MapperUtils.toIsoStringOrNull(review.getUpdatedAt());
@@ -38,6 +39,7 @@ public final class ReviewMapper {
                 review.getId(),
                 userId,
                 authorName,
+                authorAvatarUrl,
                 recipeId,
                 review.getRating(),
                 review.getTitle(),
