@@ -132,6 +132,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
     /**
      * Retrieves full recipe graph with all nested relations in a single query execution.
      * Prevents N+1 SELECT overhead when mapping full RecipeResponse DTOs.
+     * Deliberately excludes {@code descriptionBlocks}: it is a {@code List} (not a {@code Set}),
+     * so joining it alongside the other collection fetches here would multiply it by their
+     * Cartesian product instead of being deduplicated the way the Set-typed collections are.
+     * See {@link #findDescriptionBlocksByRecipeId(String)} for the companion fetch.
      *
      * Complexity:
      * Time: O(1)
@@ -147,7 +151,21 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
            "LEFT JOIN FETCH r.ingredients i " +
            "LEFT JOIN FETCH i.unit " +
            "LEFT JOIN FETCH r.instructions " +
-           "LEFT JOIN FETCH r.descriptionBlocks " +
            "WHERE r.id = :id")
     Optional<Recipe> findByIdWithDetails(@Param("id") String id);
+
+    /**
+     * Fetches a recipe's description blocks in isolation, in author-intended sort order.
+     * Paired with {@link #findByIdWithDetails(String)} within the same transaction so
+     * Hibernate attaches the ordered list to the already-loaded managed Recipe instance.
+     *
+     * Complexity:
+     * Time: O(B) where B is description block count
+     * Space: O(B)
+     *
+     * @param id target recipe unique identifier
+     * @return optional containing the recipe with its description blocks initialized
+     */
+    @Query("SELECT r FROM Recipe r LEFT JOIN FETCH r.descriptionBlocks WHERE r.id = :id")
+    Optional<Recipe> findDescriptionBlocksByRecipeId(@Param("id") String id);
 }

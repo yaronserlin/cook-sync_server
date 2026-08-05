@@ -125,6 +125,7 @@ public class RecipeService {
         Recipe recipe = recipeRepository.findByIdWithDetails(id)
                 .orElseGet(() -> recipeRepository.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Recipe", id)));
+        recipeRepository.findDescriptionBlocksByRecipeId(id);
         return RecipeMapper.toResponse(recipe);
     }
 
