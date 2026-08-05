@@ -45,11 +45,13 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/api/auth/validate-token").authenticated()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/recipes/public/**").permitAll()
                 .requestMatchers("/api/cloudinary/**").authenticated()
-                .anyRequest().authenticated()
+                // .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
