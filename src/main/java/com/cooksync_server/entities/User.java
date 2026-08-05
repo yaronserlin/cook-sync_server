@@ -61,6 +61,14 @@ public class User {
     @Column(name = "avatar_url", length = 2000)
     private String avatarUrl;
 
+    @Builder.Default
+    @Column(name = "terms_accepted", nullable = false)
+    private boolean termsAccepted = false;
+
+    @Builder.Default
+    @Column(name = "marketing_opt_in", nullable = false)
+    private boolean marketingOptIn = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

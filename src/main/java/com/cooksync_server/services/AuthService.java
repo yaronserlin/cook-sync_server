@@ -1,6 +1,8 @@
 package com.cooksync_server.services;
 
+import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,17 +12,21 @@ import org.springframework.transaction.annotation.Transactional;
 import com.cooksync_server.config.JwtUtil;
 import com.dtos.request.auth.ChangePasswordRequestDTO;
 import com.dtos.request.auth.EmailUpdateRequestDTO;
+import com.dtos.request.auth.ForgotPasswordRequestDTO;
 import com.dtos.request.auth.LoginRequestDTO;
 import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
+import com.dtos.request.auth.ResetPasswordRequestDTO;
 import com.dtos.request.auth.TokenRefreshRequestDTO;
 import com.dtos.response.auth.AuthResponse;
+import com.cooksync_server.entities.PasswordResetToken;
 import com.cooksync_server.entities.RefreshToken;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.exceptions.auth.InvalidCredentialsException;
 import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
+import com.cooksync_server.repositories.PasswordResetTokenRepository;
 import com.cooksync_server.repositories.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +43,15 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class AuthService {
 
+    /** How long a forgot-password reset token remains valid after being issued. */
+    private static final long RESET_TOKEN_VALIDITY_MS = 30 * 60 * 1000L;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
     private final String dummyPasswordHash;
 
     /**
@@ -54,12 +65,18 @@ public class AuthService {
      * @param passwordEncoder encoder for BCrypt password hashing
      * @param jwtUtil utility for JWT generation and verification
      * @param refreshTokenService service for managing session refresh tokens
+     * @param passwordResetTokenRepository repository for forgot-password reset tokens
+     * @param emailService service used to deliver password-reset emails
      */
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
+            RefreshTokenService refreshTokenService, PasswordResetTokenRepository passwordResetTokenRepository,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
         this.dummyPasswordHash = passwordEncoder.encode("dummy_password_for_timing_attack_prevention");
     }
 
@@ -87,6 +104,8 @@ public class AuthService {
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .isAdmin(false)
+                .termsAccepted(request.termsAccepted())
+                .marketingOptIn(request.marketingOptIn())
                 .build();
 
         try {
@@ -310,5 +329,68 @@ public class AuthService {
         user.setEnabled(false);
         userRepository.save(user);
         refreshTokenService.deleteByUserId(user.getId());
+    }
+
+    /**
+     * Initiates the forgot-password flow: if the email belongs to a registered account, issues a
+     * fresh one-time reset token and emails it to the user. Always succeeds silently for unknown
+     * emails as well, so the response never reveals whether an address is registered.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request forgot-password request payload
+     */
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequestDTO request) {
+        Optional<User> optionalUser = userRepository.findByEmail(request.email());
+        if (optionalUser.isEmpty()) {
+            log.info("Forgot-password requested for unknown email: {}", request.email());
+            return;
+        }
+
+        User user = optionalUser.get();
+        passwordResetTokenRepository.deleteByUserId(user.getId());
+
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .user(user)
+                .token(UUID.randomUUID().toString())
+                .expiryDate(Instant.now().plusMillis(RESET_TOKEN_VALIDITY_MS))
+                .build();
+        passwordResetTokenRepository.save(resetToken);
+
+        emailService.sendPasswordResetEmail(user.getEmail(), resetToken.getToken());
+        log.info("Password reset token issued for user ID: {}", user.getId());
+    }
+
+    /**
+     * Completes the forgot-password flow: validates the reset token, updates the account
+     * password, marks the token used, and revokes all active sessions for the account.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request reset-password request payload
+     */
+    @Transactional
+    public void resetPassword(ResetPasswordRequestDTO request) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.token())
+                .orElseThrow(() -> new UnauthorizedActionException("Invalid or expired reset token"));
+
+        if (resetToken.isUsed() || resetToken.getExpiryDate().isBefore(Instant.now())) {
+            throw new UnauthorizedActionException("Invalid or expired reset token");
+        }
+
+        User user = resetToken.getUser();
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
+
+        refreshTokenService.deleteByUserId(user.getId());
+        log.info("Password reset completed for user ID: {}", user.getId());
     }
 }

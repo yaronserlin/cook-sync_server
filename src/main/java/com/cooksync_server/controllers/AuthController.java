@@ -14,9 +14,11 @@ import com.cooksync_server.services.AuthService;
 import com.dtos.request.auth.AvatarUpdateRequestDTO;
 import com.dtos.request.auth.ChangePasswordRequestDTO;
 import com.dtos.request.auth.EmailUpdateRequestDTO;
+import com.dtos.request.auth.ForgotPasswordRequestDTO;
 import com.dtos.request.auth.LoginRequestDTO;
 import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
+import com.dtos.request.auth.ResetPasswordRequestDTO;
 import com.dtos.request.auth.TokenRefreshRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.auth.AuthResponse;
@@ -222,5 +224,41 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(Authentication authentication) {
         authService.deactivateAccount(authentication.getName());
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Account deactivated"));
+    }
+
+    /**
+     * Initiates the forgot-password flow by emailing a one-time reset token, if the given
+     * email belongs to a registered account. Always returns success regardless of whether the
+     * email is registered, so the response never reveals account existence.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request forgot-password request payload DTO
+     * @return response entity acknowledging the request
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null,
+                "If that email is registered, a password reset link has been sent"));
+    }
+
+    /**
+     * Completes the forgot-password flow by consuming a valid reset token and setting a new
+     * account password.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request reset-password request payload DTO
+     * @return response entity acknowledging the password reset
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Password reset successfully"));
     }
 }
