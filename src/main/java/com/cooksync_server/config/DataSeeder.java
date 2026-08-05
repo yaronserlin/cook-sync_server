@@ -48,6 +48,22 @@ public class DataSeeder implements CommandLineRunner {
 
     private final Logger logger = LoggerFactory.getLogger(DataSeeder.class);
 
+    private static final String[] DESCRIPTION_IMAGE_URLS = {
+            "https://images.unsplash.com/photo-1512058564366-c9e0d1b4f512?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1523986371872-9d3ba2e2f5b2?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1506354666786-959d6d497f1a?auto=format&fit=crop&w=1200&q=80"
+    };
+
+    private static final String[] INSTRUCTION_IMAGE_URLS = {
+            "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1498575207490-42125e0e5881?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1506089676908-3592f7389d4d?auto=format&fit=crop&w=1200&q=80"
+    };
+
     @Override
     @Transactional
     public void run(String... args) {
@@ -639,18 +655,72 @@ public class DataSeeder implements CommandLineRunner {
         }
         recipe.setInstructions(instructionSet);
 
-        List<DescriptionBlock> blocks = new ArrayList<>();
-        if (description != null && !description.isBlank()) {
-            blocks.add(DescriptionBlock.builder()
+        List<DescriptionBlock> blocks = buildDescriptionBlocks(recipe, description);
+        if (!blocks.isEmpty()) {
+            int insertIndex = ThreadLocalRandom.current().nextInt(blocks.size() + 1);
+            blocks.add(insertIndex, DescriptionBlock.builder()
                     .recipe(recipe)
-                    .type(DescriptionBlock.BlockType.TEXT)
-                    .text(description)
-                    .sortOrder(0)
+                    .type(DescriptionBlock.BlockType.IMAGE)
+                    .imageUrl(pickRandomDescriptionImageUrl())
+                    .caption("Recipe image")
                     .build());
         }
+
+        assignBlockSortOrders(blocks);
         recipe.setDescriptionBlocks(blocks);
+        assignRandomInstructionImage(instructions);
 
         return recipe;
+    }
+
+    private void assignRandomInstructionImage(List<Instruction> instructions) {
+        if (instructions == null || instructions.isEmpty()) {
+            return;
+        }
+        int selected = ThreadLocalRandom.current().nextInt(instructions.size());
+        Instruction instruction = instructions.get(selected);
+        instruction.setImageUrl(pickRandomInstructionImageUrl());
+    }
+
+    private void assignBlockSortOrders(List<DescriptionBlock> blocks) {
+        for (int i = 0; i < blocks.size(); i++) {
+            blocks.get(i).setSortOrder(i);
+        }
+    }
+
+    private String pickRandomDescriptionImageUrl() {
+        return DESCRIPTION_IMAGE_URLS[ThreadLocalRandom.current().nextInt(DESCRIPTION_IMAGE_URLS.length)];
+    }
+
+    private String pickRandomInstructionImageUrl() {
+        return INSTRUCTION_IMAGE_URLS[ThreadLocalRandom.current().nextInt(INSTRUCTION_IMAGE_URLS.length)];
+    }
+
+    private List<DescriptionBlock> buildDescriptionBlocks(Recipe recipe, String description) {
+        List<DescriptionBlock> blocks = new ArrayList<>();
+        if (description != null && !description.isBlank()) {
+            String[] lines = description.split("\\. ");
+            StringBuilder paragraph = new StringBuilder();
+            for (int i = 0; i < Math.max(lines.length, 5); i++) {
+                String nextLine = (i < lines.length) ? lines[i] : "Enjoy this flavorful recipe for every occasion.";
+                paragraph.append(nextLine.trim());
+                if (!nextLine.endsWith(".")) {
+                    paragraph.append(".");
+                }
+                if (i < 4) {
+                    paragraph.append(" ");
+                }
+                if ((i + 1) % 2 == 0 || i == 4) {
+                    blocks.add(DescriptionBlock.builder()
+                            .recipe(recipe)
+                            .type(DescriptionBlock.BlockType.TEXT)
+                            .text(paragraph.toString())
+                            .build());
+                    paragraph.setLength(0);
+                }
+            }
+        }
+        return blocks;
     }
 
     private Ingredient createIngredient(String name, BigDecimal quantity, Unit unit, Recipe recipe) {
