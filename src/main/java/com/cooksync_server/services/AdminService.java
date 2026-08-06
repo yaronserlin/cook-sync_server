@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cooksync_server.entities.Review;
+import com.cooksync_server.entities.ReviewReport;
 import com.cooksync_server.entities.Tag;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
@@ -22,6 +23,7 @@ import com.cooksync_server.mappers.AdminMapper;
 import com.cooksync_server.mappers.TagMapper;
 import com.cooksync_server.mappers.UserMapper;
 import com.cooksync_server.repositories.RecipeRepository;
+import com.cooksync_server.repositories.ReviewReportRepository;
 import com.cooksync_server.repositories.ReviewRepository;
 import com.cooksync_server.repositories.TagRepository;
 import com.cooksync_server.repositories.UserRepository;
@@ -47,6 +49,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminService {
 
     private final ReviewRepository reviewRepository;
+    private final ReviewReportRepository reviewReportRepository;
     private final RecipeRepository recipeRepository;
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
@@ -112,7 +115,12 @@ public class AdminService {
      */
     public List<ReportedReviewResponse> getReportedReviews() {
         return reviewRepository.findByReportedTrue().stream()
-                .map(AdminMapper::toReportedReviewResponse)
+                .map(review -> {
+                    ReviewReport latestReport = reviewReportRepository
+                            .findTopByReviewIdOrderByCreatedAtDesc(review.getId())
+                            .orElse(null);
+                    return AdminMapper.toReportedReviewResponse(review, latestReport);
+                })
                 .collect(Collectors.toList());
     }
 

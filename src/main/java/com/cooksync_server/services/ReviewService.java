@@ -6,17 +6,17 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-
 import com.dtos.request.review.ReportReviewRequestDTO;
 import com.dtos.request.review.ReviewRequestDTO;
 import com.dtos.response.review.ReviewResponse;
 import com.cooksync_server.entities.Recipe;
 import com.cooksync_server.entities.Review;
+import com.cooksync_server.entities.ReviewReport;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.mappers.ReviewMapper;
 import com.cooksync_server.repositories.RecipeRepository;
+import com.cooksync_server.repositories.ReviewReportRepository;
 import com.cooksync_server.repositories.ReviewRepository;
 import com.cooksync_server.repositories.UserRepository;
 
@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  * Service class managing user reviews, rating recomputations, and moderation report submissions.
  *
  * @author Yaron Serlin
- * @version 1.0
+ * @version 1.1
  * @since 02/08/2026
  */
 @Service
@@ -36,6 +36,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
+    private final ReviewReportRepository reviewReportRepository;
 
     /**
      * Retrieves all review entries for a recipe ordered by creation date descending.
@@ -120,7 +121,12 @@ public class ReviewService {
     }
 
     /**
-     * Flags a review for moderation audit with specified reason.
+     * Flags a review for moderation audit with the specified reason, persisting an independent
+     * {@link ReviewReport} record per submission so multiple users can report the same review
+     * without overwriting one another's reason/comment. The flat {@code reported}/
+     * {@code reportReason}/{@code reportedAt} fields on {@link Review} are also refreshed to
+     * reflect this latest report, preserving the existing admin moderation console's
+     * "currently reported" flag and dashboard count.
      *
      * Complexity:
      * Time: O(1)
@@ -128,18 +134,28 @@ public class ReviewService {
      *
      * @param reviewId target review ID
      * @param request moderation report request DTO
-     * @param userEmail user email address
+     * @param userEmail email address of the reporting user
      */
     @Transactional
     public void reportReview(String reviewId, ReportReviewRequestDTO request, String userEmail) {
-        userRepository.findByEmail(userEmail)
+        User reporter = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review", reviewId));
 
+        Review.ReportReason reason = Review.ReportReason.valueOf(request.reason().toUpperCase());
+
+        ReviewReport report = ReviewReport.builder()
+                .review(review)
+                .reporter(reporter)
+                .reason(reason)
+                .comment(request.comment())
+                .build();
+        reviewReportRepository.save(report);
+
         review.setReported(true);
-        review.setReportReason(Review.ReportReason.valueOf(request.reason().toUpperCase()));
-        review.setReportedAt(LocalDateTime.now());
+        review.setReportReason(reason);
+        review.setReportedAt(report.getCreatedAt());
         reviewRepository.save(review);
     }
 

@@ -27,6 +27,7 @@ import com.cooksync_server.entities.Tag;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.repositories.RecipeRepository;
+import com.cooksync_server.repositories.ReviewReportRepository;
 import com.cooksync_server.repositories.ReviewRepository;
 import com.cooksync_server.repositories.TagRepository;
 import com.cooksync_server.repositories.UserRepository;
@@ -48,6 +49,8 @@ class AdminServiceTest {
     @Mock
     private ReviewRepository reviewRepository;
     @Mock
+    private ReviewReportRepository reviewReportRepository;
+    @Mock
     private RecipeRepository recipeRepository;
     @Mock
     private TagRepository tagRepository;
@@ -67,7 +70,7 @@ class AdminServiceTest {
      */
     @BeforeEach
     void setUp() {
-        adminService = new AdminService(reviewRepository, recipeRepository, tagRepository, userRepository, jdbcTemplate);
+        adminService = new AdminService(reviewRepository, reviewReportRepository, recipeRepository, tagRepository, userRepository, jdbcTemplate);
     }
 
     /**
