@@ -1,7 +1,6 @@
 package com.cooksync_server.config;
 
 import com.cooksync_server.entities.*;
-import com.cooksync_server.entities.DescriptionBlock;
 import com.cooksync_server.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -49,19 +48,19 @@ public class DataSeeder implements CommandLineRunner {
     private final Logger logger = LoggerFactory.getLogger(DataSeeder.class);
 
     private static final String[] DESCRIPTION_IMAGE_URLS = {
-            "https://images.unsplash.com/photo-1512058564366-c9e0d1b4f512?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?auto=format&fit=crop&w=1200&q=80",
             "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-            "https://images.unsplash.com/photo-1523986371872-9d3ba2e2f5b2?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=1200&q=80",
             "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
             "https://images.unsplash.com/photo-1506354666786-959d6d497f1a?auto=format&fit=crop&w=1200&q=80"
     };
 
     private static final String[] INSTRUCTION_IMAGE_URLS = {
-            "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1200&q=80",
-            "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
-            "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80",
-            "https://images.unsplash.com/photo-1498575207490-42125e0e5881?auto=format&fit=crop&w=1200&q=80",
-            "https://images.unsplash.com/photo-1506089676908-3592f7389d4d?auto=format&fit=crop&w=1200&q=80"
+              "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
+            "https://images.unsplash.com/photo-1506354666786-959d6d497f1a?auto=format&fit=crop&w=1200&q=80"
     };
 
     @Override
@@ -677,8 +676,8 @@ public class DataSeeder implements CommandLineRunner {
         if (instructions == null || instructions.isEmpty()) {
             return;
         }
-        int selected = ThreadLocalRandom.current().nextInt(instructions.size());
-        Instruction instruction = instructions.get(selected);
+
+        Instruction instruction = instructions.get(0);
         instruction.setImageUrl(pickRandomInstructionImageUrl());
     }
 
@@ -762,19 +761,21 @@ public class DataSeeder implements CommandLineRunner {
         for (int i = 0; i < recipes.size(); i++) {
             Recipe recipe = recipes.get(i);
             User primaryReviewer = users.get((i % (users.size() - 1)) + 1);
+            int primaryRating = 5 - (i % 3);
             reviews.add(Review.builder()
                     .recipe(recipe)
                     .user(primaryReviewer)
-                    .rating(BigDecimal.valueOf(4.5 + (i % 3) * 0.5))
+                    .rating(BigDecimal.valueOf(primaryRating))
                     .title("Great recipe")
                     .comment("This was easy to follow and turned out really well.")
                     .build());
 
             User secondaryReviewer = users.get(((i + 2) % (users.size() - 1)) + 1);
+            int secondaryRating = 4 - (i % 2);
             reviews.add(Review.builder()
                     .recipe(recipe)
                     .user(secondaryReviewer)
-                    .rating(BigDecimal.valueOf(4.0 + (i % 2) * 0.5))
+                    .rating(BigDecimal.valueOf(secondaryRating))
                     .title("Tasty and simple")
                     .comment("I enjoyed this version and will make it again.")
                     .build());
@@ -790,7 +791,7 @@ public class DataSeeder implements CommandLineRunner {
         reviews.add(Review.builder()
                 .recipe(recipes.get(0))
                 .user(users.get(users.size() - 1))
-                .rating(BigDecimal.valueOf(1.0))
+                .rating(BigDecimal.valueOf(1))
                 .title("Not related")
                 .comment("Buy cheap kitchenware at this link, best prices anywhere, click now.")
                 .reported(true)
@@ -800,7 +801,7 @@ public class DataSeeder implements CommandLineRunner {
         reviews.add(Review.builder()
                 .recipe(recipes.get(1))
                 .user(users.get(users.size() - 2))
-                .rating(BigDecimal.valueOf(1.0))
+                .rating(BigDecimal.valueOf(1))
                 .title("Rude")
                 .comment("Whoever wrote this should not be allowed near an oven, absolute rubbish.")
                 .reported(true)
@@ -810,7 +811,7 @@ public class DataSeeder implements CommandLineRunner {
         reviews.add(Review.builder()
                 .recipe(recipes.get(2))
                 .user(users.get(users.size() - 3))
-                .rating(BigDecimal.valueOf(1.5))
+                .rating(BigDecimal.valueOf(2))
                 .title("Off topic")
                 .comment("This content does not belong in a recipe review and should be removed.")
                 .reported(true)
@@ -820,7 +821,7 @@ public class DataSeeder implements CommandLineRunner {
         reviews.add(Review.builder()
                 .recipe(recipes.get(3))
                 .user(users.get(users.size() - 4))
-                .rating(BigDecimal.valueOf(1.0))
+                .rating(BigDecimal.valueOf(1))
                 .title("Inappropriate")
                 .comment("This review is inappropriate and unrelated to the recipe instructions.")
                 .reported(true)
@@ -849,7 +850,7 @@ public class DataSeeder implements CommandLineRunner {
             Recipe recipe = recipes.get(i);
             for (int c = 0; c < 50; c++) {
                 User commenter = users.get((i + c) % users.size());
-                double randRating = Math.round(ThreadLocalRandom.current().nextDouble(1.0, 5.0) * 10.0) / 10.0;
+                int randRating = ThreadLocalRandom.current().nextInt(1, 6);
                 String commentText = String.format("%s (Comment %d for %s) — %s",
                         sampleComments[c % sampleComments.length], c + 1, recipe.getTitle(), commenter.getFirstName());
                 reviews.add(Review.builder()
