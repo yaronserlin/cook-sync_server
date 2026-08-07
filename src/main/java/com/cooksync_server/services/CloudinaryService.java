@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class CloudinaryService {
+public class CloudinaryService implements ICloudinaryService{
 
     private static final String UPLOAD_FOLDER = "CookSyncApp";
 

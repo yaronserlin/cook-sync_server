@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class InstructionService {
+public class InstructionService implements IInstructionService {
 
     private final InstructionRepository instructionRepository;
     private final RecipeRepository recipeRepository;

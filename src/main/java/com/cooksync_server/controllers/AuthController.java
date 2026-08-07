@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.services.AuthService;
+import com.cooksync_server.services.IAuthService;
 import com.dtos.request.auth.AvatarUpdateRequestDTO;
 import com.dtos.request.auth.ChangePasswordRequestDTO;
 import com.dtos.request.auth.EmailUpdateRequestDTO;
@@ -36,10 +36,10 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthService authService;
+    private final IAuthService authService;
 
     /**
-     * Constructs AuthController with AuthService dependency.
+     * Constructs AuthController with IAuthService dependency.
      *
      * Complexity:
      * Time: O(1)
@@ -47,7 +47,7 @@ public class AuthController {
      *
      * @param authService auth domain service instance
      */
-    public AuthController(AuthService authService) {
+    public AuthController(IAuthService authService) {
         this.authService = authService;
     }
 

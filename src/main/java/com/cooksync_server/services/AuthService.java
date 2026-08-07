@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-public class AuthService {
+public class AuthService implements IAuthService{
 
     /** How long a forgot-password reset token remains valid after being issued. */
     private static final long RESET_TOKEN_VALIDITY_MS = 30 * 60 * 1000L;

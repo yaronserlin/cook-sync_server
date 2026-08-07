@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 /**
  * Spring Data JPA Repository interface for PersonalInstructionNote entity persistence.
  *
@@ -23,9 +26,19 @@ public interface PersonalInstructionNoteRepository extends JpaRepository<Persona
      *
      * @param userId target user ID
      * @param recipeId target recipe ID
-     * @return list of matching personal instruction note entities
+     * @param pageable pagination information
+     * @return page of matching personal instruction note entities
      */
-    List<PersonalInstructionNote> findAllByUserIdAndRecipeId(String userId, String recipeId);
+    Page<PersonalInstructionNote> findAllByUserIdAndRecipeId(String userId, String recipeId, Pageable pageable);
+
+    /**
+     * Retrieves all personal notes created by a specific user.
+     *
+     * @param userId target user ID
+     * @param pageable pagination information
+     * @return page of matching personal instruction note entities
+     */
+    Page<PersonalInstructionNote> findAllByUserId(String userId, Pageable pageable);
 
     /**
      * Checks if a user has created any notes for a specific recipe.

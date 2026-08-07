@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.dtos.response.PagedResponse;
 
-import com.cooksync_server.services.TagService;
+import com.cooksync_server.services.ITagService;
 import com.dtos.request.tags.TagRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.tags.TagResponse;
@@ -35,7 +37,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TagsController {
 
-    private final TagService tagService;
+    private final ITagService tagService;
 
     /**
      * Retrieves all recipe tags available in the catalog.
@@ -47,8 +49,10 @@ public class TagsController {
      * @return response entity containing list of TagResponse DTOs
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TagResponse>>> getAllTags() {
-        List<TagResponse> tags = tagService.getAllTags();
+    public ResponseEntity<ApiResponse<PagedResponse<TagResponse>>> getAllTags(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PagedResponse<TagResponse> tags = tagService.getAllTags(page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, tags, null, "All tags retrieved successfully"));
     }
 

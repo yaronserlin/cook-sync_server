@@ -102,6 +102,9 @@ public class Review {
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Enum representing the reason for reporting a review.
+     */
     public enum ReportReason {
         SPAM, ABUSE, OFF_TOPIC
     }

@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class RefreshTokenService {
+public class RefreshTokenService implements IRefreshTokenService{
 
     @Value("${jwt.refreshExpirationMs:604800000}")
     private Long refreshTokenDurationMs;

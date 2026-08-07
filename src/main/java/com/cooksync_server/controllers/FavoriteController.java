@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.services.FavoriteService;
+import com.cooksync_server.services.IFavoriteService;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.recipe.RecipePreviewResponse;
 
@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FavoriteController {
 
-    private final FavoriteService favoriteService;
+    private final IFavoriteService favoriteService;
 
     /**
      * Retrieves all recipe preview entries bookmarked as favorite by the authenticated user.
@@ -39,12 +39,17 @@ public class FavoriteController {
      * Space: O(F)
      *
      * @param authentication active user authentication token
-     * @return response entity containing list of RecipePreviewResponse DTOs
+     * @param page zero-based page index
+     * @param size page size limit
+     * @return response entity containing PagedResponse of RecipePreviewResponse DTOs
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> getUserFavorites(Authentication authentication) {
+    public ResponseEntity<ApiResponse<com.dtos.response.PagedResponse<RecipePreviewResponse>>> getUserFavorites(
+            Authentication authentication,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size) {
         String userEmail = authentication.getName();
-        List<RecipePreviewResponse> favorites = favoriteService.getUserFavorites(userEmail);
+        com.dtos.response.PagedResponse<RecipePreviewResponse> favorites = favoriteService.getUserFavorites(userEmail, page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, favorites, null, "Favorites retrieved successfully"));
     }
 

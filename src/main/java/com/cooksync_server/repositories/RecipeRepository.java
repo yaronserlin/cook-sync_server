@@ -83,7 +83,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
      * @return list of authored recipe entities
      */
     @EntityGraph(attributePaths = {"createdBy", "tags", "images"})
-    List<Recipe> findByCreatedById(String userId);
+    Page<Recipe> findByCreatedById(String userId, Pageable pageable);
 
     /**
      * Retrieves public recipes created by active, enabled user accounts with eager graph loading.

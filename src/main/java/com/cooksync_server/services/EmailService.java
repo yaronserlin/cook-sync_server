@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-public class EmailService {
+public class EmailService implements IEmailService{
 
     /**
      * Sends a password-reset email containing the given token to the given address.

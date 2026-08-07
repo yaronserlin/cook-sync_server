@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dtos.request.unit.UnitRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.unit.UnitResponse;
-import com.cooksync_server.services.UnitService;
+import com.cooksync_server.services.IUnitService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UnitController {
 
-    private final UnitService unitService;
+    private final IUnitService unitService;
     private static final Logger logger = LoggerFactory.getLogger(UnitController.class);
 
     /**
@@ -49,9 +49,11 @@ public class UnitController {
      * @return response entity containing list of UnitResponse DTOs
      */
     @GetMapping("")
-    public ResponseEntity<ApiResponse<List<UnitResponse>>> getAllUnits() {
+    public ResponseEntity<ApiResponse<com.dtos.response.PagedResponse<UnitResponse>>> getAllUnits(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page, 
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size) {
         logger.info("Fetching all units from the system");
-        List<UnitResponse> units = unitService.getAllUnits();
+        com.dtos.response.PagedResponse<UnitResponse> units = unitService.getAllUnits(page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, units, null, "All units retrieved successfully"));
     }
 

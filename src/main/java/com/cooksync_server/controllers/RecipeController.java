@@ -22,7 +22,7 @@ import com.dtos.response.ApiResponse;
 import com.dtos.response.PagedResponse;
 import com.dtos.response.recipe.RecipeResponse;
 import com.dtos.response.recipe.RecipePreviewResponse;
-import com.cooksync_server.services.RecipeService;
+import com.cooksync_server.services.IRecipeService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RecipeController {
 
-    private final RecipeService recipeService;
+    private final IRecipeService recipeService;
 
     /**
      * Retrieves all public recipes for general feed display.
@@ -116,14 +116,16 @@ public class RecipeController {
      * @return response entity containing search result list of RecipePreviewResponse DTOs
      */
     @GetMapping("/public/search")
-    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> searchRecipes(
+    public ResponseEntity<ApiResponse<PagedResponse<RecipePreviewResponse>>> searchRecipes(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String ingredient,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String difficulty,
-            @RequestParam(required = false) Double minRating) {
-        List<RecipePreviewResponse> recipes = recipeService.searchRecipes(q, author, ingredient, sortBy, difficulty, minRating);
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PagedResponse<RecipePreviewResponse> recipes = recipeService.searchRecipes(q, author, ingredient, sortBy, difficulty, minRating, page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Search completed"));
     }
 
@@ -142,12 +144,14 @@ public class RecipeController {
      * @return response entity containing list of RecipePreviewResponse DTOs
      */
     @GetMapping("/public/tag/{tagName}")
-    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> getRecipesByTag(
+    public ResponseEntity<ApiResponse<PagedResponse<RecipePreviewResponse>>> getRecipesByTag(
             @PathVariable String tagName,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String difficulty,
-            @RequestParam(required = false) Double minRating) {
-        List<RecipePreviewResponse> recipes = recipeService.findRecipesByTag(tagName, sortBy, difficulty, minRating);
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PagedResponse<RecipePreviewResponse> recipes = recipeService.findRecipesByTag(tagName, sortBy, difficulty, minRating, page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Recipes retrieved by tag"));
     }
 
@@ -162,8 +166,11 @@ public class RecipeController {
      * @return response entity containing user's RecipePreviewResponse DTOs
      */
     @GetMapping("/mine")
-    public ResponseEntity<ApiResponse<List<RecipePreviewResponse>>> getMyRecipes(Authentication authentication) {
-        List<RecipePreviewResponse> recipes = recipeService.getMyRecipes(authentication.getName());
+    public ResponseEntity<ApiResponse<PagedResponse<RecipePreviewResponse>>> getMyRecipes(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PagedResponse<RecipePreviewResponse> recipes = recipeService.getMyRecipes(authentication.getName(), page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, recipes, null, "Your recipes retrieved successfully"));
     }
 

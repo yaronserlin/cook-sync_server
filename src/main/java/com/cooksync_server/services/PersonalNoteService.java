@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class PersonalNoteService {
+public class PersonalNoteService implements IPersonalNoteService{
 
     private final PersonalInstructionNoteRepository noteRepository;
     private final RecipeRepository recipeRepository;
@@ -97,15 +97,62 @@ public class PersonalNoteService {
      *
      * @param recipeId target recipe ID
      * @param userEmail user email address
-     * @return list of NoteResponse DTOs
+     * @param page page number
+     * @param size page size
+     * @return PagedResponse of NoteResponse DTOs
      */
-    public List<NoteResponse> getNotesForRecipe(String recipeId, String userEmail) {
+    public com.dtos.response.PagedResponse<NoteResponse> getNotesForRecipe(String recipeId, String userEmail, int page, int size) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        return noteRepository.findAllByUserIdAndRecipeId(user.getId(), recipeId).stream()
+        org.springframework.data.domain.Page<PersonalInstructionNote> notesPage = noteRepository.findAllByUserIdAndRecipeId(
+            user.getId(), recipeId, org.springframework.data.domain.PageRequest.of(page, size));
+
+        List<NoteResponse> content = notesPage.getContent().stream()
                 .map(PersonalNoteService::toResponse)
                 .collect(Collectors.toList());
+
+        return new com.dtos.response.PagedResponse<>(
+                content,
+                notesPage.getNumber(),
+                notesPage.getSize(),
+                notesPage.getTotalElements(),
+                notesPage.getTotalPages(),
+                notesPage.isLast()
+        );
+    }
+
+    /**
+     * Retrieves all personal notes created by the user.
+     *
+     * Complexity:
+     * Time: O(N) where N is user note count
+     * Space: O(N)
+     *
+     * @param userEmail user email address
+     * @param page page number
+     * @param size page size
+     * @return PagedResponse of NoteResponse DTOs
+     */
+    public com.dtos.response.PagedResponse<NoteResponse> getMyNotes(String userEmail, int page, int size) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+
+        org.springframework.data.domain.Page<PersonalInstructionNote> notesPage = noteRepository.findAllByUserId(
+            user.getId(), org.springframework.data.domain.PageRequest.of(page, size));
+
+        List<NoteResponse> content = notesPage.getContent().stream()
+                .map(PersonalNoteService::toResponse)
+                .collect(Collectors.toList());
+
+        return new com.dtos.response.PagedResponse<>(
+                content,
+                notesPage.getNumber(),
+                notesPage.getSize(),
+                notesPage.getTotalElements(),
+                notesPage.getTotalPages(),
+                notesPage.isLast()
+        );
     }
 
     private static NoteResponse toResponse(PersonalInstructionNote n) {

@@ -1,6 +1,6 @@
 package com.cooksync_server.controllers;
 
-import com.cooksync_server.services.CloudinaryService;
+import com.cooksync_server.services.ICloudinaryService;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.cloudinary.CloudinarySignatureResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CloudinaryController {
 
-    private final CloudinaryService cloudinaryService;
+    private final ICloudinaryService cloudinaryService;
 
     /**
      * Generates a signed upload signature payload for client-side direct media uploads.

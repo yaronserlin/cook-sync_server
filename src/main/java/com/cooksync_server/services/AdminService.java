@@ -46,7 +46,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class AdminService {
+public class AdminService implements IAdminService{
 
     private final ReviewRepository reviewRepository;
     private final ReviewReportRepository reviewReportRepository;
@@ -113,8 +113,9 @@ public class AdminService {
      *
      * @return list of ReportedReviewResponse DTOs
      */
-    public List<ReportedReviewResponse> getReportedReviews() {
-        return reviewRepository.findByReportedTrue().stream()
+    public PagedResponse<ReportedReviewResponse> getReportedReviews(int page, int size) {
+        Page<Review> result = reviewRepository.findByReportedTrue(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        List<ReportedReviewResponse> content = result.getContent().stream()
                 .map(review -> {
                     ReviewReport latestReport = reviewReportRepository
                             .findTopByReviewIdOrderByCreatedAtDesc(review.getId())
@@ -122,6 +123,8 @@ public class AdminService {
                     return AdminMapper.toReportedReviewResponse(review, latestReport);
                 })
                 .collect(Collectors.toList());
+        return new PagedResponse<>(content, result.getNumber(), result.getSize(),
+                result.getTotalElements(), result.getTotalPages(), result.isLast());
     }
 
     /**
@@ -186,9 +189,10 @@ public class AdminService {
      *
      * @return list of DuplicateTagGroupResponse DTOs
      */
-    public List<DuplicateTagGroupResponse> getDuplicateTagGroups() {
+    public PagedResponse<DuplicateTagGroupResponse> getDuplicateTagGroups(int page, int size) {
+        Page<Tag> tagPage = tagRepository.findAll(PageRequest.of(page, size));
         Map<String, List<Tag>> byNormalizedName = new LinkedHashMap<>();
-        for (Tag tag : tagRepository.findAll()) {
+        for (Tag tag : tagPage.getContent()) {
             String normalized = normalize(tag.getName());
             byNormalizedName.computeIfAbsent(normalized, k -> new ArrayList<>()).add(tag);
         }
@@ -203,7 +207,8 @@ public class AdminService {
                     .collect(Collectors.toList());
             groups.add(new DuplicateTagGroupResponse(entry.getKey(), variants));
         }
-        return groups;
+        return new PagedResponse<>(groups, tagPage.getNumber(), tagPage.getSize(),
+                tagPage.getTotalElements(), tagPage.getTotalPages(), tagPage.isLast());
     }
 
     /**

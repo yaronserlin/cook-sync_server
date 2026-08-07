@@ -22,4 +22,12 @@ public interface UnitRepository extends JpaRepository<Unit, String> {
      * @return optional containing Unit if found
      */
     Optional<Unit> findByCode(String code);
+
+    /**
+     * Retrieves all measurement units with pagination.
+     *
+     * @param pageable pagination parameters
+     * @return page of Unit entities
+     */
+    org.springframework.data.domain.Page<Unit> findAll(org.springframework.data.domain.Pageable pageable);
 }

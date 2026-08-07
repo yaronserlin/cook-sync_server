@@ -54,12 +54,7 @@ public class Tag {
     private LocalDateTime updatedAt;
 
     @JsonIgnore
-    @ManyToMany
-    @JoinTable(
-            name = "recipe_tags",
-            joinColumns = @JoinColumn(name = "tag_id"),
-            inverseJoinColumns = @JoinColumn(name = "recipe_id")
-    )
+    @ManyToMany(mappedBy = "tags")
     @Builder.Default
     private Set<Recipe> recipes = new HashSet<>();
 

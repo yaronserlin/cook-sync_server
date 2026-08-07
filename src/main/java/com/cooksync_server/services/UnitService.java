@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class UnitService {
+public class UnitService implements IUnitService{
 
     private final UnitRepository unitRepository;
 
@@ -39,8 +39,20 @@ public class UnitService {
      *
      * @return list of UnitResponse DTOs
      */
-    public List<UnitResponse> getAllUnits() {
-        return unitRepository.findAll().stream().map(UnitMapper::toResponse).toList();
+    public com.dtos.response.PagedResponse<UnitResponse> getAllUnits(int page, int size) {
+        org.springframework.data.domain.Page<Unit> unitPage = unitRepository.findAll(
+            org.springframework.data.domain.PageRequest.of(page, size));
+            
+        List<UnitResponse> content = unitPage.getContent().stream().map(UnitMapper::toResponse).toList();
+        
+        return new com.dtos.response.PagedResponse<>(
+                content,
+                unitPage.getNumber(),
+                unitPage.getSize(),
+                unitPage.getTotalElements(),
+                unitPage.getTotalPages(),
+                unitPage.isLast()
+        );
     }
 
     /**

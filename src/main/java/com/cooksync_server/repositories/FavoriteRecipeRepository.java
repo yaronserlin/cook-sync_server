@@ -17,12 +17,13 @@ import java.util.Optional;
 public interface FavoriteRecipeRepository extends JpaRepository<FavoriteRecipe, String> {
 
     /**
-     * Retrieves all favorite recipe bookmark entries for a specific user ID.
+     * Retrieves a paginated list of favorite recipe bookmark entries for a specific user ID.
      *
      * @param userId unique user identifier
-     * @return list of favorite recipe entities
+     * @param pageable pagination and sorting information
+     * @return page of favorite recipe entities
      */
-    List<FavoriteRecipe> findByUserId(String userId);
+    org.springframework.data.domain.Page<FavoriteRecipe> findByUserId(String userId, org.springframework.data.domain.Pageable pageable);
 
     /**
      * Finds a favorite recipe relation by user ID and recipe ID.

@@ -10,12 +10,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dtos.request.note.NoteRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.note.NoteResponse;
-import com.cooksync_server.services.PersonalNoteService;
+import com.cooksync_server.services.IPersonalNoteService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class NoteController {
 
-    private final PersonalNoteService noteService;
+    private final IPersonalNoteService noteService;
 
     /**
      * Saves or updates a personal note for a recipe or instruction step.
@@ -99,14 +100,39 @@ public class NoteController {
      * Space: O(N)
      *
      * @param recipeId target recipe ID
+     * @param page page number
+     * @param size page size
      * @param authentication active user authentication token
-     * @return response entity containing list of NoteResponse DTOs
+     * @return response entity containing PagedResponse of NoteResponse DTOs
      */
     @GetMapping("/recipe/{recipeId}/all")
-    public ResponseEntity<ApiResponse<List<NoteResponse>>> getNotesForRecipe(
+    public ResponseEntity<ApiResponse<com.dtos.response.PagedResponse<NoteResponse>>> getNotesForRecipe(
             @PathVariable String recipeId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
-        List<NoteResponse> notes = noteService.getNotesForRecipe(recipeId, authentication.getName());
+        com.dtos.response.PagedResponse<NoteResponse> notes = noteService.getNotesForRecipe(recipeId, authentication.getName(), page, size);
+        return ResponseEntity.ok(new ApiResponse<>(true, notes, null, "OK"));
+    }
+
+    /**
+     * Retrieves all personal notes created by the authenticated user.
+     *
+     * Complexity:
+     * Time: O(N) where N is user note count
+     * Space: O(N)
+     *
+     * @param page page number
+     * @param size page size
+     * @param authentication active user authentication token
+     * @return response entity containing PagedResponse of NoteResponse DTOs
+     */
+    @GetMapping("/mine")
+    public ResponseEntity<ApiResponse<com.dtos.response.PagedResponse<NoteResponse>>> getMyNotes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication) {
+        com.dtos.response.PagedResponse<NoteResponse> notes = noteService.getMyNotes(authentication.getName(), page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, notes, null, "OK"));
     }
 }

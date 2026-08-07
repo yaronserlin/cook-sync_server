@@ -58,7 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RecipeService {
+public class RecipeService implements IRecipeService{
 
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
@@ -142,8 +142,8 @@ public class RecipeService {
      * @return list of RecipePreviewResponse DTOs
      */
     @Transactional(readOnly = true)
-    public List<RecipePreviewResponse> searchRecipes(String keyword, String author, String ingredient, String sortBy, String difficulty, Double minRating) {
-        log.debug("Executing recipe search. Keyword: {}, Author: {}, Ingredient: {}, SortBy: {}, Difficulty: {}, MinRating: {}", keyword, author, ingredient, sortBy, difficulty, minRating);
+    public PagedResponse<RecipePreviewResponse> searchRecipes(String keyword, String author, String ingredient, String sortBy, String difficulty, Double minRating, int page, int size) {
+        log.debug("Executing recipe search. Keyword: {}, Author: {}, Ingredient: {}, SortBy: {}, Difficulty: {}, MinRating: {}, Page: {}, Size: {}", keyword, author, ingredient, sortBy, difficulty, minRating, page, size);
         Sort sort = RecipeSpecifications.resolveSortOrder(sortBy);
         Specification<Recipe> spec = RecipeSpecifications.combine(
                 RecipeSpecifications.isPublicAndEnabled(),
@@ -152,8 +152,10 @@ public class RecipeService {
                 RecipeSpecifications.hasIngredient(ingredient),
                 RecipeSpecifications.hasDifficulty(difficulty),
                 RecipeSpecifications.hasMinRating(minRating));
-        return recipeRepository.findAll(spec, sort)
-                .stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        Page<Recipe> result = recipeRepository.findAll(spec, PageRequest.of(page, size, sort));
+        List<RecipePreviewResponse> content = result.getContent().stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        return new PagedResponse<>(content, result.getNumber(), result.getSize(),
+                result.getTotalElements(), result.getTotalPages(), result.isLast());
     }
 
     /**
@@ -167,16 +169,18 @@ public class RecipeService {
      * @return list of RecipePreviewResponse DTOs
      */
     @Transactional(readOnly = true)
-    public List<RecipePreviewResponse> findRecipesByTag(String tagName, String sortBy, String difficulty, Double minRating) {
-        log.debug("Fetching recipes by tag name: {}, SortBy: {}, Difficulty: {}, MinRating: {}", tagName, sortBy, difficulty, minRating);
+    public PagedResponse<RecipePreviewResponse> findRecipesByTag(String tagName, String sortBy, String difficulty, Double minRating, int page, int size) {
+        log.debug("Fetching recipes by tag name: {}, SortBy: {}, Difficulty: {}, MinRating: {}, Page: {}, Size: {}", tagName, sortBy, difficulty, minRating, page, size);
         Sort sort = RecipeSpecifications.resolveSortOrder(sortBy);
         Specification<Recipe> spec = RecipeSpecifications.combine(
                 RecipeSpecifications.isPublicAndEnabled(),
                 RecipeSpecifications.hasTag(tagName),
                 RecipeSpecifications.hasDifficulty(difficulty),
                 RecipeSpecifications.hasMinRating(minRating));
-        return recipeRepository.findAll(spec, sort)
-                .stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        Page<Recipe> result = recipeRepository.findAll(spec, PageRequest.of(page, size, sort));
+        List<RecipePreviewResponse> content = result.getContent().stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        return new PagedResponse<>(content, result.getNumber(), result.getSize(),
+                result.getTotalElements(), result.getTotalPages(), result.isLast());
     }
 
     /**
@@ -190,11 +194,14 @@ public class RecipeService {
      * @return list of RecipePreviewResponse DTOs
      */
     @Transactional(readOnly = true)
-    public List<RecipePreviewResponse> getMyRecipes(String userEmail) {
-        log.debug("Fetching recipes for user email: {}", userEmail);
+    public PagedResponse<RecipePreviewResponse> getMyRecipes(String userEmail, int page, int size) {
+        log.debug("Fetching recipes for user email: {}, Page: {}, Size: {}", userEmail, page, size);
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
-        return recipeRepository.findByCreatedById(user.getId()).stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        Page<Recipe> result = recipeRepository.findByCreatedById(user.getId(), PageRequest.of(page, size));
+        List<RecipePreviewResponse> content = result.getContent().stream().map(RecipeMapper::toPreview).collect(Collectors.toList());
+        return new PagedResponse<>(content, result.getNumber(), result.getSize(),
+                result.getTotalElements(), result.getTotalPages(), result.isLast());
     }
 
     /**

@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class FavoriteService {
+public class FavoriteService implements IFavoriteService{
 
     private final FavoriteRecipeRepository favoriteRepository;
     private final RecipeRepository recipeRepository;
@@ -91,14 +91,19 @@ public class FavoriteService {
      * Space: O(F)
      *
      * @param userEmail authenticated user email address
-     * @return list of RecipePreviewResponse DTOs with personal notes if present
+     * @param page page number
+     * @param size page size
+     * @return PagedResponse of RecipePreviewResponse DTOs with personal notes if present
      */
     @Transactional(readOnly = true)
-    public List<RecipePreviewResponse> getUserFavorites(String userEmail) {
+    public com.dtos.response.PagedResponse<RecipePreviewResponse> getUserFavorites(String userEmail, int page, int size) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
 
-        return favoriteRepository.findByUserId(user.getId()).stream()
+        org.springframework.data.domain.Page<FavoriteRecipe> favoritesPage = favoriteRepository.findByUserId(
+            user.getId(), org.springframework.data.domain.PageRequest.of(page, size));
+
+        List<RecipePreviewResponse> content = favoritesPage.getContent().stream()
                 .map(fav -> {
                     boolean hasNote = personalInstructionNoteRepository.existsByUserIdAndRecipeId(user.getId(), fav.getRecipe().getId());
                     Optional<PersonalInstructionNote> note = personalInstructionNoteRepository
@@ -106,5 +111,14 @@ public class FavoriteService {
                     return RecipeMapper.toPreview(fav.getRecipe(), hasNote, note.map(PersonalInstructionNote::getNote).orElse(null));
                 })
                 .collect(Collectors.toList());
+
+        return new com.dtos.response.PagedResponse<>(
+                content,
+                favoritesPage.getNumber(),
+                favoritesPage.getSize(),
+                favoritesPage.getTotalElements(),
+                favoritesPage.getTotalPages(),
+                favoritesPage.isLast()
+        );
     }
 }

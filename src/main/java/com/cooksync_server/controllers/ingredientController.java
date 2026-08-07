@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dtos.request.ingredient.IngredientRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.ingredient.IngredientResponse;
-import com.cooksync_server.services.IngredientService;
+import com.cooksync_server.services.IIngredientService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class IngredientController {
 
-    private final IngredientService ingredientService;
+    private final IIngredientService ingredientService;
 
     /**
      * Appends a new ingredient entry to a specific recipe.

@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/validate-token").authenticated()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/recipes/public/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tags").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/units").permitAll()
                 .requestMatchers("/api/cloudinary/**").authenticated()
                 .anyRequest().authenticated()
             )

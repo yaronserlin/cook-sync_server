@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 
-import com.cooksync_server.services.AdminService;
+import com.cooksync_server.services.IAdminService;
 import com.dtos.request.tags.TagMergeRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.PagedResponse;
@@ -39,7 +39,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminController {
 
-    private final AdminService adminService;
+    private final IAdminService adminService;
 
     /**
      * Retrieves aggregated system stats for the administrative dashboard.
@@ -92,8 +92,10 @@ public class AdminController {
      * @return response entity containing list of ReportedReviewResponse DTOs
      */
     @GetMapping("/reviews/reported")
-    public ResponseEntity<ApiResponse<List<ReportedReviewResponse>>> getReportedReviews() {
-        return ResponseEntity.ok(new ApiResponse<>(true, adminService.getReportedReviews(), null, "Reported reviews retrieved successfully"));
+    public ResponseEntity<ApiResponse<PagedResponse<ReportedReviewResponse>>> getReportedReviews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(new ApiResponse<>(true, adminService.getReportedReviews(page, size), null, "Reported reviews retrieved successfully"));
     }
 
     /**
@@ -154,8 +156,10 @@ public class AdminController {
      * @return response entity containing list of DuplicateTagGroupResponse DTOs
      */
     @GetMapping("/tags/duplicates")
-    public ResponseEntity<ApiResponse<List<DuplicateTagGroupResponse>>> getDuplicateTagGroups() {
-        return ResponseEntity.ok(new ApiResponse<>(true, adminService.getDuplicateTagGroups(), null, "Duplicate tag groups retrieved successfully"));
+    public ResponseEntity<ApiResponse<PagedResponse<DuplicateTagGroupResponse>>> getDuplicateTagGroups(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(new ApiResponse<>(true, adminService.getDuplicateTagGroups(page, size), null, "Duplicate tag groups retrieved successfully"));
     }
 
     /**

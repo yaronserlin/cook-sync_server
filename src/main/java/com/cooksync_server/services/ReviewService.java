@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class ReviewService {
+public class ReviewService implements IReviewService{
 
     private final ReviewRepository reviewRepository;
     private final RecipeRepository recipeRepository;
@@ -46,15 +46,30 @@ public class ReviewService {
      * Space: O(R)
      *
      * @param recipeId target recipe ID
-     * @return list of ReviewResponse DTOs
+     * @param page page number
+     * @param size page size
+     * @return paged response of ReviewResponse DTOs
      */
-    public List<ReviewResponse> getReviewsForRecipe(String recipeId) {
+    public com.dtos.response.PagedResponse<ReviewResponse> getReviewsForRecipe(String recipeId, int page, int size) {
         if (!recipeRepository.existsById(recipeId)) {
             throw new ResourceNotFoundException("Recipe", recipeId);
         }
-        return reviewRepository.findByRecipeIdOrderByCreatedAtDesc(recipeId).stream()
+        
+        org.springframework.data.domain.Page<Review> reviewPage = reviewRepository.findByRecipeIdOrderByCreatedAtDesc(
+                recipeId, org.springframework.data.domain.PageRequest.of(page, size));
+
+        List<ReviewResponse> content = reviewPage.getContent().stream()
                 .map(ReviewMapper::toResponse)
                 .toList();
+
+        return new com.dtos.response.PagedResponse<>(
+                content,
+                reviewPage.getNumber(),
+                reviewPage.getSize(),
+                reviewPage.getTotalElements(),
+                reviewPage.getTotalPages(),
+                reviewPage.isLast()
+        );
     }
 
     /**

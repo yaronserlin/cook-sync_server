@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class TagService {
+public class TagService implements ITagService{
 
     private final TagRepository tagRepository;
 
@@ -37,8 +37,21 @@ public class TagService {
      *
      * @return list of TagResponse DTOs
      */
-    public List<TagResponse> getAllTags() {
-        return tagRepository.findAll().stream().map(TagMapper::toResponse).toList();
+    public com.dtos.response.PagedResponse<TagResponse> getAllTags(int page, int size) {
+        org.springframework.data.domain.Page<Tag> tagsPage = tagRepository.findAll(
+            org.springframework.data.domain.PageRequest.of(page, size));
+        List<TagResponse> content = tagsPage.getContent().stream()
+                .map(TagMapper::toResponse)
+                .toList();
+
+        return new com.dtos.response.PagedResponse<>(
+                content,
+                tagsPage.getNumber(),
+                tagsPage.getSize(),
+                tagsPage.getTotalElements(),
+                tagsPage.getTotalPages(),
+                tagsPage.isLast()
+        );
     }
 
     /**

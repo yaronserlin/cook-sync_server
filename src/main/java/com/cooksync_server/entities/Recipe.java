@@ -150,10 +150,16 @@ public class Recipe {
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Enum representing the cooking difficulty level.
+     */
     public enum Difficulty {
         EASY, MEDIUM, HARD
     }
 
+    /**
+     * Enum representing the visibility of the recipe.
+     */
     public enum Visibility {
         PUBLIC, PRIVATE
     }

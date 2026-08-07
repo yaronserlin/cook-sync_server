@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.services.InstructionService;
+import com.cooksync_server.services.IInstructionService;
 import com.dtos.request.instruction.InstructionRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.instruction.InstructionResponse;
@@ -20,7 +20,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * REST Controller managing recipe preparation instruction steps.
+ * REST Controller providing granular management endpoints for recipe instruction steps.
  *
  * @author Yaron Serlin
  * @version 1.0
@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InstructionController {
 
-    private final InstructionService instructionService;
+    private final IInstructionService instructionService;
 
     /**
      * Adds a new preparation instruction step to a recipe.

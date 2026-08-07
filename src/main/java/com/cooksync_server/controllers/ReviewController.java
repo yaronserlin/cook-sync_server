@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cooksync_server.services.ReviewService;
+import com.cooksync_server.services.IReviewService;
 import com.dtos.request.review.ReportReviewRequestDTO;
 import com.dtos.request.review.ReviewRequestDTO;
 import com.dtos.response.ApiResponse;
@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ReviewController {
 
-    private final ReviewService reviewService;
+    private final IReviewService reviewService;
 
     /**
      * Retrieves all review entries for a given recipe ID.
@@ -44,11 +44,16 @@ public class ReviewController {
      * Space: O(R)
      *
      * @param recipeId target recipe ID
-     * @return response entity containing list of ReviewResponse DTOs
+     * @param page page number
+     * @param size page size
+     * @return response entity containing paged ReviewResponse DTOs
      */
     @GetMapping("/recipes/{recipeId}/reviews")
-    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviewsForRecipe(@PathVariable String recipeId) {
-        List<ReviewResponse> reviews = reviewService.getReviewsForRecipe(recipeId);
+    public ResponseEntity<ApiResponse<com.dtos.response.PagedResponse<ReviewResponse>>> getReviewsForRecipe(
+            @PathVariable String recipeId,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size) {
+        com.dtos.response.PagedResponse<ReviewResponse> reviews = reviewService.getReviewsForRecipe(recipeId, page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, reviews, null, "Reviews retrieved successfully"));
     }
 
