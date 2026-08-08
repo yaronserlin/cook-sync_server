@@ -152,6 +152,14 @@ public class AdminService implements IAdminService{
      * self-deactivation or self-deletion request: public recipe listings already filter on
      * {@code createdBy.enabled}. Reviews need an explicit bulk flip since there's no equivalent
      * join-based filter for review authorship.
+     * <p>
+     * A suspended account is never picked up by the scheduled purge job — that job only ever
+     * matches {@code status == DEACTIVATED} rows, never {@code SUSPENDED} ones — so suspension
+     * is indefinite and reversible solely by an admin, regardless of how long it lasts. Also
+     * clears any leftover {@code deletionRequestedAt} timestamp: if a user had self-requested
+     * deletion and an admin suspended them mid-grace-period, that timestamp is now meaningless
+     * (the account is admin-suspended, not self-deletion-pending) and left set would misleadingly
+     * suggest an active countdown that in fact no longer applies to this account.
      *
      * Complexity:
      * Time: O(R) where R is the user's review count
@@ -165,6 +173,7 @@ public class AdminService implements IAdminService{
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         user.setEnabled(false);
         user.setStatus(User.AccountStatus.SUSPENDED);
+        user.setDeletionRequestedAt(null);
         userRepository.save(user);
         reviewRepository.setHiddenByUserId(true, userId);
     }
