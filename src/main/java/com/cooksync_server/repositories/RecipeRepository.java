@@ -73,6 +73,20 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
     List<Recipe> findByTagName(@Param("tagName") String tagName);
 
     /**
+     * Counts how many recipes are tagged with a specific tag ID, for the admin duplicate-tag
+     * merge UI's "recipes using this tag" indicator.
+     *
+     * Complexity:
+     * Time: O(1) (indexed join-table lookup)
+     * Space: O(1)
+     *
+     * @param tagId target tag unique identifier
+     * @return number of recipes associated with the tag
+     */
+    @Query("SELECT COUNT(r) FROM Recipe r JOIN r.tags t WHERE t.id = :tagId")
+    long countByTagId(@Param("tagId") String tagId);
+
+    /**
      * Retrieves all recipes authored by a specific user account ID.
      *
      * Complexity:

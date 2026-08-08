@@ -107,7 +107,9 @@ public class ReviewService implements IReviewService{
     }
 
     /**
-     * Deletes a review entry following authorization checks and recomputes recipe average rating.
+     * Deletes a review entry following authorization checks, recomputes recipe average rating,
+     * and clears any moderation reports filed against it first (a non-nullable foreign key
+     * would otherwise block the deletion).
      *
      * Complexity:
      * Time: O(R) where R is total review count for recipe
@@ -132,6 +134,7 @@ public class ReviewService implements IReviewService{
         recomputeAverageRating(recipe);
         recipeRepository.save(recipe);
 
+        reviewReportRepository.deleteByReviewId(reviewId);
         reviewRepository.delete(review);
     }
 

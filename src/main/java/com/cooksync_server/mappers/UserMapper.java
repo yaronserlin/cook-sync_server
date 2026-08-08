@@ -40,7 +40,8 @@ public final class UserMapper {
                 user.getAvatarUrl(),
                 created,
                 updated,
-                user.isEnabled()
+                user.isEnabled(),
+                user.getStatus().name()
         );
     }
 }

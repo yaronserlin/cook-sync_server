@@ -20,7 +20,6 @@ import com.cooksync_server.entities.Tag;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
 import com.cooksync_server.mappers.AdminMapper;
-import com.cooksync_server.mappers.TagMapper;
 import com.cooksync_server.mappers.UserMapper;
 import com.cooksync_server.repositories.RecipeRepository;
 import com.cooksync_server.repositories.ReviewReportRepository;
@@ -32,7 +31,7 @@ import com.dtos.response.PagedResponse;
 import com.dtos.response.admin.AdminStatsResponse;
 import com.dtos.response.admin.DuplicateTagGroupResponse;
 import com.dtos.response.admin.ReportedReviewResponse;
-import com.dtos.response.tags.TagResponse;
+import com.dtos.response.admin.TagVariantResponse;
 import com.dtos.response.user.UserResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -160,6 +159,7 @@ public class AdminService implements IAdminService{
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         user.setEnabled(false);
+        user.setStatus(User.AccountStatus.SUSPENDED);
         userRepository.save(user);
     }
 
@@ -177,6 +177,7 @@ public class AdminService implements IAdminService{
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         user.setEnabled(true);
+        user.setStatus(User.AccountStatus.ACTIVE);
         userRepository.save(user);
     }
 
@@ -202,8 +203,8 @@ public class AdminService implements IAdminService{
             if (entry.getValue().size() < 2) {
                 continue;
             }
-            List<TagResponse> variants = entry.getValue().stream()
-                    .map(TagMapper::toResponse)
+            List<TagVariantResponse> variants = entry.getValue().stream()
+                    .map(tag -> new TagVariantResponse(tag.getId(), tag.getName(), recipeRepository.countByTagId(tag.getId())))
                     .collect(Collectors.toList());
             groups.add(new DuplicateTagGroupResponse(entry.getKey(), variants));
         }

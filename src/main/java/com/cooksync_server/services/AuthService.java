@@ -327,6 +327,7 @@ public class AuthService implements IAuthService{
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
         user.setEnabled(false);
+        user.setStatus(User.AccountStatus.DEACTIVATED);
         userRepository.save(user);
         refreshTokenService.deleteByUserId(user.getId());
     }
