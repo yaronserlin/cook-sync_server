@@ -88,6 +88,29 @@ public class User {
     @Column(name = "marketing_opt_in", nullable = false)
     private boolean marketingOptIn = false;
 
+    @Column(length = 255)
+    private String city;
+
+    @Column(length = 1000)
+    private String bio;
+
+    @Builder.Default
+    @Column(name = "show_recipes_publicly", nullable = false)
+    private boolean showRecipesPublicly = true;
+
+    @Builder.Default
+    @Column(name = "show_favorites_publicly", nullable = false)
+    private boolean showFavoritesPublicly = false;
+
+    /**
+     * Timestamp of a self-service account-deletion request, distinct from a plain
+     * {@link AccountStatus#DEACTIVATED} deactivation. Null means the account was never asked to be
+     * deleted (or a prior request was cancelled by logging back in). When set, it anchors the
+     * 30-day grace period after which the scheduled purge job permanently erases the account.
+     */
+    @Column(name = "deletion_requested_at")
+    private LocalDateTime deletionRequestedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

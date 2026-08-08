@@ -1,6 +1,8 @@
 package com.cooksync_server.services;
 
+import com.dtos.request.auth.DeleteAccountRequestDTO;
 import com.dtos.request.auth.ForgotPasswordRequestDTO;
+import com.dtos.request.auth.PrivacySettingsUpdateRequestDTO;
 import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,8 @@ public interface IAuthService {
 
     AuthResponse validateToken(String userEmail);
 
+    com.dtos.response.user.UserResponse getCurrentUserProfile(String userEmail);
+
     void logout(String userEmail);
 
     void updateAvatar(String userEmail, String avatarUrl);
@@ -51,6 +55,10 @@ public interface IAuthService {
     AuthResponse updateEmail(String userEmail, EmailUpdateRequestDTO request);
 
     void deactivateAccount(String userEmail);
+
+    void updatePrivacySettings(String userEmail, PrivacySettingsUpdateRequestDTO request);
+
+    void requestAccountDeletion(String userEmail, DeleteAccountRequestDTO request);
 
     void forgotPassword(ForgotPasswordRequestDTO request);
 

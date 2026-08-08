@@ -53,6 +53,7 @@ public class AdminService implements IAdminService{
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final IAccountDeletionService accountDeletionService;
 
     /**
      * Calculates system-wide aggregate stats for admin dashboard monitoring.
@@ -146,10 +147,14 @@ public class AdminService implements IAdminService{
     }
 
     /**
-     * Disables a user account, preventing login and hiding authored recipes from public listings.
+     * Suspends a user account, preventing login and hiding both authored recipes and authored
+     * reviews from public listings. Recipes are hidden implicitly, the same way as a
+     * self-deactivation or self-deletion request: public recipe listings already filter on
+     * {@code createdBy.enabled}. Reviews need an explicit bulk flip since there's no equivalent
+     * join-based filter for review authorship.
      *
      * Complexity:
-     * Time: O(1)
+     * Time: O(R) where R is the user's review count
      * Space: O(1)
      *
      * @param userId target user ID
@@ -161,13 +166,19 @@ public class AdminService implements IAdminService{
         user.setEnabled(false);
         user.setStatus(User.AccountStatus.SUSPENDED);
         userRepository.save(user);
+        reviewRepository.setHiddenByUserId(true, userId);
     }
 
     /**
-     * Enables a previously disabled user account.
+     * Reactivates a previously suspended or deactivated user account, restoring both authored
+     * recipes and authored reviews to public visibility. Delegates to
+     * {@link AccountDeletionService#restoreFromPendingDeletion(User)}, the same restoration
+     * logic the self-service login-restore path uses: it re-enables the account, resets its
+     * status to {@code ACTIVE}, clears any pending deletion timestamp (harmless no-op if the
+     * account was only suspended, never mid-deletion), and un-hides its reviews.
      *
      * Complexity:
-     * Time: O(1)
+     * Time: O(R) where R is the user's review count
      * Space: O(1)
      *
      * @param userId target user ID
@@ -176,9 +187,7 @@ public class AdminService implements IAdminService{
     public void enableUser(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
-        user.setEnabled(true);
-        user.setStatus(User.AccountStatus.ACTIVE);
-        userRepository.save(user);
+        accountDeletionService.restoreFromPendingDeletion(user);
     }
 
     /**

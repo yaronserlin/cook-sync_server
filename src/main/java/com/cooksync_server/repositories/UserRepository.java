@@ -1,5 +1,7 @@
 package com.cooksync_server.repositories;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -49,4 +51,14 @@ public interface UserRepository extends JpaRepository<User, String> {
             "OR LOWER(u.email) LIKE CONCAT('%', :q, '%')) " +
             "AND (:enabled IS NULL OR u.enabled = :enabled)")
     Page<User> search(@Param("q") String q, @Param("enabled") Boolean enabled, Pageable pageable);
+
+    /**
+     * Retrieves every user with an account-deletion request older than the given cutoff, i.e.
+     * accounts whose 30-day grace period has lapsed and are due for permanent purge.
+     *
+     * @param status account status the deletion request left the account in (always {@code DEACTIVATED})
+     * @param cutoff purge-eligibility threshold: requests made before this instant qualify
+     * @return list of matching User entities
+     */
+    List<User> findByStatusAndDeletionRequestedAtBefore(User.AccountStatus status, LocalDateTime cutoff);
 }

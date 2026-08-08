@@ -1,6 +1,7 @@
 package com.cooksync_server.services;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,18 +12,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.cooksync_server.config.JwtUtil;
 import com.dtos.request.auth.ChangePasswordRequestDTO;
+import com.dtos.request.auth.DeleteAccountRequestDTO;
 import com.dtos.request.auth.EmailUpdateRequestDTO;
 import com.dtos.request.auth.ForgotPasswordRequestDTO;
 import com.dtos.request.auth.LoginRequestDTO;
+import com.dtos.request.auth.PrivacySettingsUpdateRequestDTO;
 import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
 import com.dtos.request.auth.ResetPasswordRequestDTO;
 import com.dtos.request.auth.TokenRefreshRequestDTO;
 import com.dtos.response.auth.AuthResponse;
+import com.dtos.response.user.UserResponse;
 import com.cooksync_server.entities.PasswordResetToken;
 import com.cooksync_server.entities.RefreshToken;
 import com.cooksync_server.entities.User;
 import com.cooksync_server.exceptions.ResourceNotFoundException;
+import com.cooksync_server.mappers.UserMapper;
 import com.cooksync_server.exceptions.auth.InvalidCredentialsException;
 import com.cooksync_server.exceptions.auth.UnauthorizedActionException;
 import com.cooksync_server.exceptions.auth.UserAlreadyExistsException;
@@ -46,12 +51,16 @@ public class AuthService implements IAuthService{
     /** How long a forgot-password reset token remains valid after being issued. */
     private static final long RESET_TOKEN_VALIDITY_MS = 30 * 60 * 1000L;
 
+    /** Grace period after a deletion request during which logging back in restores the account. */
+    private static final long DELETION_GRACE_PERIOD_DAYS = 30;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
+    private final IAccountDeletionService accountDeletionService;
     private final String dummyPasswordHash;
 
     /**
@@ -67,16 +76,18 @@ public class AuthService implements IAuthService{
      * @param refreshTokenService service for managing session refresh tokens
      * @param passwordResetTokenRepository repository for forgot-password reset tokens
      * @param emailService service used to deliver password-reset emails
+     * @param accountDeletionService service handling the self-service account-deletion lifecycle
      */
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
             RefreshTokenService refreshTokenService, PasswordResetTokenRepository passwordResetTokenRepository,
-            EmailService emailService) {
+            EmailService emailService, IAccountDeletionService accountDeletionService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
+        this.accountDeletionService = accountDeletionService;
         this.dummyPasswordHash = passwordEncoder.encode("dummy_password_for_timing_attack_prevention");
     }
 
@@ -147,8 +158,13 @@ public class AuthService implements IAuthService{
 
         User user = optionalUser.get();
         if (!user.isEnabled()) {
-            log.warn("Login failed - account disabled for user ID: {}", user.getId());
-            throw new UnauthorizedActionException("This account has been disabled.");
+            if (isWithinDeletionGracePeriod(user)) {
+                log.info("Login during deletion grace period - restoring account ID: {}", user.getId());
+                accountDeletionService.restoreFromPendingDeletion(user);
+            } else {
+                log.warn("Login failed - account disabled for user ID: {}", user.getId());
+                throw new UnauthorizedActionException("This account has been disabled.");
+            }
         }
         String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.isAdmin());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
@@ -200,6 +216,24 @@ public class AuthService implements IAuthService{
     }
 
     /**
+     * Fetches the authenticated user's full profile, including fields not carried by
+     * {@link AuthResponse} (city, bio, privacy preferences).
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail authenticated user email
+     * @return the user's full profile
+     */
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUserProfile(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+        return UserMapper.toResponse(user);
+    }
+
+    /**
      * Revokes active user refresh tokens upon logout.
      *
      * Complexity:
@@ -234,7 +268,7 @@ public class AuthService implements IAuthService{
     }
 
     /**
-     * Updates user first and last name profile details.
+     * Updates user first name, last name, city, and bio profile details.
      *
      * Complexity:
      * Time: O(1)
@@ -249,6 +283,27 @@ public class AuthService implements IAuthService{
                 .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
+        user.setCity(request.city());
+        user.setBio(request.bio());
+        userRepository.save(user);
+    }
+
+    /**
+     * Updates the user's public-profile privacy preferences.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail target user email
+     * @param request privacy settings update request DTO
+     */
+    @Transactional
+    public void updatePrivacySettings(String userEmail, PrivacySettingsUpdateRequestDTO request) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+        user.setShowRecipesPublicly(request.showRecipesPublicly());
+        user.setShowFavoritesPublicly(request.showFavoritesPublicly());
         userRepository.save(user);
     }
 
@@ -330,6 +385,52 @@ public class AuthService implements IAuthService{
         user.setStatus(User.AccountStatus.DEACTIVATED);
         userRepository.save(user);
         refreshTokenService.deleteByUserId(user.getId());
+    }
+
+    /**
+     * Starts the 30-day self-service account-deletion grace period following password
+     * verification. Distinct from {@link #deactivateAccount(String)}: this also hides the
+     * user's reviews and starts the countdown to permanent purge; a plain deactivation does
+     * neither. Logging back in within the grace period restores the account via
+     * {@link #login(LoginRequestDTO)}.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param userEmail target user email
+     * @param request delete-account request DTO carrying the current password for verification
+     */
+    @Transactional
+    public void requestAccountDeletion(String userEmail, DeleteAccountRequestDTO request) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userEmail));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+
+        accountDeletionService.requestDeletion(user);
+    }
+
+    /**
+     * Determines whether a disabled account is still within its 30-day account-deletion grace
+     * period and therefore eligible to be restored by logging back in, as opposed to a plain
+     * deactivation (never self-service restorable) or an already-lapsed deletion request (the
+     * scheduled purge job should have already erased it, but login is rejected defensively
+     * either way since {@link #login(LoginRequestDTO)} only reaches this check for existing rows).
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param user the disabled account attempting to log in
+     * @return true if the account has a pending deletion request within the grace period
+     */
+    private boolean isWithinDeletionGracePeriod(User user) {
+        return user.getStatus() == User.AccountStatus.DEACTIVATED
+                && user.getDeletionRequestedAt() != null
+                && user.getDeletionRequestedAt().isAfter(LocalDateTime.now().minusDays(DELETION_GRACE_PERIOD_DAYS));
     }
 
     /**

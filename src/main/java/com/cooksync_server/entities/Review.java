@@ -64,6 +64,16 @@ public class Review {
     @Column(nullable = false)
     private boolean reported = false;
 
+    /**
+     * True while the review's author has a pending account-deletion request, so it is hidden from
+     * every public listing without losing the underlying row. Restored to false if the user logs
+     * back in within the 30-day grace period; the row is hard-deleted outright by the purge job if
+     * the grace period lapses.
+     */
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean hidden = false;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "report_reason")
     private ReportReason reportReason;

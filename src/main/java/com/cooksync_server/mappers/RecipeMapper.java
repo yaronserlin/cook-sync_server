@@ -45,6 +45,7 @@ public final class RecipeMapper {
             return null;
         }
         String primaryImageUrl = resolvePrimaryImageUrl(recipe);
+        List<ReviewResponse> visibleReviews = mapReviews(recipe);
 
         return new RecipeResponse(
                 recipe.getId(),
@@ -55,9 +56,9 @@ public final class RecipeMapper {
                 recipe.getPrepTimeMinutes(),
                 recipe.getCookTimeMinutes(),
                 recipe.getServings(),
-                recipe.getReviewCount(),
-                recipe.getAverageRating(),
-                mapReviews(recipe),
+                visibleReviews.size(),
+                averageRating(visibleReviews),
+                visibleReviews,
                 MapperUtils.toIsoStringOrNull(recipe.getCreatedAt()),
                 MapperUtils.toIsoStringOrNull(recipe.getUpdatedAt()),
                 mapTags(recipe),
@@ -170,9 +171,42 @@ public final class RecipeMapper {
         return blocks;
     }
 
+    /**
+     * Maps a recipe's reviews for the detail response, excluding reviews whose author has a
+     * pending account-deletion request. Mirrors the same {@code hidden} filter
+     * {@code ReviewRepository.findByRecipeIdAndHiddenFalseOrderByCreatedAtDesc} applies to the
+     * paginated review-listing endpoint — this recipe-detail path embeds reviews directly from
+     * the entity graph instead of calling that repository method, so it needs its own filter to
+     * avoid leaking a deleted account's reviews here.
+     *
+     * @param recipe target Recipe entity
+     * @return non-hidden reviews as response DTOs
+     */
     private static List<ReviewResponse> mapReviews(Recipe recipe) {
         return recipe.getReviews() == null ? List.of()
-                : recipe.getReviews().stream().map(ReviewMapper::toResponse).collect(Collectors.toList());
+                : recipe.getReviews().stream()
+                        .filter(review -> review != null && !review.isHidden())
+                        .map(ReviewMapper::toResponse)
+                        .collect(Collectors.toList());
+    }
+
+    /**
+     * Recomputes the average rating from a set of already-visible reviews, so the detail
+     * response's rating stays consistent with the review list shown alongside it rather than
+     * reading the recipe's denormalized {@code averageRating} column, which isn't recalculated
+     * when reviews are hidden/restored by the account-deletion grace-period flow.
+     *
+     * @param visibleReviews the reviews being returned in this response
+     * @return the average rating, or null if there are no visible reviews
+     */
+    private static Double averageRating(List<ReviewResponse> visibleReviews) {
+        if (visibleReviews.isEmpty()) {
+            return null;
+        }
+        return visibleReviews.stream()
+                .mapToDouble(review -> review.rating().doubleValue())
+                .average()
+                .orElse(0.0);
     }
 
     private static List<TagResponse> mapTags(Recipe recipe) {

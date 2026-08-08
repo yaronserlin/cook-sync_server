@@ -2,6 +2,7 @@ package com.cooksync_server.repositories;
 
 import com.cooksync_server.entities.PersonalInstructionNote;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -69,4 +70,18 @@ public interface PersonalInstructionNoteRepository extends JpaRepository<Persona
      */
     @Query("SELECT n FROM PersonalInstructionNote n WHERE n.user.id = :userId AND n.recipe.id = :recipeId AND n.instruction.id = :instructionId")
     Optional<PersonalInstructionNote> findByUserIdAndRecipeIdAndInstructionId(@Param("userId") String userId, @Param("recipeId") String recipeId, @Param("instructionId") String instructionId);
+
+    /**
+     * Bulk-deletes every personal note either authored by the given user or attached to one of
+     * the given recipes. Used ahead of account-deletion purges: the first half clears the
+     * deleted user's own notes on any recipe, the second half clears other users' notes on
+     * recipes the deleted user authored, since {@code personal_instruction_notes.recipe_id} is a
+     * non-nullable foreign key with no cascade delete.
+     *
+     * @param userId note-author user ID whose own notes are included
+     * @param recipeIds recipe IDs whose notes (by any author) are included
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM PersonalInstructionNote n WHERE n.user.id = :userId OR n.recipe.id IN :recipeIds")
+    void deleteByUserIdOrRecipeIdIn(@Param("userId") String userId, @Param("recipeIds") List<String> recipeIds);
 }

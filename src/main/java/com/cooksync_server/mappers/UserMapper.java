@@ -41,7 +41,11 @@ public final class UserMapper {
                 created,
                 updated,
                 user.isEnabled(),
-                user.getStatus().name()
+                user.getStatus().name(),
+                user.getCity(),
+                user.getBio(),
+                user.isShowRecipesPublicly(),
+                user.isShowFavoritesPublicly()
         );
     }
 }

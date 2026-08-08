@@ -2,6 +2,9 @@ package com.cooksync_server.repositories;
 
 import com.cooksync_server.entities.FavoriteRecipe;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -50,4 +53,18 @@ public interface FavoriteRecipeRepository extends JpaRepository<FavoriteRecipe, 
      * @param recipeId unique recipe identifier
      */
     void deleteByUserIdAndRecipeId(String userId, String recipeId);
+
+    /**
+     * Bulk-deletes every favorite bookmark either owned by the given user or pointing at one of
+     * the given recipes. Used ahead of account-deletion purges: the first half clears the
+     * deleted user's own favorites list, the second half clears other users' bookmarks on
+     * recipes the deleted user authored, since {@code favorite_recipes.recipe_id} is a
+     * non-nullable foreign key with no cascade delete.
+     *
+     * @param userId bookmarking user ID whose own favorites are included
+     * @param recipeIds recipe IDs whose favorites (by any user) are included
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM FavoriteRecipe f WHERE f.user.id = :userId OR f.recipe.id IN :recipeIds")
+    void deleteByUserIdOrRecipeIdIn(@Param("userId") String userId, @Param("recipeIds") List<String> recipeIds);
 }

@@ -55,7 +55,7 @@ public class ReviewService implements IReviewService{
             throw new ResourceNotFoundException("Recipe", recipeId);
         }
         
-        org.springframework.data.domain.Page<Review> reviewPage = reviewRepository.findByRecipeIdOrderByCreatedAtDesc(
+        org.springframework.data.domain.Page<Review> reviewPage = reviewRepository.findByRecipeIdAndHiddenFalseOrderByCreatedAtDesc(
                 recipeId, org.springframework.data.domain.PageRequest.of(page, size));
 
         List<ReviewResponse> content = reviewPage.getContent().stream()

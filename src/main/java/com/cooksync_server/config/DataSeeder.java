@@ -135,9 +135,27 @@ public class DataSeeder implements CommandLineRunner {
         ));
     }
 
+    private static final String[] DEMO_CITIES = {
+            "Tel Aviv", "Jerusalem", "Haifa", "Beer Sheva", "Netanya", "Herzliya",
+            "Ramat Gan", "Rishon LeZion", "Eilat", "Ra'anana"
+    };
+
+    private static final String[] DEMO_BIOS = {
+            "I cook the same six things very well and write them down so I stop forgetting.",
+            "Weeknight cook, weekend hoarder of half-used spice jars.",
+            "Trying to get my kids to eat vegetables, one recipe at a time.",
+            "Slow food on weekends, fast food never.",
+            "Baking is my therapy, cooking is my hobby.",
+            "Still perfecting my grandmother's recipes.",
+            "I season by feel and regret it half the time.",
+            "Vegetarian by choice, dessert-first by nature.",
+            "Meal-prep Sunday is sacred in this house.",
+            "Collecting recipes faster than I can cook them."
+    };
+
     private List<User> seedUsers() {
         logger.info(">>> Seeding users...");
-        return userRepository.saveAll(List.of(
+        List<User> users = new ArrayList<>(List.of(
                 User.builder().firstName("Yaron").lastName("Serlin").email("yaron@gmail.com")
                         .passwordHash(passwordEncoder.encode("123456aA!")).isAdmin(true)
                         .avatarUrl("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80")
@@ -411,6 +429,31 @@ public class DataSeeder implements CommandLineRunner {
                         .avatarUrl("https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=400&q=80")
                         .build()
         ));
+        applyDemoProfileDetails(users);
+        return userRepository.saveAll(users);
+    }
+
+    /**
+     * Fills in the city, bio, and privacy preferences the account-details feature added to
+     * {@link User}, cycled across demo pools rather than hardcoded per builder call above so
+     * every seeded account has realistic profile content to exercise the Account Details screen
+     * with. {@code showRecipesPublicly} is left at the entity default (true) for everyone;
+     * {@code showFavoritesPublicly} is toggled on for roughly a third of users so both privacy
+     * states are represented in the demo data.
+     *
+     * Complexity:
+     * Time: O(U) where U is user count
+     * Space: O(1)
+     *
+     * @param users freshly built (not yet persisted) seed users to fill in
+     */
+    private void applyDemoProfileDetails(List<User> users) {
+        for (int i = 0; i < users.size(); i++) {
+            User user = users.get(i);
+            user.setCity(DEMO_CITIES[i % DEMO_CITIES.length]);
+            user.setBio(DEMO_BIOS[i % DEMO_BIOS.length]);
+            user.setShowFavoritesPublicly(i % 3 == 0);
+        }
     }
 
     private List<Recipe> seedRecipes(List<User> users, List<Unit> units, List<Tag> tags) {

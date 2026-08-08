@@ -2,6 +2,7 @@ package com.cooksync_server.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,15 +14,18 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cooksync_server.services.IAuthService;
 import com.dtos.request.auth.AvatarUpdateRequestDTO;
 import com.dtos.request.auth.ChangePasswordRequestDTO;
+import com.dtos.request.auth.DeleteAccountRequestDTO;
 import com.dtos.request.auth.EmailUpdateRequestDTO;
 import com.dtos.request.auth.ForgotPasswordRequestDTO;
 import com.dtos.request.auth.LoginRequestDTO;
+import com.dtos.request.auth.PrivacySettingsUpdateRequestDTO;
 import com.dtos.request.auth.ProfileUpdateRequestDTO;
 import com.dtos.request.auth.RegisterRequestDTO;
 import com.dtos.request.auth.ResetPasswordRequestDTO;
 import com.dtos.request.auth.TokenRefreshRequestDTO;
 import com.dtos.response.ApiResponse;
 import com.dtos.response.auth.AuthResponse;
+import com.dtos.response.user.UserResponse;
 
 import jakarta.validation.Valid;
 
@@ -114,6 +118,24 @@ public class AuthController {
         String userEmail = authentication.getName();
         AuthResponse response = authService.validateToken(userEmail);
         return ResponseEntity.ok(new ApiResponse<>(true, response, null, "Token is valid"));
+    }
+
+    /**
+     * Fetches the authenticated user's full profile, including fields not carried by
+     * {@link AuthResponse} (city, bio, privacy preferences). Used by the client's Account
+     * Details screen to pre-fill the edit form.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param authentication active Spring Security authentication token
+     * @return response entity containing the current user's full profile
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(Authentication authentication) {
+        UserResponse response = authService.getCurrentUserProfile(authentication.getName());
+        return ResponseEntity.ok(new ApiResponse<>(true, response, null, "Current user profile retrieved"));
     }
 
     /**
@@ -224,6 +246,47 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(Authentication authentication) {
         authService.deactivateAccount(authentication.getName());
         return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Account deactivated"));
+    }
+
+    /**
+     * Updates public-profile privacy preferences for authenticated user.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request privacy settings update payload DTO
+     * @param authentication active Spring Security authentication token
+     * @return response entity acknowledging the privacy settings update
+     */
+    @PutMapping("/privacy")
+    public ResponseEntity<ApiResponse<Void>> updatePrivacySettings(
+            @Valid @RequestBody PrivacySettingsUpdateRequestDTO request,
+            Authentication authentication) {
+        authService.updatePrivacySettings(authentication.getName(), request);
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null, "Privacy settings updated successfully"));
+    }
+
+    /**
+     * Starts the 30-day self-service account-deletion grace period for authenticated user,
+     * following password verification. The account is restored automatically if the user logs
+     * back in before the grace period lapses; otherwise it is permanently purged.
+     *
+     * Complexity:
+     * Time: O(1)
+     * Space: O(1)
+     *
+     * @param request delete-account payload DTO carrying the current password for verification
+     * @param authentication active Spring Security authentication token
+     * @return response entity acknowledging the deletion request
+     */
+    @DeleteMapping("/account")
+    public ResponseEntity<ApiResponse<Void>> requestAccountDeletion(
+            @Valid @RequestBody DeleteAccountRequestDTO request,
+            Authentication authentication) {
+        authService.requestAccountDeletion(authentication.getName(), request);
+        return ResponseEntity.ok(new ApiResponse<>(true, null, null,
+                "Account scheduled for deletion. Log back in within 30 days to cancel."));
     }
 
     /**

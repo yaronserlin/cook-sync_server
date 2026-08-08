@@ -1,5 +1,6 @@
 package com.cooksync_server.repositories;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +15,7 @@ import com.cooksync_server.entities.ReviewReport;
  * Spring Data JPA Repository interface for ReviewReport entity persistence.
  *
  * @author Yaron Serlin
- * @version 1.0
+ * @version 1.1
  * @since 05/08/2026
  */
 @Repository
@@ -47,4 +48,26 @@ public interface ReviewReportRepository extends JpaRepository<ReviewReport, Stri
     @Modifying
     @Query("DELETE FROM ReviewReport r WHERE r.review.id = :reviewId")
     void deleteByReviewId(@Param("reviewId") String reviewId);
+
+    /**
+     * Bulk-deletes every report filed against any of the given reviews, in a single statement.
+     * Used ahead of account-deletion purges, where a whole batch of reviews is about to be
+     * removed at once rather than one at a time.
+     *
+     * @param reviewIds target review unique identifiers
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ReviewReport r WHERE r.review.id IN :reviewIds")
+    void deleteByReviewIdIn(@Param("reviewIds") List<String> reviewIds);
+
+    /**
+     * Bulk-deletes every report filed by a given user as reporter, regardless of which review it
+     * targets. Used during account-deletion purges to clear reports the deleted user filed
+     * against reviews that otherwise remain in place.
+     *
+     * @param reporterId reporting user's unique identifier
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ReviewReport r WHERE r.reporter.id = :reporterId")
+    void deleteByReporterId(@Param("reporterId") String reporterId);
 }
